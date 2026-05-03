@@ -96,7 +96,7 @@ skanit_to_plate <- function(
     dplyr::mutate(X1 = clean_file$X1)
 
   return(list(
-    "abs_data" = clean_file,
-    "map_data" = map_file
+    "abs_tibble" = clean_file,
+    "map_tibble" = map_file
   ))
 }
