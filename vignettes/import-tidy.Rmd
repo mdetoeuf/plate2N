@@ -1,0 +1,38 @@
+---
+title: "import-tidy"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{import-tidy}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Principles
+Import & tidy, different types of raw data files
+
+```{r setup}
+library(plate2N)
+```
+
+# Import
+## Case of .TXT
+bla bla
+
+## Case of .csv
+bla bla
+
+## Case of skanit .csv
+bla bla
+
+## Other formats
+Bring it to tibble
+
+# Tidy table
+Verticalize

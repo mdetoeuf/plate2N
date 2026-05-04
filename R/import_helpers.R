@@ -22,3 +22,4 @@ columns <- readr::read_csv(I("row,1,2,3,4,5,6,7,8,9,10,11,12"), col_names = FALS
 names(columns) <- c("row", "X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9", "X10", "X11", "X12", "X13")
 
 
+
