@@ -22,12 +22,11 @@ It starts from a tibble in plate format (as rendered by \code{txt_to_tibble()}, 
 and ends with a tidy tibble of 96 rows (row per well) and one column per plate, as well as structural columns allowing well identification (row, column)
 }
 \examples{
-# create tibble with skanit_to_tibble()
-skanit_csv <- system.file("extdata", "skanit.csv", package = "plate2N")
-plate_data <- skanit_to_tibble(skanit_csv, delim = ",")
-(tibble <- plate_data$abs_tibble)
+# check out input
+tibble_example
+(verticalize_plates(tibble_example))
 
-# run verticalize_plates()
-(verticalize_plates(tibble))
-
+}
+\seealso{
+\code{\link[=skanit_to_tibble]{skanit_to_tibble()}}, \code{\link[=csv_to_tibble]{csv_to_tibble()}}, \code{\link[=txt_to_tibble]{txt_to_tibble()}} that can generate the input needed
 }

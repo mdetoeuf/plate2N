@@ -16,23 +16,20 @@ utils::globalVariables(c("row", "X1", "X12"))
 #' @import dplyr roperators tidyr tidyselect
 #'
 #' @returns A tidy tibble (verticalized plate data), with 1 column per plate
+#' @seealso [skanit_to_tibble()], [csv_to_tibble()], [txt_to_tibble()] that can generate the input needed
 #' @export
 #'
 #' @examples
-#' # create tibble with skanit_to_tibble()
-#' skanit_csv <- system.file("extdata", "skanit.csv", package = "plate2N")
-#' plate_data <- skanit_to_tibble(skanit_csv, delim = ",")
-#' (tibble <- plate_data$abs_tibble)
-#'
-#' # run verticalize_plates()
-#' (verticalize_plates(tibble))
+#' # check out input
+#' tibble_example
+#' (verticalize_plates(tibble_example))
 #'
 verticalize_plates <- function(
     tibble
 ) {
 
   # initialize the tidy table format by verticalizing a empty plate and store in a tibble
-  vertical_plates <- verticalized_empty
+  vertic_plates <- verticalized_empty
 
   # extract plate_ids
   plates <- tibble |>
@@ -63,7 +60,7 @@ verticalize_plates <- function(
 
 
     # verticalize the absorbance data and append it to the dataframe in construction
-    vertical_plates <- vertical_plates |>
+    vertic_plates <- vertic_plates |>
       dplyr::mutate(
         plate_abs |>
           tidyr::pivot_longer(cols = X1:X12, names_to = "column", values_to = plate_id) |>
@@ -73,5 +70,5 @@ verticalize_plates <- function(
     #i = i+1
   } # end of for-loop
 
-  return(vertical_plates)
+  return(vertic_plates)
 }
