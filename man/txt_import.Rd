@@ -4,15 +4,19 @@
 \alias{txt_import}
 \title{Imports 96-well plate data from .TXT format as exported from the plate reader}
 \usage{
-txt_import(filepath, extension = ".TXT")
+txt_import(filepath, extension = ".TXT", output = "tibble")
 }
 \arguments{
 \item{filepath}{The path to the folder containing the .TXT files. The folder may contain other non-TXT files, but all .TXT files within the folder will be included. \strong{Warning:} the only "." allowed in the filename is the one before the TXT extension}
 
 \item{extension}{The default is ".TXT". This parameter defines the pattern by which files to be included will be picked from the folder identified by 'filepath'.}
+
+\item{output}{Desired output format. Default is a tibble. Alternative option is a list (one element per plate)}
 }
 \value{
-A list where each element is a tibble corresponding to raw plate data (1 file --> 1 plate --> 1 element). Names of the elements correspond to the names of the files (without the extension .TXT). A good practice is thus to name the files as "plate_name.TXT"
+Depends on the output parameter.
+If \code{output = "tibble"}, a tibble where each plate is stacked on top of each other (same format as with skanit_to_plate())
+If \code{output = "list"}, a list where each element is a tibble corresponding to raw plate data (1 file --> 1 plate --> 1 element). Names of the elements correspond to the names of the files (without the extension .TXT). A good practice is thus to name the files as "plate_name.TXT"
 }
 \description{
 Imports 96-well plate data from .TXT format as exported from the plate reader
