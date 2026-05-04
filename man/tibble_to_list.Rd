@@ -16,7 +16,7 @@ A list where each element contains the data of a single plate, and the name of e
 Converts a tibble (as outputted from csv_import() or skanit_to_plate()) containing all plate data into a list of tibbles (1 per plate)
 }
 \examples{
-tibble <- csv_import(system.file("extdata", "csv_example.csv", package = "plate2N"))
+tibble <- csv_to_tibble(system.file("extdata", "csv_example.csv", package = "plate2N"))
 tibble
 list <- tibble_to_list(tibble)
 names(list)[1]; list[[1]]

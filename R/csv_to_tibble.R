@@ -17,10 +17,10 @@
 #'
 #' @examples
 #' example_csv <- system.file("extdata", "csv_example.csv", package = "plate2N")
-#' plate_data <- csv_import(example_csv)
+#' plate_data <- csv_to_tibble(example_csv)
 #' plate_data
 
-csv_import <- function(
+csv_to_tibble <- function(
     filepath,
     delim = ","      # alternative is ";"
 ) {

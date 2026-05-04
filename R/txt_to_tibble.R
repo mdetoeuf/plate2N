@@ -12,7 +12,7 @@
 
 # filepath <- "/Users/Admin/Nextcloud/PhD/2024_trial/Fab_Mo/Red_story/InterBIC_Npools_code/raw_data/Nmin"
 # file <- paste0(filepath, "/", "NH4_1F1.TXT")
-txt_import <- function(
+txt_to_tibble <- function(
   filepath,
   extension = ".TXT",
   output = "tibble") {

@@ -14,11 +14,11 @@ utils::globalVariables(c(
 #'
 #' @examples
 #' skanit_csv <- system.file("extdata", "skanit.csv", package = "plate2N")
-#' plate_data <- skanit_to_plate(skanit_csv, delim = ",")
+#' plate_data <- skanit_to_tibble(skanit_csv, delim = ",")
 #' plate_data$abs_data
 #' plate_data$map_data
 #'
-skanit_to_plate <- function(
+skanit_to_tibble <- function(
     skanit_csv,
     delim = ","
 ) {

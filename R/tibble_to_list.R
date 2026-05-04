@@ -12,7 +12,7 @@ utils::globalVariables("X1")
 #' @export
 #'
 #' @examples
-#' tibble <- csv_import(system.file("extdata", "csv_example.csv", package = "plate2N"))
+#' tibble <- csv_to_tibble(system.file("extdata", "csv_example.csv", package = "plate2N"))
 #' tibble
 #' list <- tibble_to_list(tibble)
 #' names(list)[1]; list[[1]]
