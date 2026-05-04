@@ -1,4 +1,4 @@
-utils::globalVariables("X1")
+utils::globalVariables("row")
 
 #' Converts plates data from tibble to a list
 #'
@@ -22,9 +22,9 @@ tibble_to_list <- function(tibble) {
   # to get to the plate_ids
   plates <- tibble |>
     # exclude rows where 1st column contains single capital letters
-    dplyr::filter(X1 %ni% LETTERS) |>
+    dplyr::filter(row %ni% LETTERS) |>
     # keep only 1st column --> create a tibble (1 column) with plate_ids
-    dplyr::select(plate_id = X1)
+    dplyr::select(plate_id = row)
 
   # initiate an empty list
   abs_data_list <- list()
@@ -36,7 +36,7 @@ tibble_to_list <- function(tibble) {
     plate_id <- plates$plate_id[i]
 
     # extract line corresponding to plate_id
-    line <- which(tibble$X1 == plate_id)
+    line <- which(tibble$row == plate_id)
 
     # get plate absorbances (start at line of plate_id, and get next 8 lines)
     plate_abs <- tibble[line:(line+8),] |>

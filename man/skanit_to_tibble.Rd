@@ -12,7 +12,7 @@ skanit_to_tibble(skanit_csv, delim = ",")
 \item{delim}{The value delimiter within the csv file. Default is ",", accepts also ";".}
 }
 \value{
-A list containing 2 elements. The first, called $abs_data contains the absorbance data. The second $map_data contains the mapping data (only relevant if the mapping has been encoded into skanit. Otherwise: use other functions to import mapping data).
+A list containing 2 elements. The first, called $abs_data contains a tibble with the absorbance data. The second $map_data contains a tibble with the mapping data (only relevant if the mapping has been encoded into skanit. Otherwise: use other functions to import mapping data).
 }
 \description{
 Import 96-well plate data from Skanit format

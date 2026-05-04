@@ -1,5 +1,5 @@
 utils::globalVariables(c(
-  "X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9", "X10", "X11", "X12", "X13"))
+  "row", "X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9", "X10", "X11", "X12"))
 
 
 #' Import 96-well plate data from Skanit format
@@ -9,7 +9,7 @@ utils::globalVariables(c(
 #'
 #' @import dplyr readr stringr tidyr
 #'
-#' @returns A list containing 2 elements. The first, called $abs_data contains the absorbance data. The second $map_data contains the mapping data (only relevant if the mapping has been encoded into skanit. Otherwise: use other functions to import mapping data).
+#' @returns A list containing 2 elements. The first, called $abs_data contains a tibble with the absorbance data. The second $map_data contains a tibble with the mapping data (only relevant if the mapping has been encoded into skanit. Otherwise: use other functions to import mapping data).
 #' @export
 #'
 #' @examples
@@ -50,10 +50,14 @@ skanit_to_tibble <- function(
       This could generate issues in downstream steps, but should not generate errors in this function call.")
   }
 
+  # correct column names to fit to convention from other *_to_tibble functions
+  names(file) <- names(columns)
+
   # Remove last row if contains something like "Autoloading..."
-  if (stringr::str_split_i(file$X1[nrow(file)], pattern = " ", i = 1) == "Autoloading") {
+  if (stringr::str_split_i(file$row[nrow(file)], pattern = " ", i = 1) == "Autoloading") {
     file <- file[1:(nrow(file)-1),]
   }
+
 
   # extract first column
   file_col1 <- file[[1]]
@@ -69,12 +73,12 @@ skanit_to_tibble <- function(
 
   # create new version of file where only absorbance data and map data is kept
   file_plate_ids <- file |>
-    dplyr::mutate(X1 = file_col1) |>
+    dplyr::mutate(row = file_col1) |>
     # remove useless NA rows (where plate id was stored)
-    tidyr::drop_na(X1)
+    tidyr::drop_na(row)
 
   # find rownumber where cells contain "Sample" (indicates the start of plate map)
-  nrow_sample <- which(file_plate_ids$X1 == "Sample")
+  nrow_sample <- which(file_plate_ids$row == "Sample")
 
   # create a vector with all indices of rows containing map data
   seq <- c()
@@ -89,11 +93,11 @@ skanit_to_tibble <- function(
   # complementary of that subset = absorbance data
   clean_file <- dplyr::anti_join(
     file_plate_ids, anti_file,
-    by = dplyr::join_by(X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13))
+    by = dplyr::join_by(row, X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12))
 
   # create a map file to export as well
   map_file <- anti_file |>
-    dplyr::mutate(X1 = clean_file$X1)
+    dplyr::mutate(row = clean_file$row)
 
   return(list(
     "abs_tibble" = clean_file,

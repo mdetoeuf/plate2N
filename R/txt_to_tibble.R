@@ -4,6 +4,8 @@
 #' @param extension The default is ".TXT". This parameter defines the pattern by which files to be included will be picked from the folder identified by 'filepath'.
 #' @param output Desired output format. Default is a tibble. Alternative option is a list (one element per plate)
 #'
+#' @import dplyr readr stringr tidyr
+#'
 #' @returns Depends on the output parameter.
 #'          If `output = "tibble"`, a tibble where each plate is stacked on top of each other (same format as with skanit_to_plate())
 #'          If `output = "list"`, a list where each element is a tibble corresponding to raw plate data (1 file --> 1 plate --> 1 element). Names of the elements correspond to the names of the files (without the extension .TXT). A good practice is thus to name the files as "plate_name.TXT"
@@ -22,13 +24,6 @@ txt_to_tibble <- function(
     pattern = extension,
     full.names = FALSE)
 
-  # store column names
-  columns <- read_csv(I("row,1,2,3,4,5,6,7,8,9,10,11,12"), col_names = FALSE,
-                                      col_types = cols(.default = col_character()))
-  names(columns) <- columns
-
-
-
   # in a loop: extract each plate and append the list
   # (1 file --> 1 plate --> 1 element of the list)
 
@@ -46,7 +41,7 @@ txt_to_tibble <- function(
 
     # initiate headers
     plate_header <- columns |>
-      mutate(row = plate_id, .before = 1)
+      dplyr::mutate(row = plate_id, .before = 1)
  #   names(plate_header) <- names(empty_plate)
 
     # extract only absorbance data from file to exploit as a tibble
@@ -57,8 +52,8 @@ txt_to_tibble <- function(
 
     if (output == "tibble") {
       # bind headers and plate_abs, then append tibble
-      plate_abs <- bind_rows(plate_header, plate_abs)
-      tibble <- bind_rows(tibble, plate_abs)
+      plate_abs <- dplyr::bind_rows(plate_header, plate_abs)
+      tibble <- dplyr::bind_rows(tibble, plate_abs)
     } else {
       # save data into the list format
       abs_data_list[[i]] <- plate_abs

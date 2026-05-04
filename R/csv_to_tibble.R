@@ -26,16 +26,18 @@ csv_to_tibble <- function(
 ) {
   # import csv
   if (delim == ",") {
-    raw_tibble <-  readr::read_csv(
+    tibble <-  readr::read_csv(
     filepath,
     col_names = FALSE,
     show_col_types = FALSE)
   } else {
-    raw_tibble <-  readr::read_csv2(
+    tibble <-  readr::read_csv2(
       filepath,
       col_names = FALSE,
       show_col_types = FALSE)
   }
 
-  return(raw_tibble)
+  names(tibble) <- names(columns)
+
+  return(tibble)
 }
