@@ -12,6 +12,8 @@ utils::globalVariables(c("row", "X1", "X12"))
 #'               - Plate ids **cannot** be a single capital letter (e.g., "A", "B", ...)
 #'               - Plates must be complete (96 wells accounted for, set up in 12 columns x 8 rows), but may contain NA's
 #'               - Plate data in the tibble **must be** structured exactly as in example files (see also `txt_to_tibble()`, `csv_to_tibble()` or `skanit_to_tibble()`).
+#' @param coerce_numeric Whether or not to force data entries to be numerical. The default is set to `FALSE`, so that data will be outputted as strings
+#' @param prefix Defaults as an empty string. A `prefix` can be added to all column names, which can be useful to join tables from distinct datasets
 #'
 #' @import dplyr roperators tidyr tidyselect
 #'
@@ -26,7 +28,8 @@ utils::globalVariables(c("row", "X1", "X12"))
 #'
 verticalize_plates <- function(
     tibble,
-    coerce_numeric = FALSE
+    coerce_numeric = FALSE,
+    prefix = ""
 ) {
 
   # initialize the tidy table format by verticalizing a empty plate and store in a tibble
@@ -70,6 +73,11 @@ verticalize_plates <- function(
           tidyr::pivot_longer(cols = X1:X12, names_to = "column", values_to = plate_id) |>
           dplyr::select(tidyselect::any_of(plate_id))
       )
+
+    if (prefix != "") {
+      vertic_plates <- vertic_plates |>
+        rename_with( ~ paste0(prefix, .x, recycle0 = TRUE))
+    }
     #print(i)
     #i = i+1
   } # end of for-loop
