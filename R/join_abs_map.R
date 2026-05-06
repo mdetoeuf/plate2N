@@ -1,3 +1,5 @@
+utils::globalVariables(c("row", "column"))
+
 #' Merging 2 vertical plates into one
 #'
 #' The function `join_abs_map()` was thought to merge absorbance data with their mapping counterparts,
@@ -39,7 +41,8 @@ join_abs_map <- function(
       map_tibble,
       coerce_numeric = coerce_numeric[2],
       prefix = paste0(dataset, abs_map[2])
-    )
+    ),
+    by = join_by(row, column)
   )
   return(joined_vertical)
 }
