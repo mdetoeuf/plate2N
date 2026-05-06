@@ -4,7 +4,7 @@
 \alias{verticalize_plates}
 \title{Tidying plate data (verticalization)}
 \usage{
-verticalize_plates(tibble, coerce_numeric = FALSE, prefix = "")
+verticalize_plates(tibble, coerce_numeric = FALSE, prefix = NULL)
 }
 \arguments{
 \item{tibble}{The tibble containing the raw plate-formatted data to be tidied.
@@ -21,7 +21,7 @@ tibble must fit the following criteria:
 A tidy tibble (verticalized plate data), with 1 column per plate
 }
 \description{
-\code{verticalize_plates}brings plate data (absorbance or mapping data) into a vertical, tidy format.
+\code{verticalize_plates} brings plate data (absorbance or mapping data) into a vertical, tidy format.
 It starts from a tibble in plate format (as rendered by \code{txt_to_tibble()}, \code{csv_to_tibble()} and \code{skanit_to_tibble()}),
 and ends with a tidy tibble of 96 rows (row per well) and one column per plate, as well as structural columns allowing well identification (row, column)
 }
@@ -29,6 +29,8 @@ and ends with a tidy tibble of 96 rows (row per well) and one column per plate, 
 # check out input
 tibble_example
 (verticalize_plates(tibble_example))
+(verticalize_plates(tibble_example, coerce_numeric = TRUE))
+(verticalize_plates(tibble_example, prefix = "prefix_"))
 
 }
 \seealso{

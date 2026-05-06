@@ -3,7 +3,7 @@ utils::globalVariables(c("row", "column", "X1", "X12"))
 
 #' Tidying plate data (verticalization)
 #'
-#' `verticalize_plates`brings plate data (absorbance or mapping data) into a vertical, tidy format.
+#' `verticalize_plates` brings plate data (absorbance or mapping data) into a vertical, tidy format.
 #' It starts from a tibble in plate format (as rendered by `txt_to_tibble()`, `csv_to_tibble()` and `skanit_to_tibble()`),
 #' and ends with a tidy tibble of 96 rows (row per well) and one column per plate, as well as structural columns allowing well identification (row, column)
 #'
@@ -25,11 +25,14 @@ utils::globalVariables(c("row", "column", "X1", "X12"))
 #' # check out input
 #' tibble_example
 #' (verticalize_plates(tibble_example))
+#' (verticalize_plates(tibble_example, coerce_numeric = TRUE))
+#' (verticalize_plates(tibble_example, prefix = "prefix_"))
+
 #'
 verticalize_plates <- function(
     tibble,
     coerce_numeric = FALSE,
-    prefix = ""
+    prefix = NULL
 ) {
 
   # initialize the tidy table format by verticalizing a empty plate and store in a tibble
@@ -73,14 +76,12 @@ verticalize_plates <- function(
           tidyr::pivot_longer(cols = X1:X12, names_to = "column", values_to = plate_id) |>
           dplyr::select(tidyselect::any_of(plate_id))
       )
-
-    if (prefix != "") {
-      vertic_plates <- vertic_plates |>
-        rename_with(~ paste0(prefix, .x, recycle0 = TRUE), .cols = !row:column)
-
     }
     #print(i)
     #i = i+1
+  if (!is.null(prefix)) {
+    vertic_plates <- vertic_plates |>
+      rename_with(~ paste0(prefix, .x, recycle0 = TRUE), .cols = !row:column)
   } # end of for-loop
 
   return(vertic_plates)
