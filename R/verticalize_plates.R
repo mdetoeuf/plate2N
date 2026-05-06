@@ -25,7 +25,8 @@ utils::globalVariables(c("row", "X1", "X12"))
 #' (verticalize_plates(tibble_example))
 #'
 verticalize_plates <- function(
-    tibble
+    tibble,
+    coerce_numeric = FALSE
 ) {
 
   # initialize the tidy table format by verticalizing a empty plate and store in a tibble
@@ -55,9 +56,12 @@ verticalize_plates <- function(
       dplyr::rename(row = tidyselect::any_of(plate_id)) |>
       dplyr::filter(row != plate_id)
 
-    # force data (now as strings) to become numeric
-    plate_abs[2:13] <- lapply(plate_abs[2:13], as.numeric)
-
+    # force data (now as strings) to become numeric (if coerce_numeric == TRUE)
+    if (coerce_numeric) {
+      plate_abs[2:13] <- lapply(plate_abs[2:13], as.numeric)
+    } else { #(default, if coerce_numeric == FALSE)
+      plate_abs[2:13] <- lapply(plate_abs[2:13], as.character)
+    }
 
     # verticalize the absorbance data and append it to the dataframe in construction
     vertic_plates <- vertic_plates |>
