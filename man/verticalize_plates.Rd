@@ -4,7 +4,7 @@
 \alias{verticalize_plates}
 \title{Tidying plate data (verticalization)}
 \usage{
-verticalize_plates(tibble)
+verticalize_plates(tibble, coerce_numeric = FALSE, prefix = "")
 }
 \arguments{
 \item{tibble}{The tibble containing the raw plate-formatted data to be tidied.
@@ -12,6 +12,10 @@ tibble must fit the following criteria:
 - Plate ids \strong{cannot} be a single capital letter (e.g., "A", "B", ...)
 - Plates must be complete (96 wells accounted for, set up in 12 columns x 8 rows), but may contain NA's
 - Plate data in the tibble \strong{must be} structured exactly as in example files (see also \code{txt_to_tibble()}, \code{csv_to_tibble()} or \code{skanit_to_tibble()}).}
+
+\item{coerce_numeric}{Whether or not to force data entries to be numerical. The default is set to \code{FALSE}, so that data will be outputted as strings}
+
+\item{prefix}{Defaults as an empty string. A \code{prefix} can be added to all column names, which can be useful to join tables from distinct datasets}
 }
 \value{
 A tidy tibble (verticalized plate data), with 1 column per plate

@@ -1,4 +1,4 @@
-utils::globalVariables(c("row", "X1", "X12"))
+utils::globalVariables(c("row", "column", "X1", "X12"))
 
 
 #' Tidying plate data (verticalization)
@@ -76,7 +76,8 @@ verticalize_plates <- function(
 
     if (prefix != "") {
       vertic_plates <- vertic_plates |>
-        rename_with( ~ paste0(prefix, .x, recycle0 = TRUE))
+        rename_with(~ paste0(prefix, .x, recycle0 = TRUE), .cols = !row:column)
+
     }
     #print(i)
     #i = i+1
