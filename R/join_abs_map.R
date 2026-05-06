@@ -14,7 +14,7 @@ utils::globalVariables(c("row", "column"))
 #' @param abs_tibble,map_tibble The first and second tibble (will appear on the left and right, respectively). Must have the same structure as `tibble_example`.
 #' @param dataset An optional string to be added as a prefix to all column names (from both tibbles), with the exception of the first 2 columns describing well id ("row" and "column"). It is originally meant to record the name of the dataset for later uses.
 #' @param abs_map A string vector to add additional prefixes. The default value is set to c("abs", "map"), so that the "abs" data (corresponding to argument `abs_tibble`) will receive the first prefix, and the "map" data (corresponding to argument `map_tibble`) will receive the second prefix. Set this to c("", "") to prevent prefix addition.
-#' @param coerce_numeric A logical vector to decide whether the function `verticalize_plates()`, called separately for `abs_tibble` and `map_tibble`, should coerce data to become numeric or not. The default value is set to `c(TRUE, FALSE)`, so that absorbance data will be numerical whereas mapping data will be strings.
+#' @param coerce_numeric A logical vector to decide whether the function `verticalize_plates()`, called separately for `abs_tibble` and `map_tibble`, should coerce data to become numeric or not. The default value is set to `c(FALSE, FALSE)`, so that eventually all data can be pivotted in a single column (see later steps in the pipeline).
 #'
 #' @returns A unique verticalized table containing the data from both data sets.
 #' @seealso [verticalize_plates()]
@@ -25,11 +25,11 @@ utils::globalVariables(c("row", "column"))
 #' skanit_tibbles <- skanit_to_tibble(skanit_csv)
 #' join_abs_map(skanit_tibbles$abs_tibble, skanit_tibbles$map_tibble)
 join_abs_map <- function(
-    abs_tibble,
-    map_tibble,
+    abs_tibble, # abs_tibble = skanit_tibble_abs
+    map_tibble, # map_tibble = skanit_tibble_map
     dataset = "",
-    abs_map = c("abs", "map"),
-    coerce_numeric = c(TRUE, FALSE)
+    abs_map = c("abs-", "map-"),
+    coerce_numeric = c(FALSE, FALSE)
 ) {
   joined_vertical <- dplyr::left_join(
     verticalize_plates(
@@ -42,7 +42,7 @@ join_abs_map <- function(
       coerce_numeric = coerce_numeric[2],
       prefix = paste0(dataset, abs_map[2])
     ),
-    by = join_by(row, column)
+    by = dplyr::join_by(row, column)
   )
   return(joined_vertical)
 }

@@ -8,8 +8,8 @@ join_abs_map(
   abs_tibble,
   map_tibble,
   dataset = "",
-  abs_map = c("abs", "map"),
-  coerce_numeric = c(TRUE, FALSE)
+  abs_map = c("abs-", "map-"),
+  coerce_numeric = c(FALSE, FALSE)
 )
 }
 \arguments{
@@ -19,7 +19,7 @@ join_abs_map(
 
 \item{abs_map}{A string vector to add additional prefixes. The default value is set to c("abs", "map"), so that the "abs" data (corresponding to argument \code{abs_tibble}) will receive the first prefix, and the "map" data (corresponding to argument \code{map_tibble}) will receive the second prefix. Set this to c("", "") to prevent prefix addition.}
 
-\item{coerce_numeric}{A logical vector to decide whether the function \code{verticalize_plates()}, called separately for \code{abs_tibble} and \code{map_tibble}, should coerce data to become numeric or not. The default value is set to \code{c(TRUE, FALSE)}, so that absorbance data will be numerical whereas mapping data will be strings.}
+\item{coerce_numeric}{A logical vector to decide whether the function \code{verticalize_plates()}, called separately for \code{abs_tibble} and \code{map_tibble}, should coerce data to become numeric or not. The default value is set to \code{c(FALSE, FALSE)}, so that eventually all data can be pivotted in a single column (see later steps in the pipeline).}
 }
 \value{
 A unique verticalized table containing the data from both data sets.
