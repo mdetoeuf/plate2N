@@ -1,0 +1,21 @@
+# Package index
+
+## All functions
+
+- [`csv_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/csv_to_tibble.md)
+  : Import 96-well plate data in csv format
+- [`join_abs_map()`](https://mdetoeuf.github.io/plate2N/reference/join_abs_map.md)
+  : Merging 2 vertical plates into one
+- [`skanit_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/skanit_to_tibble.md)
+  : Import 96-well plate data from Skanit format
+- [`tibble_example`](https://mdetoeuf.github.io/plate2N/reference/tibble_example.md)
+  : Example of a tibble format for plate data
+- [`tibble_to_list()`](https://mdetoeuf.github.io/plate2N/reference/tibble_to_list.md)
+  : Converts plates data from tibble to a list
+- [`txt_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/txt_to_tibble.md)
+  : Imports 96-well plate data from .TXT format as exported from the
+  plate reader
+- [`vertical_plates`](https://mdetoeuf.github.io/plate2N/reference/vertical_plates.md)
+  : Example of the tidy, verticalized plate data
+- [`verticalize_plates()`](https://mdetoeuf.github.io/plate2N/reference/verticalize_plates.md)
+  : Tidying plate data (verticalization)
