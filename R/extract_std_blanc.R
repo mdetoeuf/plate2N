@@ -1,11 +1,3 @@
-# helper function
-extract_std_data <- function(data, std_def = "Std") {
-  std_data <- data |>
-    # take only plate-columns with standard curves
-    filter(map == std_def) |>
-    group_by(dataset, plate_id)
-  std_data
-}
 
 utils::globalVariables(c("row", "column", "well_id", "unique_well_id", "dataset", "plate_id", "map", "abs", "blanc_sdev", "blanc_avg"))
 
@@ -64,11 +56,7 @@ extract_std_blanc <- function(
     pipetting_direction = "top_down"
 ) {
 
-  if (pipetting_direction == "top_down") {
-    blanc_should_be_in <- "A"
-  } else if (pipetting_direction == "bottom_up") {
-    blanc_should_be_in <- "H"
-  } else {stop("Unknown pipetting direction. Choose between `top-down` and `bottom_up`")}
+# blank_should_be_in <- pipette_to_row(pipetting_direction)
 
   # in case still character, correct absorbance values to be numerical
   data <- data |> dplyr::mutate(abs = as.numeric(abs))
@@ -84,7 +72,7 @@ extract_std_blanc <- function(
       with_ties = FALSE
     )
 
-  std_blanc_untrusted <- std_blanc_all |> dplyr::filter(row != blanc_should_be_in)
+  std_blanc_untrusted <- std_blanc_all |> dplyr::filter(row != pipette_to_row(pipetting_direction))
 
   std_blanc_trusted <- std_blanc_all |>
     dplyr::anti_join(

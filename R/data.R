@@ -52,6 +52,35 @@
 #'
 "tidy_table"
 
+#' Example of Tidy table of plate data
+#'
+#' The `tidy_table`represents data corresponding to 5 physical 96-well plates,
+#' where absorbance and mapping data are merged (thus containing 10 times the volume of data of 1 plate).
+#'
+#' This tidy table set was generated from raw absorbance data in the .TXT format,
+#' (see the raw file stored at `system.file("extdata", "txt_examples", package = "plate2N")`).
+#' The mapping data was imported from a .csv format, (see also the raw file stored at
+#' `system.file("extdata", "csv_map.csv", package = "plate2N")`)
+#'
+#' The data wrangling pipeline followed steps of the vignette (see `vignette("import-tidy, package = "plate2N")`),
+#' i.e., data was imported with [`txt_to_tibble()`] and [`csv_to_tibble()`], then absorbance and mapping data were verticalized and merged with [`join_abs_map()`],
+#' and finally the verticalized plate data was rearranged using [`vertical_to_tidy()`].
+#'
+#' @format
+#' A tibble with 960 rows (1 per well of the 5x2 data plates) and 8 columns
+#' \describe{
+#'  \item{row}{1-letter identifier of the original plate-row (letters A to H)}
+#'  \item{column}{1-number identifier of the original plate-column (numbers 1 to 12)}
+#'  \item{well_id}{concatenation of `row` and `column` (values from A1 to H12). Each `well_id` is repeated 10 times (once per data plate)}
+#'  \item{plate_id}{Unique identifier for each physical 96-well plate (thus repeated 2x each, corresponding to absorbance and mapping data)}
+#'  \item{unique_well_id}{concatenation of `well_id` and `plate_id`, it identifies uniquely every single well}
+#'  \item{dataset}{here, all data comes from a single dataset called "expe1", but the information on dataset is added at the merging stage, and could allow filtering the `tidy_table` based on dataset}
+#'  \item{map}{mapping data from the 96-well plates. This can contain a sample identifier and/or treatment identifier. It reflects strictly the data that was imported from the raw data files}
+#'  \item{abs}{absorbance data from the 96-well plates. This, too, corresponds strictly to the imported data. Note that absorbance data is still stored as a character string. Use [`as.double()`] or [`as.numeric()`] to turn it into numbers}
+#' }
+#'
+"tidy_plates"
+
 #' Example of failed well table
 #'
 #' In experiments with 96-well plates, especially with manual pipetting,
@@ -67,4 +96,6 @@
 #' }
 #'
 "failed_wells_example"
+
+
 
