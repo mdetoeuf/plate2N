@@ -24,19 +24,29 @@ The goal of `plate2N` is to facilitate data wrangling and data analysis for raw 
 library(plate2N)
 ```
 
-This particular vignette adresses the first steps of the pipeline: getting from raw data in various forms to a tidy data table that can be easily manipulated in downstream steps. Here, we cover two steps:
+This particular vignette adresses the first steps of the pipeline: getting from files of raw data in various forms to a tidy data table that can be easily manipulated in downstream steps. The final `tidy_table` will look something like this:
+
+```{r}
+tidy_table
+```
+
+In this vignette, we cover three steps:
 
 **1) Data import** from various raw file formats with `txt_to_tibble()`, `csv_to_tibble()` and `skanit_to_tibble()`, where data is brought into a shape that is common to all import file. We refer to the output of this first step in an object called "tibble" where data is still in a "plate" format (see hereunder). In this tibble, the first columns contains the plate id in the first row, followed by the letters caracterising the 8 rows of the plate (from A to H). The rest of the first row contains the plate-column numbers (from 1 to 12). The rest of the table contains the original plate data, which can be numerical (e.g., absorbance data) or characters (e.g., plate mapping)
 ```{r}
 tibble_example
 ```
 
-**2) Transformation** of the "tibble" into a tidy data table that is easily usable for downstream data transformations and analyses, with `verticalize_plates()`. The tidy table presents data in a verticalized format, i.e., data from each plate corresponds to a single column where the name of the column is the plate id. The first 2 columns of those verticalized plates contain the well identifier, in the columns "row" (of the plate, from A to H), and "column" (from 1 to 12). See example hereunder
+**2) Verticalization** of the "tibble" into a verticalized table with `verticalize_plates()`. The `vertical_plates` present data in a verticalized format, i.e., data from each plate is displayed in a single column where the name of the column is the plate id. The first 2 columns contain the well identifier, stored in the columns "row" (of the plate, from A to H), and "column" (from 1 to 12). This vertical format is a good format to select a subset of plates (e.g., based on experiment, treatment, or anything else that the user stored into column names). See example hereunder:
 ```{r}
 vertical_plates
 ```
 
+**3) Tidying** of the verticalized plate into the `tidy_table` displayed at the beginning of this vignette, a format that is easily usable for downstream data transformations and analyses. This step is done using the `tidyr` package
+
 Note: If the need arises to fit this package to other plate formats than 96-well plates, please reach out to the authors.
+
+------------------------
 
 # 1 - Import
 
@@ -125,7 +135,7 @@ Should you have data in different raw formats, there are 2 options.
 
 **2) With bigger data sets**, we recommend using an export function from the `readr` package (e.g., `readr::read_csv()`, `readr::read_tsv()` or `readr::read_delim()`), possibly with a selection of columns or rows, then using tools of the `dplyr` or `tidyr` packages to bring the resulting tibble into the required format.
 
-# 2 - Tidy table
+# 2 - Verticalized table
 
 Finally, once the `tibble` has been generated with any of the import options hereabove, we can proceed to the data verticalization. 
 
@@ -169,7 +179,7 @@ When we look at this new joined table, we recognize the same verticalized struct
   
 Additional info can be found under `?join_abs_map()`.
 
-# 3 - Next steps
+# 3 - Tidy table
 
 The vertical format is practical for manual/human handling, with an easy-to-handle number of rows (96), and individual plates are easy to select based on plate name. For example, here is an easy moment to subset some plates based on dataset, abs/map or even some features that are embedded in plate name (such as N species in our case where plate names contained either "NO3", "NO2" or "NH4"). This can be easily done using the `dplyr` package and its function `dplyr::select()`, aided by some helper functions from the `tidyselect` package, such as `starts_with()`, `contains()`, etc.
 
@@ -203,9 +213,10 @@ This went a bit too far. What we want, is to have one column for absorbance data
   ))
 ```
 
+# 4 - Next steps
 Once the data is in this practical and tidy format, we can start data transformation of all sorts, see also vignettes *xxx and xxx (under development)* of this package. This is a good place to save the tidy table into an intermediary file, for example, using `data_tidy |> write_rds("path/to/my/output/file.rds")`.
 
-# 4 - Final note: issues when absorbance and mapping data with identical plate ids are imported from a single file.
+# 5 - Final note: issues when absorbance and mapping data with identical plate ids are imported from a single file.
 
 Usually, a physical plate that is used in the lab will come with 2 or more data tables in plate format. Indeed, the measure of absorbance of a well needs to be accompanied by some mapping information (e.g., to each well corresponds also a sample id or information on treatment). Consequently, a single plate (let's call it "NO3_plate1") will result in the import of at least 2 "plate data tables". Those 2 plate data sets characterizing the same plate will need to be handled differently in downstream analysis. We see here 2 typical use cases
 
