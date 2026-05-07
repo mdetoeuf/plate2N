@@ -3,7 +3,8 @@ pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
   import-tidy: import-tidy.html
-last_built: 2026-05-07T21:25Z
+  translate-abs: translate-abs.html
+last_built: 2026-05-07T21:42Z
 urls:
   reference: https://mdetoeuf.github.io/plate2N/reference
   article: https://mdetoeuf.github.io/plate2N/articles

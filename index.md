@@ -1,8 +1,8 @@
-First, plate2N supports in the import and tidying of raw 96-well plate
-data. Then, it provides tools to translate raw absorbance data into
-concentration in Nitrogen species (e.g., ammonium, nitrite, nitrate),
-including blanc-correction of absorbance and application of the
-regression equation for the standard curve. plate2N also helps in
+First, plate2N supports users in the import and tidying of raw 96-well
+plate data. Then, it provides tools to translate raw absorbance data
+into concentration in Nitrogen species (e.g., ammonium, nitrite,
+nitrate), including blanc-correction of absorbance and application of
+the regression equation for the standard curve. plate2N also helps in
 performing several quality checks, supporting the user's decision to
 remove outliers, and proposes functions to do so. Although it is
 designed to support data analysis for Nitrogen dosage using absorbance
