@@ -7,7 +7,7 @@
 failed_wells_template(nrow = 30)
 }
 \arguments{
-\item{nrow}{The number of rows that the user want to have. Defaults at \code{nrow = 30}.
+\item{nrow}{The desired number of rows. Defaults at \code{nrow = 30}.
 Note that if data is encoded in an Excel or equivalent file, the number of rows is not really important and can be increased indefinitely}
 }
 \value{

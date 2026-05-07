@@ -51,3 +51,20 @@
 #' }
 #'
 "tidy_table"
+
+#' Example of failed well table
+#'
+#' In experiments with 96-well plates, especially with manual pipetting,
+#' it is not rare to have some mishaps where we know that a certain well is to be excluded.
+#' A template for such data can be obtained using [`failed_wells_template()`],
+#' exported (e.g., with [`readr::write_csv()`]) filled by users and imported (e.g., with [`readr::read_csv()`]).
+#'
+#' @format
+#' A tibble 2 rows and 3 columns (dataset, plate_id and well_id), allowing unique identification of failed wells
+#' \describe{
+#'  \item{dataset,plate_id}{must be the same as in your plate data}
+#'  \item{well_id}{standard well identifiers, concatenation of plate rows (letters from A to H) and plate columns (numbers from 1 to 12)}
+#' }
+#'
+"failed_wells_example"
+

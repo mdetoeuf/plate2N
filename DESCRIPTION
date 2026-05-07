@@ -1,31 +1,43 @@
 Package: plate2N
 Title: From Raw 96-well Plate Data to Dosage of Nitrogen Compounds
 Version: 0.0.1
-Authors@R: 
-    person("Morgane", "de Toeuf", "morgane.detoeuf@gmail.com", role = c("aut", "cre"), comment = c(ORCID = "0009-0001-1961-8180"))
-Description: First, plate2N supports in the import and tidying of raw 96-well plate data.
-    Then, it provides tools to translate raw absorbance data into concentration in Nitrogen species (e.g., ammonium, nitrite, nitrate), including blanc-correction of absorbance and application of the regression equation for the standard curve.
-    plate2N also helps in performing several quality checks, supporting the user's decision to remove outliers, and proposes functions to do so.
-    Although it is designed to support data analysis for Nitrogen dosage using absorbance readings, we believe that it could be used for any dosage based on absorbance readings, including experiments using fluorescence, as long as the relation between absorbance and concentration is linear.
-    Feel free to reach out to the authors to propose or discuss adaptations to match your analytical needs.
+Description: First, plate2N supports in the import and tidying of raw
+    96-well plate data.  Then, it provides tools to translate raw
+    absorbance data into concentration in Nitrogen species (e.g.,
+    ammonium, nitrite, nitrate), including blanc-correction of absorbance
+    and application of the regression equation for the standard curve.
+    plate2N also helps in performing several quality checks, supporting
+    the user's decision to remove outliers, and proposes functions to do
+    so.  Although it is designed to support data analysis for Nitrogen
+    dosage using absorbance readings, we believe that it could be used for
+    any dosage based on absorbance readings, including experiments using
+    fluorescence, as long as the relation between absorbance and
+    concentration is linear.  Feel free to reach out to the authors to
+    propose or discuss adaptations to match your analytical needs.
 License: MIT + file LICENSE
-Encoding: UTF-8
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
+URL: https://mdetoeuf.github.io/plate2N/,
+    https://github.com/mdetoeuf/plate2N
+BugReports: https://github.com/mdetoeuf/plate2N/issues
+Depends: 
+    R (>= 3.5)
 Imports:
     dplyr,
     janitor,
     readr,
     roperators,
     stringr,
+    tibble,
     tidyr,
     tidyselect
-Depends: 
-    R (>= 3.5)
-LazyData: true
 Suggests: 
     knitr,
     rmarkdown
-VignetteBuilder: knitr
-URL: https://mdetoeuf.github.io/plate2N/, https://github.com/mdetoeuf/plate2N
-BugReports: https://github.com/mdetoeuf/plate2N/issues
+VignetteBuilder: 
+    knitr
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Authors@R: 
+    person("Morgane", "de Toeuf", , "morgane.detoeuf@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0009-0001-1961-8180"))
