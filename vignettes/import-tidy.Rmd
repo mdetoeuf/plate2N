@@ -181,6 +181,8 @@ Additional info can be found under `?join_abs_map()`.
 
 # 3 - Tidy table
 
+**TO DO: change this section to reflect new function vertical_to_tidy()** 
+
 The vertical format is practical for manual/human handling, with an easy-to-handle number of rows (96), and individual plates are easy to select based on plate name. For example, here is an easy moment to subset some plates based on dataset, abs/map or even some features that are embedded in plate name (such as N species in our case where plate names contained either "NO3", "NO2" or "NH4"). This can be easily done using the `dplyr` package and its function `dplyr::select()`, aided by some helper functions from the `tidyselect` package, such as `starts_with()`, `contains()`, etc.
 
 But this verticalized format is not ideal for bulk computing and transformations, where the might of the `tidyverse` sits in computations done no columns. So, a typical last step of tidying would be to bring this dataset in a format with a single column for the absorbance date, and another for the mapping data, where each unique well would be represented by a row. The `tidyr` and "`dplyr` packages do this job wonderfully and we did not feel the need to create our own function, as each user might want to adapt this final tidy table to their own need. However, we show here one example of how to use successively `tidyr::pivot_longer()`and `tidyr::pivot_wider()` to get the data where we need it before sending it to computational/analytical pipelines.
