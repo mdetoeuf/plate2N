@@ -22,6 +22,7 @@ Depends:
     R (>= 3.5)
 Imports:
     dplyr,
+    ggplot2,
     janitor,
     readr,
     roperators,

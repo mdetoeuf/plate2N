@@ -6,7 +6,8 @@ utils::globalVariables("row")
 #'
 #' @param tibble The tibble containing all plate data. See output from examples under ?csv_import for a glimpse of the required tibble structure and column names
 #'
-#' @import roperators tidyselect
+#' @import tidyselect
+#' @importFrom roperators %ni%
 #'
 #' @returns A list where each element contains the data of a single plate, and the name of each element is the plate identifier (plate name). This list format is the same as the output from txt_import()
 #' @export

@@ -15,7 +15,8 @@ utils::globalVariables(c("row", "column", "X1", "X12"))
 #' @param coerce_numeric Whether or not to force data entries to be numerical. The default is set to `FALSE`, so that data will be outputted as strings
 #' @param prefix Defaults as an empty string. A `prefix` can be added to all column names, which can be useful to join tables from distinct datasets
 #'
-#' @import dplyr roperators tidyr tidyselect
+#' @import dplyr tidyr tidyselect
+#' @importFrom roperators %ni%
 #'
 #' @returns A tidy tibble (verticalized plate data), with 1 column per plate
 #' @seealso [skanit_to_tibble()], [csv_to_tibble()], [txt_to_tibble()] that can generate the input needed

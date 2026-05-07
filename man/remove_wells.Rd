@@ -4,12 +4,14 @@
 \alias{remove_wells}
 \title{Clean a tidy table from undesired wells}
 \usage{
-remove_wells(table_to_clean, well_table)
+remove_wells(table_to_clean, well_table, show_msg = TRUE)
 }
 \arguments{
 \item{table_to_clean, well_table}{Tibbles with the same structure, respectively, as \code{\link{tidy_table}} and \code{\link{failed_wells_example}}.
 Column (dataset, plate_id, well_id) must have strictly the same name, but the order of columns does not matter.
 Rows of \code{well_table} uniquely identify wells to be removed}
+
+\item{show_msg}{Logical (default to TRUE). Whether to show the message (confirmation that it worked) or warning (that it failed).}
 }
 \value{
 A cleaned version of the input tidy_table, that should have less rows than the input table (shortened by the number of rows of \code{well_table})
