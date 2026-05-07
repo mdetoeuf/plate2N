@@ -14,6 +14,8 @@
   : Clean a tidy table from undesired wells
 - [`skanit_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/skanit_to_tibble.md)
   : Import 96-well plate data from Skanit format
+- [`suspicious_wells()`](https://mdetoeuf.github.io/plate2N/reference/suspicious_wells.md)
+  : Identifying wells for which raw absorbance is out of range
 - [`tibble_example`](https://mdetoeuf.github.io/plate2N/reference/tibble_example.md)
   : Example of a tibble format for plate data
 - [`tibble_to_list()`](https://mdetoeuf.github.io/plate2N/reference/tibble_to_list.md)

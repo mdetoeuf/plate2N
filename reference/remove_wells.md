@@ -9,7 +9,7 @@ ad-hoc function.
 ## Usage
 
 ``` r
-remove_wells(table_to_clean, well_table)
+remove_wells(table_to_clean, well_table, show_msg = TRUE)
 ```
 
 ## Arguments
@@ -23,6 +23,11 @@ remove_wells(table_to_clean, well_table)
   Column (dataset, plate_id, well_id) must have strictly the same name,
   but the order of columns does not matter. Rows of `well_table`
   uniquely identify wells to be removed
+
+- show_msg:
+
+  Logical (default to TRUE). Whether to show the message (confirmation
+  that it worked) or warning (that it failed).
 
 ## Value
 

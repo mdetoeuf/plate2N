@@ -45,7 +45,7 @@ However, its iterative use in analysis justifies the definition of an ad-hoc fun
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">remove_wells</span><span class="op">(</span><span class="va">table_to_clean</span>, <span class="va">well_table</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">remove_wells</span><span class="op">(</span><span class="va">table_to_clean</span>, <span class="va">well_table</span>, show_msg <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -56,6 +56,10 @@ However, its iterative use in analysis justifies the definition of an ad-hoc fun
 <dd><p>Tibbles with the same structure, respectively, as <code><a href="tidy_table.html">tidy_table</a></code> and <code><a href="failed_wells_example.html">failed_wells_example</a></code>.
 Column (dataset, plate_id, well_id) must have strictly the same name, but the order of columns does not matter.
 Rows of <code>well_table</code> uniquely identify wells to be removed</p></dd>
+
+
+<dt id="arg-show-msg">show_msg<a class="anchor" aria-label="anchor" href="#arg-show-msg"></a></dt>
+<dd><p>Logical (default to TRUE). Whether to show the message (confirmation that it worked) or warning (that it failed).</p></dd>
 
 </dl></div>
     <div class="section level2">
