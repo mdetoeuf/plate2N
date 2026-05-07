@@ -2,17 +2,22 @@
 
 ## Authors
 
-- **First Last**. Author, maintainer.
+- **Morgane de Toeuf**. Author, maintainer.
+  [](https://orcid.org/0009-0001-1961-8180)
 
 ## Citation
 
-Last F (2026). *plate2N: What the Package Does (One Line, Title Case)*.
-R package version 0.0.0.9000, <https://mdetoeuf.github.io/plate2N/>.
+Source:
+[`DESCRIPTION`](https://github.com/mdetoeuf/plate2N/blob/main/DESCRIPTION)
+
+de Toeuf M (2026). *plate2N: From Raw 96-well Plate Data to Dosage of
+Nitrogen Compounds*. R package version 0.0.1,
+<https://mdetoeuf.github.io/plate2N/>.
 
     @Manual{,
-      title = {plate2N: What the Package Does (One Line, Title Case)},
-      author = {First Last},
+      title = {plate2N: From Raw 96-well Plate Data to Dosage of Nitrogen Compounds},
+      author = {Morgane {de Toeuf}},
       year = {2026},
-      note = {R package version 0.0.0.9000},
+      note = {R package version 0.0.1},
       url = {https://mdetoeuf.github.io/plate2N/},
     }

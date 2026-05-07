@@ -1,4 +1,16 @@
-What the package does (one paragraph).
+First, plate2N supports in the import and tidying of raw 96-well plate
+data. Then, it provides tools to translate raw absorbance data into
+concentration in Nitrogen species (e.g., ammonium, nitrite, nitrate),
+including blanc-correction of absorbance and application of the
+regression equation for the standard curve. plate2N also helps in
+performing several quality checks, supporting the user's decision to
+remove outliers, and proposes functions to do so. Although it is
+designed to support data analysis for Nitrogen dosage using absorbance
+readings, we believe that it could be used for any dosage based on
+absorbance readings, including experiments using fluorescence, as long
+as the relation between absorbance and concentration is linear. Feel
+free to reach out to the authors to propose or discuss adaptations to
+match your analytical needs.
 
 # Package index
 
@@ -6,8 +18,14 @@ What the package does (one paragraph).
 
 - [`csv_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/csv_to_tibble.md)
   : Import 96-well plate data in csv format
+- [`failed_wells_example`](https://mdetoeuf.github.io/plate2N/reference/failed_wells_example.md)
+  : Example of failed well table
+- [`failed_wells_template()`](https://mdetoeuf.github.io/plate2N/reference/failed_wells_template.md)
+  : Generate a template to record "failed wells"
 - [`join_abs_map()`](https://mdetoeuf.github.io/plate2N/reference/join_abs_map.md)
   : Merging 2 vertical plates into one
+- [`remove_wells()`](https://mdetoeuf.github.io/plate2N/reference/remove_wells.md)
+  : Clean a tidy table from undesired wells
 - [`skanit_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/skanit_to_tibble.md)
   : Import 96-well plate data from Skanit format
 - [`tibble_example`](https://mdetoeuf.github.io/plate2N/reference/tibble_example.md)
