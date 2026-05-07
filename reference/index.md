@@ -12,10 +12,12 @@
   : Example of a tibble format for plate data
 - [`tibble_to_list()`](https://mdetoeuf.github.io/plate2N/reference/tibble_to_list.md)
   : Converts plates data from tibble to a list
+- [`tidy_table`](https://mdetoeuf.github.io/plate2N/reference/tidy_table.md)
+  : Example of Tidy table of plate data
 - [`txt_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/txt_to_tibble.md)
   : Imports 96-well plate data from .TXT format as exported from the
   plate reader
 - [`vertical_plates`](https://mdetoeuf.github.io/plate2N/reference/vertical_plates.md)
-  : Example of the tidy, verticalized plate data
+  : Example of the verticalized plate data
 - [`verticalize_plates()`](https://mdetoeuf.github.io/plate2N/reference/verticalize_plates.md)
   : Tidying plate data (verticalization)

@@ -17,8 +17,30 @@ library(plate2N)
 ```
 
 This particular vignette adresses the first steps of the pipeline:
-getting from raw data in various forms to a tidy data table that can be
-easily manipulated in downstream steps. Here, we cover two steps:
+getting from files of raw data in various forms to a tidy data table
+that can be easily manipulated in downstream steps. The final
+`tidy_table` will look something like this:
+
+``` r
+
+tidy_table
+#> # A tibble: 960 × 8
+#>    row   column well_id plate_id unique_well_id dataset map     abs   
+#>    <chr> <chr>  <chr>   <chr>    <chr>          <chr>   <chr>   <chr> 
+#>  1 A     1      A1      M12      A1_M12         expe1   Std0001 1.4402
+#>  2 A     1      A1      M16      A1_M16         expe1   Std0097 1.5789
+#>  3 A     1      A1      M17      A1_M17         expe1   Std0193 1.5611
+#>  4 A     1      A1      M18      A1_M18         expe1   Std0289 1.7013
+#>  5 A     1      A1      M19      A1_M19         expe1   Std0385 1.6865
+#>  6 A     1      A1      M20      A1_M20         expe1   Std0481 1.7936
+#>  7 A     1      A1      M21      A1_M21         expe1   Std0577 1.7925
+#>  8 A     1      A1      M22      A1_M22         expe1   Std0673 1.8274
+#>  9 A     1      A1      M23      A1_M23         expe1   Std0769 1.9330
+#> 10 A     1      A1      M1       A1_M1          expe1   Std0865 0.9254
+#> # ℹ 950 more rows
+```
+
+In this vignette, we cover three steps:
 
 **1) Data import** from various raw file formats with
 [`txt_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/txt_to_tibble.md),
@@ -54,14 +76,15 @@ tibble_example
 #> # ℹ 1 more variable: X12 <dbl>
 ```
 
-**2) Transformation** of the “tibble” into a tidy data table that is
-easily usable for downstream data transformations and analyses, with
+**2) Verticalization** of the “tibble” into a verticalized table with
 [`verticalize_plates()`](https://mdetoeuf.github.io/plate2N/reference/verticalize_plates.md).
-The tidy table presents data in a verticalized format, i.e., data from
-each plate corresponds to a single column where the name of the column
-is the plate id. The first 2 columns of those verticalized plates
-contain the well identifier, in the columns “row” (of the plate, from A
-to H), and “column” (from 1 to 12). See example hereunder
+The `vertical_plates` present data in a verticalized format, i.e., data
+from each plate is displayed in a single column where the name of the
+column is the plate id. The first 2 columns contain the well identifier,
+stored in the columns “row” (of the plate, from A to H), and “column”
+(from 1 to 12). This vertical format is a good format to select a subset
+of plates (e.g., based on experiment, treatment, or anything else that
+the user stored into column names). See example hereunder:
 
 ``` r
 
@@ -82,8 +105,15 @@ vertical_plates
 #> # ℹ 86 more rows
 ```
 
+**3) Tidying** of the verticalized plate into the `tidy_table` displayed
+at the beginning of this vignette, a format that is easily usable for
+downstream data transformations and analyses. This step is done using
+the `tidyr` package
+
 Note: If the need arises to fit this package to other plate formats than
 96-well plates, please reach out to the authors.
+
+------------------------------------------------------------------------
 
 ## 1 - Import
 
@@ -411,7 +441,7 @@ possibly with a selection of columns or rows, then using tools of the
 `dplyr` or `tidyr` packages to bring the resulting tibble into the
 required format.
 
-## 2 - Tidy table
+## 2 - Verticalized table
 
 Finally, once the `tibble` has been generated with any of the import
 options hereabove, we can proceed to the data verticalization.
@@ -589,7 +619,7 @@ either “abs” or “map”.
 
 Additional info can be found under `?join_abs_map()`.
 
-## 3 - Next steps
+## 3 - Tidy table
 
 The vertical format is practical for manual/human handling, with an
 easy-to-handle number of rows (96), and individual plates are easy to
@@ -681,13 +711,15 @@ and unique_well_id).
 #> # ℹ 950 more rows
 ```
 
+## 4 - Next steps
+
 Once the data is in this practical and tidy format, we can start data
 transformation of all sorts, see also vignettes *xxx and xxx (under
 development)* of this package. This is a good place to save the tidy
 table into an intermediary file, for example, using
 `data_tidy |> write_rds("path/to/my/output/file.rds")`.
 
-## 4 - Final note: issues when absorbance and mapping data with identical plate ids are imported from a single file.
+## 5 - Final note: issues when absorbance and mapping data with identical plate ids are imported from a single file.
 
 Usually, a physical plate that is used in the lab will come with 2 or
 more data tables in plate format. Indeed, the measure of absorbance of a
