@@ -1,8 +1,8 @@
 utils::globalVariables(c("map", "abs", "dataset", "plate_id", "well_id"))
 
-#' Identifying wells for which raw absorbance is out of range
+#' Quality Check (QC) of raw absorbance data
 #'
-#' `suspicious_wells()` extracts data relating to wells for which the absorbance is outside of a user-defined range.
+#' `qc_raw_abs()` extracts data relating to wells for which the absorbance is outside of a user-defined range.
 #' Whereas there is a long-lasting tradition of setting "acceptable" absorbance values between 0.1 and 1 (default values for this function),
 #' in reality, the acceptable range will depend on experiment, usage and quality of the spectrophotomer.
 #' Note that values lower than 0.1 are not rare, especially for blank and lower values in the standard curve.
@@ -36,8 +36,8 @@ utils::globalVariables(c("map", "abs", "dataset", "plate_id", "well_id"))
 #' data <- tidy_table
 #' data$abs[1] <- NA
 #' data$map[2] <- "empty"
-#' suspicious_wells(data)
-suspicious_wells <- function(
+#' qc_raw_abs(data)
+qc_raw_abs <- function(
     data, # data = tidy_table
     min_abs = 0.1,
     max_abs = 1,
