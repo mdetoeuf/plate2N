@@ -8,7 +8,7 @@ a plate to be deemed "suspicious" is defined by max_coeff
 
 ``` r
 qc_raw_extr(
-  data = NULL,
+  data,
   max_coeff = 5,
   suppress_message = FALSE,
   suppress_warning = FALSE

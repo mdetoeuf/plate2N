@@ -1,6 +1,6 @@
-# Review suspicious extractant values and spot outliers
+# Extract suspicious extractant wells
 
-Review suspicious extractant values and spot outliers
+Extract suspicious extractant wells
 
 ## Usage
 
@@ -27,21 +27,19 @@ suspicious_extr(data, suspicious_plate_id = NULL, max_coeff = 5)
 
 ## Value
 
-A list with 2 elements. `$suspicious_extractant`, a subset of `data`
-containing only plates where raw extractant values should be reviewed
-`$multiple_plot`, a collection of distributions of those raw absorbance
-values, to help spotting outlier wells
+A subset of `data` containing only plates where raw extractant values
+should be reviewed
 
 ## Examples
 
 ``` r
 data <- tidy_plates
 # 0.5 is unreasonable in most uses, but is used here to ensure some output
-suspicious_extr <- suspicious_extr(data, max_coeff = 0.5)
-#> Warning: There is a big variation in absorbance values for the blanc (more than 0.5%).
-#>         Remove the most unlikely values / remove outliers manually.
-#>         Suspicious plate ID's are returned
-suspicious_extr$suspicious_extractant
+suspicious_plate_id <- qc_raw_extr(data, max_coeff = 0.5,
+    suppress_message = TRUE, suppress_warning = TRUE)
+suspicious_extr <- suspicious_extr(data, max_coeff = 0.5,
+    suspicious_plate_id = suspicious_plate_id)
+suspicious_extr
 #> # A tibble: 40 × 8
 #> # Groups:   plate_id, map [5]
 #>    row   column well_id unique_well_id dataset plate_id map     abs
@@ -57,11 +55,4 @@ suspicious_extr$suspicious_extractant
 #>  9 A     8      A8      A8_NO3_1F2     Nmin    NO3_1F2  extr  0.083
 #> 10 B     8      B8      B8_NO3_1F2     Nmin    NO3_1F2  extr  0.082
 #> # ℹ 30 more rows
-suspicious_extr$multiple_plot
-#> `stat_bin()` using `bins = 30`. Pick better value `binwidth`.
-#> `stat_bin()` using `bins = 30`. Pick better value `binwidth`.
-#> `stat_bin()` using `bins = 30`. Pick better value `binwidth`.
-#> `stat_bin()` using `bins = 30`. Pick better value `binwidth`.
-#> `stat_bin()` using `bins = 30`. Pick better value `binwidth`.
-
 ```

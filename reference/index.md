@@ -2,6 +2,9 @@
 
 ## All functions
 
+- [`boxplot_outlier_extr()`](https://mdetoeuf.github.io/plate2N/reference/boxplot_outlier_extr.md)
+  : Identify outlier-wells within plates containing suspicious
+  extractant data
 - [`correct_std_blank()`](https://mdetoeuf.github.io/plate2N/reference/correct_std_blank.md)
   : Replaces raw absorbance data from standard curves by blank-corrected
   absorbance values.
@@ -28,6 +31,9 @@
   : Merging 2 vertical plates into one
 - [`metadata`](https://mdetoeuf.github.io/plate2N/reference/metadata.md)
   : Example of plate metadata
+- [`multiplot_outlier_extr()`](https://mdetoeuf.github.io/plate2N/reference/multiplot_outlier_extr.md)
+  : Multiple distribution plot to review suspicious extractant values
+  and spot outliers
 - [`plot_blank_var_distrib()`](https://mdetoeuf.github.io/plate2N/reference/plot_blank_var_distrib.md)
   : Plot dataset-wide distribution of withing-plate variation for
   extractant data
@@ -42,7 +48,7 @@
 - [`skanit_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/skanit_to_tibble.md)
   : Import 96-well plate data from Skanit format
 - [`suspicious_extr()`](https://mdetoeuf.github.io/plate2N/reference/suspicious_extr.md)
-  : Review suspicious extractant values and spot outliers
+  : Extract suspicious extractant wells
 - [`tibble_example`](https://mdetoeuf.github.io/plate2N/reference/tibble_example.md)
   : Example of a tibble format for plate data
 - [`tibble_to_list()`](https://mdetoeuf.github.io/plate2N/reference/tibble_to_list.md)
