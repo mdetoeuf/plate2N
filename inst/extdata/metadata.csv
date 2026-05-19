@@ -1,0 +1,6 @@
+﻿plate_id,date,time,sampling_time,std_column,std_sp,std_unit,std_prep,std_conc,sample_dilution,extractant_column,extractant_sp,extractant_unit,extractant_conc,empty_column,wait_min
+NO3_1F1,,,t1,1-12,NO3,mg NO3- L-1,H2O,0-0.5-1-2-4-8-16-24,1x,,K2SO4,M,0.5,,30 min
+NO3_1F2,,,t1,1-12,NO3,mg NO3- L-1,H2O,0-0.5-1-2-4-8-16-24,1x,,K2SO4,M,0.5,,30 min
+NO3_1F3,,,t1,1-12,NO3,mg NO3- L-1,H2O,0-0.5-1-2-4-8-16-24,1x,,K2SO4,M,0.5,,30 min
+NO3_1F4,,,t1,1-12,NO3,mg NO3- L-1,H2O,0-0.5-1-2-4-8-16-24,1x,,K2SO4,M,0.5,,30 min
+NO3_1F5,,,t1,1-12,NO3,mg NO3- L-1,H2O,0-0.5-1-2-4-8-16-24,1x,,K2SO4,M,0.5,,30 min
