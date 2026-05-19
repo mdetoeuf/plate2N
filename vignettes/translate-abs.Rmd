@@ -37,3 +37,5 @@ library(plate2N)
 ## qc_raw_extr()
 
 ## suspicious_extr()
+
+## plot extractant outliers with boxplot_outlier_extr() or multiplot_outlier_extr()

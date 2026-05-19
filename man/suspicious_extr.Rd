@@ -2,7 +2,7 @@
 % Please edit documentation in R/qc_raw_extr.R
 \name{suspicious_extr}
 \alias{suspicious_extr}
-\title{Review suspicious extractant values and spot outliers}
+\title{Extract suspicious extractant wells}
 \usage{
 suspicious_extr(data, suspicious_plate_id = NULL, max_coeff = 5)
 }
@@ -16,20 +16,18 @@ the coefficient of variation for extractant raw absorbance is above this thresho
 will be considered "suspicious plates"}
 }
 \value{
-A list with 2 elements.
-\verb{$suspicious_extractant}, a subset of \code{data} containing only plates where
+A subset of \code{data} containing only plates where
 raw extractant values should be reviewed
-\verb{$multiple_plot}, a collection of distributions of those raw absorbance values,
-to help spotting outlier wells
 }
 \description{
-Review suspicious extractant values and spot outliers
+Extract suspicious extractant wells
 }
 \examples{
 data <- tidy_plates
 # 0.5 is unreasonable in most uses, but is used here to ensure some output
-suspicious_extr <- suspicious_extr(data, max_coeff = 0.5)
-suspicious_extr$suspicious_extractant
-suspicious_extr$multiple_plot
-
+suspicious_plate_id <- qc_raw_extr(data, max_coeff = 0.5,
+    suppress_message = TRUE, suppress_warning = TRUE)
+suspicious_extr <- suspicious_extr(data, max_coeff = 0.5,
+    suspicious_plate_id = suspicious_plate_id)
+suspicious_extr
 }

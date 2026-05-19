@@ -1,6 +1,6 @@
 Package: plate2N
 Title: Simplified Pipeline from Raw 96-well Plate Data to Dosage of Chemical Compounds
-Version: 0.0.1
+Version: 0.0.2
 Description: A pipeline that imports and tidies raw
     96-well plate data, then translates raw
     absorbance data into concentrations of Nitrogen species (e.g.,
@@ -22,7 +22,9 @@ Depends:
     R (>= 3.5)
 Imports:
     dplyr,
+    forcats,
     ggplot2,
+    ggrepel,
     janitor,
     magrittr,
     patchwork,

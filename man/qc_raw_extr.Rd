@@ -5,7 +5,7 @@
 \title{Quality check of raw absorbance data for extractant wells}
 \usage{
 qc_raw_extr(
-  data = NULL,
+  data,
   max_coeff = 5,
   suppress_message = FALSE,
   suppress_warning = FALSE
