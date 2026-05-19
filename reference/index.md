@@ -7,21 +7,42 @@
   absorbance values.
 - [`csv_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/csv_to_tibble.md)
   : Import 96-well plate data in csv format
+- [`extract_curve()`](https://mdetoeuf.github.io/plate2N/reference/extract_curve.md)
+  : Get concentration of standard curve from metadata
+- [`extract_extractant()`](https://mdetoeuf.github.io/plate2N/reference/extract_extractant.md)
+  : Extracting "extractant" data (blank for samples) from plate tidy
+  table
 - [`extract_std_blanc()`](https://mdetoeuf.github.io/plate2N/reference/extract_std_blanc.md)
   : Extraction and Quality Check (QC) of blank values for standard
   curves
+- [`extract_std_data()`](https://mdetoeuf.github.io/plate2N/reference/extract_std_data.md)
+  : Keeps only wells corresponding to standard curves
+- [`extractant_average()`](https://mdetoeuf.github.io/plate2N/reference/extractant_average.md)
+  : Computing the per-plate average for raw absorbance of the extractant
+  (blank for samples)
 - [`failed_wells_example`](https://mdetoeuf.github.io/plate2N/reference/failed_wells_example.md)
   : Example of failed well table
 - [`failed_wells_template()`](https://mdetoeuf.github.io/plate2N/reference/failed_wells_template.md)
   : Generate a template to record "failed wells"
 - [`join_abs_map()`](https://mdetoeuf.github.io/plate2N/reference/join_abs_map.md)
   : Merging 2 vertical plates into one
+- [`metadata`](https://mdetoeuf.github.io/plate2N/reference/metadata.md)
+  : Example of plate metadata
+- [`plot_blank_var_distrib()`](https://mdetoeuf.github.io/plate2N/reference/plot_blank_var_distrib.md)
+  : Plot dataset-wide distribution of withing-plate variation for
+  extractant data
+- [`plot_std()`](https://mdetoeuf.github.io/plate2N/reference/plot_std.md)
+  : Display one or more standard curve(s)
 - [`qc_raw_abs()`](https://mdetoeuf.github.io/plate2N/reference/qc_raw_abs.md)
   : Quality Check (QC) of raw absorbance data
+- [`qc_raw_extr()`](https://mdetoeuf.github.io/plate2N/reference/qc_raw_extr.md)
+  : Quality check of raw absorbance data for extractant wells
 - [`remove_wells()`](https://mdetoeuf.github.io/plate2N/reference/remove_wells.md)
   : Clean a tidy table from undesired wells
 - [`skanit_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/skanit_to_tibble.md)
   : Import 96-well plate data from Skanit format
+- [`suspicious_extr()`](https://mdetoeuf.github.io/plate2N/reference/suspicious_extr.md)
+  : Review suspicious extractant values and spot outliers
 - [`tibble_example`](https://mdetoeuf.github.io/plate2N/reference/tibble_example.md)
   : Example of a tibble format for plate data
 - [`tibble_to_list()`](https://mdetoeuf.github.io/plate2N/reference/tibble_to_list.md)

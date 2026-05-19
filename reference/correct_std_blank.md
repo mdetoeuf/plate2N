@@ -10,7 +10,9 @@ correct_std_blank(
   data,
   std_def = "Std",
   pipetting_direction = "top_down",
-  std_blanc = NULL
+  std_blank_average = NULL,
+  std_blank_trusted = NULL,
+  std_blank = NULL
 )
 ```
 
@@ -37,15 +39,24 @@ correct_std_blank(
   highest value in row H. Conversely, bottom_up pipetting would have the
   blank in row H and the most concentrated solution in row A
 
-- std_blanc:
+- std_blank_average:
 
-  If NULL (default), std_blanc will be computed within the function
-  call. Otherwise, `std_blanc` should be a tibble in the same format as
-  `extract_std_blanc(data)$all`. Changing the default value of
-  `std_blanc` may be relevant if the previous call to
+  If NULL (default), it will be computed from `std_blank_trusted`.
+  Otherwise, `std_blank_average` should be a tibble in the same format
+  as `extract_std_blanc(data)$average` Changing the default value of
+  `std_blanc_average` may be relevant if the previous call to
   [`extract_std_blanc()`](https://mdetoeuf.github.io/plate2N/reference/extract_std_blanc.md)
   has led the user to correct "trusted" blancs in any way (see
   `?extract_std_blanc()` for more details)
+
+- std_blank_trusted:
+
+  If NULL (default), it will be extracted from `std_blank`
+
+- std_blank:
+
+  If NULL (default), it will be extracted/computed from `data`, using
+  [`extract_std_blanc()`](https://mdetoeuf.github.io/plate2N/reference/extract_std_blanc.md).
 
 ## Value
 
