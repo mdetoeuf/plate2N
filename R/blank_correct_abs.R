@@ -46,7 +46,10 @@ blank_correct_abs <- function(
   # Reformat blank_avg_data
   if ("map" %in% names(per_plate_avg_blank)) {
     blank_avg_data <- per_plate_avg_blank |> dplyr::select(!map)
+  } else {
+    blank_avg_data <- per_plate_avg_blank
   }
+
 
   # blank correction
   corrected_data <-

@@ -21,6 +21,7 @@ BugReports: https://github.com/mdetoeuf/plate2N/issues
 Depends: 
     R (>= 3.5)
 Imports:
+    car,
     dplyr,
     forcats,
     ggplot2,
