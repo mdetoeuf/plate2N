@@ -247,7 +247,7 @@ boxplot_outlier_extr <- function(
     #facet_wrap(~dataset, scales = "free", nrow = n_row_panels) +
     ggplot2::ylab("Plate id") + ggplot2::xlab("raw absorbance of extractant wells") +
     ggplot2::labs(title = "Identifying outliers for extractant wells",
-         subtitle = paste0("Only plates with outliers are displayed here\n(coefficient of variation of absorbance > ", max_coeff, ")")) #+
+         subtitle = paste0("Only plates with outliers are displayed here\n(coefficient of variation of absorbance > ", max_coeff, "%)")) #+
   #coord_flip()
 
   return(boxplot)
