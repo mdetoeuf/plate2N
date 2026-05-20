@@ -55,6 +55,8 @@ needs.
 - [`plot_blank_var_distrib()`](https://mdetoeuf.github.io/plate2N/reference/plot_blank_var_distrib.md)
   : Plot dataset-wide distribution of withing-plate variation for
   extractant data
+- [`plot_list_lm()`](https://mdetoeuf.github.io/plate2N/reference/plot_list_lm.md)
+  : Compute a list of plots, one per standard curve
 - [`plot_std()`](https://mdetoeuf.github.io/plate2N/reference/plot_std.md)
   : Display one or more standard curve(s)
 - [`qc_raw_abs()`](https://mdetoeuf.github.io/plate2N/reference/qc_raw_abs.md)
