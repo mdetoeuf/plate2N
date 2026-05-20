@@ -16,6 +16,8 @@ needs.
 
 ## All functions
 
+- [`blank_correct_abs()`](https://mdetoeuf.github.io/plate2N/reference/blank_correct_abs.md)
+  : Transform Raw Absorbance Data into Blank-corrected Absorbance
 - [`boxplot_outlier_extr()`](https://mdetoeuf.github.io/plate2N/reference/boxplot_outlier_extr.md)
   : Identify outlier-wells within plates containing suspicious
   extractant data
@@ -43,6 +45,8 @@ needs.
   : Generate a template to record "failed wells"
 - [`join_abs_map()`](https://mdetoeuf.github.io/plate2N/reference/join_abs_map.md)
   : Merging 2 vertical plates into one
+- [`lm_std_curve()`](https://mdetoeuf.github.io/plate2N/reference/lm_std_curve.md)
+  : Perform Linear Model for Standard Curve
 - [`metadata`](https://mdetoeuf.github.io/plate2N/reference/metadata.md)
   : Example of plate metadata
 - [`multiplot_outlier_extr()`](https://mdetoeuf.github.io/plate2N/reference/multiplot_outlier_extr.md)
@@ -61,6 +65,8 @@ needs.
   : Clean a tidy table from undesired wells
 - [`skanit_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/skanit_to_tibble.md)
   : Import 96-well plate data from Skanit format
+- [`std_corrected`](https://mdetoeuf.github.io/plate2N/reference/std_corrected.md)
+  : Example of Blank-corrected Data for Standard Curve
 - [`suspicious_extr()`](https://mdetoeuf.github.io/plate2N/reference/suspicious_extr.md)
   : Extract suspicious extractant wells
 - [`tibble_example`](https://mdetoeuf.github.io/plate2N/reference/tibble_example.md)

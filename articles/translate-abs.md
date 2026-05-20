@@ -17,7 +17,9 @@ library(plate2N)
 
 ### extract_std_blanc() (& extract_std_data()?)
 
-### correct_std_blank()
+### blank_correct_abs()
+
+### OUT? correct_std_blank()
 
 ### plot_blank_var_distrib() (& extractant_average()?)
 
@@ -26,3 +28,5 @@ library(plate2N)
 ### suspicious_extr()
 
 ### plot extractant outliers with boxplot_outlier_extr() or multiplot_outlier_extr()
+
+### lm_std_curve()
