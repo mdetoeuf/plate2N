@@ -20,8 +20,10 @@
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/failed_wells_template.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/index.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/join_abs_map.html</loc></url>
+<url><loc>https://mdetoeuf.github.io/plate2N/reference/lm_output.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/lm_std_curve.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/metadata.html</loc></url>
+<url><loc>https://mdetoeuf.github.io/plate2N/reference/molar_masses.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/multiplot_outlier_extr.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/plot_blank_var_distrib.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/plot_list_lm.html</loc></url>
@@ -32,6 +34,7 @@
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/skanit_to_tibble.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/std_corrected.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/suspicious_extr.html</loc></url>
+<url><loc>https://mdetoeuf.github.io/plate2N/reference/suspicious_lm.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/tibble_example.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/tibble_to_list.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/tidy_plates.html</loc></url>

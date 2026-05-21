@@ -29,4 +29,4 @@ library(plate2N)
 
 ### plot extractant outliers with boxplot_outlier_extr() or multiplot_outlier_extr()
 
-### lm_std_curve() & lm_std_curve()
+### lm_std_curve(), suspicious_lm() & plot_list_lm()

@@ -31,10 +31,14 @@
   : Generate a template to record "failed wells"
 - [`join_abs_map()`](https://mdetoeuf.github.io/plate2N/reference/join_abs_map.md)
   : Merging 2 vertical plates into one
+- [`lm_output`](https://mdetoeuf.github.io/plate2N/reference/lm_output.md)
+  : Example of Outputs from the Linear Model of the Standard Curves
 - [`lm_std_curve()`](https://mdetoeuf.github.io/plate2N/reference/lm_std_curve.md)
   : Perform Linear Model for Standard Curve
 - [`metadata`](https://mdetoeuf.github.io/plate2N/reference/metadata.md)
   : Example of plate metadata
+- [`molar_masses`](https://mdetoeuf.github.io/plate2N/reference/molar_masses.md)
+  : Record of molar masses for studied compounds
 - [`multiplot_outlier_extr()`](https://mdetoeuf.github.io/plate2N/reference/multiplot_outlier_extr.md)
   : Multiple distribution plot to review suspicious extractant values
   and spot outliers
@@ -57,6 +61,9 @@
   : Example of Blank-corrected Data for Standard Curve
 - [`suspicious_extr()`](https://mdetoeuf.github.io/plate2N/reference/suspicious_extr.md)
   : Extract suspicious extractant wells
+- [`suspicious_lm()`](https://mdetoeuf.github.io/plate2N/reference/suspicious_lm.md)
+  : Extract Suspicious Rows from Linear Model Data (non-significance,
+  Non-normality, heteroscedasticity)
 - [`tibble_example`](https://mdetoeuf.github.io/plate2N/reference/tibble_example.md)
   : Example of a tibble format for plate data
 - [`tibble_to_list()`](https://mdetoeuf.github.io/plate2N/reference/tibble_to_list.md)
