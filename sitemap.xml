@@ -7,8 +7,10 @@
 <url><loc>https://mdetoeuf.github.io/plate2N/articles/translate-abs.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/authors.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/index.html</loc></url>
+<url><loc>https://mdetoeuf.github.io/plate2N/reference/abs_corrected.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/blank_correct_abs.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/boxplot_outlier_extr.html</loc></url>
+<url><loc>https://mdetoeuf.github.io/plate2N/reference/convert_molec.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/correct_std_blank.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/csv_to_tibble.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/extract_curve.html</loc></url>
@@ -30,6 +32,7 @@
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/plot_std.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/qc_raw_abs.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/qc_raw_extr.html</loc></url>
+<url><loc>https://mdetoeuf.github.io/plate2N/reference/reg_join_abs.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/remove_wells.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/skanit_to_tibble.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/std_corrected.html</loc></url>

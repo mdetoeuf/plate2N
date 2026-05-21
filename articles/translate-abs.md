@@ -7,7 +7,7 @@ library(plate2N)
 
 ## **TO DO**
 
-### introduce example data (tidy_plates, tidy_table, failed_wells_example)
+### introduce example data (tidy_plates, tidy_table, failed_wells_example, lm_outputs, molar_masses)
 
 ### failed_wells_template()
 
@@ -30,3 +30,5 @@ library(plate2N)
 ### plot extractant outliers with boxplot_outlier_extr() or multiplot_outlier_extr()
 
 ### lm_std_curve(), suspicious_lm() & plot_list_lm()
+
+### convert_molec()

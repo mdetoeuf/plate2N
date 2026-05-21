@@ -16,11 +16,15 @@ needs.
 
 ## All functions
 
+- [`abs_corrected`](https://mdetoeuf.github.io/plate2N/reference/abs_corrected.md)
+  : Example of Blank-corrected Absorbance Data (samples)
 - [`blank_correct_abs()`](https://mdetoeuf.github.io/plate2N/reference/blank_correct_abs.md)
   : Transform Raw Absorbance Data into Blank-corrected Absorbance
 - [`boxplot_outlier_extr()`](https://mdetoeuf.github.io/plate2N/reference/boxplot_outlier_extr.md)
   : Identify outlier-wells within plates containing suspicious
   extractant data
+- [`convert_molec()`](https://mdetoeuf.github.io/plate2N/reference/convert_molec.md)
+  : Converts Concentrations From Compound Weight to Target Weight
 - [`correct_std_blank()`](https://mdetoeuf.github.io/plate2N/reference/correct_std_blank.md)
   : Replaces raw absorbance data from standard curves by blank-corrected
   absorbance values.
@@ -67,6 +71,9 @@ needs.
   : Quality Check (QC) of raw absorbance data
 - [`qc_raw_extr()`](https://mdetoeuf.github.io/plate2N/reference/qc_raw_extr.md)
   : Quality check of raw absorbance data for extractant wells
+- [`reg_join_abs()`](https://mdetoeuf.github.io/plate2N/reference/reg_join_abs.md)
+  : Merge Data from Regression Equation on Standard Curve with
+  Absorbance Data (samples)
 - [`remove_wells()`](https://mdetoeuf.github.io/plate2N/reference/remove_wells.md)
   : Clean a tidy table from undesired wells
 - [`skanit_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/skanit_to_tibble.md)
