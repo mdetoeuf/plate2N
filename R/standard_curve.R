@@ -272,7 +272,7 @@ plot_std <- function(
     ggplot2::theme_minimal() +
     ggplot2::ylab("Absorbance") +
     ggplot2::xlab(paste0("Concentration of Standard Curve")) +
-    ggplot2::geom_smooth(method = "lm", formula = y ~ x, alpha = 0.5, aes(colour = column)) +
+    ggplot2::geom_smooth(method = "lm", formula = y ~ x - 1, alpha = 0.5, aes(colour = column)) +
     #geom_line()
     ggplot2::geom_point(aes(colour = column)) +
    # ggplot2::geom_line(ggplot2::aes(colour = column)) +

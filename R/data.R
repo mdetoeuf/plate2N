@@ -139,3 +139,39 @@
 #'
 "std_corrected"
 
+#' Example of Outputs from the Linear Model of the Standard Curves
+#'
+#'
+#' @format
+#' List containing 3 elements, computed with `lm_std_curve()`, `suspicious_lm()`
+#'     and `plot_list_lm()`.
+#'
+#' \describe{
+#'  \item{lm_data}{Tibble, 1 row per curve, serves as summary for the linear model}
+#'  \item{suspicious_lm}{Subset of `lm_data`, keeping only "problematic" curves,
+#'      i.e., either with p-value > 0.5, or with non-normality or
+#'      heteroscedasticity of residuals}
+#'  \item{plot_list_suspicious}{A list of ggplots displaying those problematic curves
+#'      (only one plot in this data set)}
+##' }
+#'
+"lm_output"
+
+
+#' Record of molar masses for studied compounds
+#'
+#' Originally, it contains molar masses of N, NO3-, NO2-, NH4+, but it can easily
+#'     be appended with additional molar masses for other relevant applications
+#'
+#' @format
+#' A vector of named numerics containing relevant molar masses.
+#'
+#' \describe{
+#'  \item{N}{molar mass of elemental nitrogen in g/mol (not N2)}
+#'  \item{NO3}{molar mass of nitrate in g/mol}
+#'  \item{NO2}{molar mass of nitrite in g/mol}
+#'  \item{NH4}{molar mass of ammonium in g/mol}
+##' }
+#'
+"molar_masses"
+

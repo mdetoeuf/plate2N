@@ -14,7 +14,9 @@ on your data before calling the function). Must contain columns \code{std_conc},
 \value{
 A table containing relevant parameters of the linear model, with
 - 1 row per "group" (e.g., plate * column, which is relevant to spot outliers).
-- columns
+- columns: \code{unique_curve_id}, \code{slope}, \code{r_squared}, \code{adj_r_squared}, \code{lm_p},
+\code{normality_lm_residuals}, \code{shapiro_p}, \code{homoscedasticity_lm_residuals},
+\code{breusch_pagan_p}, \code{outlier_rstudent}
 }
 \description{
 The linear model is based on the function \code{lm()} and fits the curve to go through
