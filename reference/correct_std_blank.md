@@ -1,7 +1,7 @@
 # Replaces raw absorbance data from standard curves by blank-corrected absorbance values.
 
 `correct_std_blank()` relies on
-[`extract_std_blanc()`](https://mdetoeuf.github.io/plate2N/reference/extract_std_blanc.md).
+[`extract_std_blank()`](https://mdetoeuf.github.io/plate2N/reference/extract_std_blank.md).
 
 ## Usage
 
@@ -43,11 +43,11 @@ correct_std_blank(
 
   If NULL (default), it will be computed from `std_blank_trusted`.
   Otherwise, `std_blank_average` should be a tibble in the same format
-  as `extract_std_blanc(data)$average` Changing the default value of
-  `std_blanc_average` may be relevant if the previous call to
-  [`extract_std_blanc()`](https://mdetoeuf.github.io/plate2N/reference/extract_std_blanc.md)
-  has led the user to correct "trusted" blancs in any way (see
-  `?extract_std_blanc()` for more details)
+  as `extract_std_blank(data)$average` Changing the default value of
+  `std_blank_average` may be relevant if the previous call to
+  [`extract_std_blank()`](https://mdetoeuf.github.io/plate2N/reference/extract_std_blank.md)
+  has led the user to correct "trusted" blanks in any way (see
+  `?extract_std_blank()` for more details)
 
 - std_blank_trusted:
 
@@ -56,7 +56,7 @@ correct_std_blank(
 - std_blank:
 
   If NULL (default), it will be extracted/computed from `data`, using
-  [`extract_std_blanc()`](https://mdetoeuf.github.io/plate2N/reference/extract_std_blanc.md).
+  [`extract_std_blank()`](https://mdetoeuf.github.io/plate2N/reference/extract_std_blank.md).
 
 ## Value
 
@@ -69,7 +69,7 @@ this output table
 
 ## See also
 
-[`extract_std_blanc()`](https://mdetoeuf.github.io/plate2N/reference/extract_std_blanc.md)
+[`extract_std_blank()`](https://mdetoeuf.github.io/plate2N/reference/extract_std_blank.md)
 
 ## Examples
 

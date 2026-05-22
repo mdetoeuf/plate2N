@@ -48,7 +48,7 @@ ID's of suspicious plates. (+ a message or warning if not suppressed)
 data <- tidy_plates
 extractant_average <- tidy_plates |> extractant_average()
 suspicious_plate_id <- qc_raw_extr(data, max_coeff = 0.5)
-#> Warning: There is a big variation in absorbance values for the blanc (more than 0.5%).
+#> Warning: There is a big variation in absorbance values for the blank (more than 0.5%).
 #>         Remove the most unlikely values / remove outliers manually.
 #>         Suspicious plate ID's are returned
 ```

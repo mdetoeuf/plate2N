@@ -35,7 +35,7 @@ needs.
 - [`extract_extractant()`](https://mdetoeuf.github.io/plate2N/reference/extract_extractant.md)
   : Extracting "extractant" data (blank for samples) from plate tidy
   table
-- [`extract_std_blanc()`](https://mdetoeuf.github.io/plate2N/reference/extract_std_blanc.md)
+- [`extract_std_blank()`](https://mdetoeuf.github.io/plate2N/reference/extract_std_blank.md)
   : Extraction and Quality Check (QC) of blank values for standard
   curves
 - [`extract_std_data()`](https://mdetoeuf.github.io/plate2N/reference/extract_std_data.md)

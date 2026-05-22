@@ -82,7 +82,9 @@
 </div>
 <section class="section level2"><h2 id="to-do">TO DO<a class="anchor" aria-label="anchor" href="#to-do"></a>
 </h2>
-</section><section class="section level2"><h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
+<ul>
+<li>Make sure there is a “bad” curve in the example dataset (with blank with higher absorbance than row B)</li>
+</ul></section><section class="section level2"><h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
 <p>This vignette shows the basic functions that allow the correction of raw absorbance data (<code>abs</code>) to blank-corrected absorbance data, referred to as <code>abs_corrected</code> throughout this package.</p>
 <p>This pipeline is adapted to the case where the standard curve solutions were prepared with a different blank than the samples. Because of that, there are 2 parallel pipelines to perform the blank-correction, then data from standard curves and from samples are merged again.</p>
@@ -199,7 +201,7 @@
 </div>
 </section><section class="level2"><h3 id="compute-per-plate-average-of-std_blank">2.3 - Compute per-plate average of std_blank<a class="anchor" aria-label="anchor" href="#compute-per-plate-average-of-std_blank"></a>
 </h3>
-<p><code><a href="../reference/extract_std_blanc.html">extract_std_blanc()</a></code> returns a list with several elements concerning standard blanks</p>
+<p><code>extract_std_blanc()</code> returns a list with several elements concerning standard blanks</p>
 <ul>
 <li><p><code>std_blank$all</code> fetches all wells that are expected to contain the standard blank (all standard data from plate-row A (<code>pipetting_direction = "top_down"</code>) or H (<code>pipetting_direction = "bottom_up"</code>)</p></li>
 <li><p><code>std_blank$untrusted</code> identifies expected blank wells that do not correspond to the lowest absorbance value of their standard curve<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;This quality check was added because, in case of top_down pipetting, A1 often will contain the standard blank, but it is also often the first well to be filled during pipetting. With automated pipettes, a small ejection of liquid has to occur before dispensing the first dose of solution. Failure to intentionally eject will result in the first well receiving the “ejection” dose, which is not the correct volume. This can end up in various responses in terms of absorbance, depending on which reagent has been wrongly pipetted.&lt;/p&gt;"><sup>1</sup></a>. This item and may be empty</p></li>
@@ -209,9 +211,10 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">std_blank</span> <span class="op">&lt;-</span> <span class="va">std_data</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu"><a href="../reference/extract_std_blanc.html">extract_std_blanc</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="../reference/extract_std_blank.html">extract_std_blank</a></span><span class="op">(</span></span>
 <span>    std_def <span class="op">=</span> <span class="st">"Std"</span>,</span>
 <span>    pipetting_direction <span class="op">=</span> <span class="st">"top_down"</span><span class="op">)</span></span>
+<span></span>
 <span><span class="va">std_blank</span><span class="op">$</span><span class="va">all</span></span>
 <span><span class="co">#&gt; # A tibble: 10 × 8</span></span>
 <span><span class="co">#&gt; # Groups:   dataset, plate_id, column [10]</span></span>
@@ -227,15 +230,17 @@
 <span><span class="co">#&gt;  8 A12     Nmin    NO3_1F3  A     12     A12_NO3_1F3    NO3_1F3_col12   0.09 </span></span>
 <span><span class="co">#&gt;  9 A12     Nmin    NO3_1F4  A     12     A12_NO3_1F4    NO3_1F4_col12   0.091</span></span>
 <span><span class="co">#&gt; 10 A12     Nmin    NO3_1F5  A     12     A12_NO3_1F5    NO3_1F5_col12   0.09</span></span>
+<span></span>
 <span><span class="va">std_blank</span><span class="op">$</span><span class="va">average</span></span>
 <span><span class="co">#&gt; # A tibble: 5 × 5</span></span>
-<span><span class="co">#&gt;   dataset plate_id blanc_avg blanc_sdev blanc_coeff_var_percent</span></span>
+<span><span class="co">#&gt;   dataset plate_id blank_avg blank_sdev blank_coeff_var_percent</span></span>
 <span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;        &lt;dbl&gt;      &lt;dbl&gt;                   &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt; 1 Nmin    NO3_1F1     0.0915   0.000707                   0.773</span></span>
 <span><span class="co">#&gt; 2 Nmin    NO3_1F2     0.0905   0.000707                   0.781</span></span>
 <span><span class="co">#&gt; 3 Nmin    NO3_1F3     0.0915   0.00212                    2.32 </span></span>
 <span><span class="co">#&gt; 4 Nmin    NO3_1F4     0.0915   0.000707                   0.773</span></span>
 <span><span class="co">#&gt; 5 Nmin    NO3_1F5     0.091    0.00141                    1.55</span></span>
+<span></span>
 <span><span class="va">std_blank</span><span class="op">$</span><span class="va">untrusted</span> ; <span class="va">std_blank</span><span class="op">$</span><span class="va">trusted</span></span>
 <span><span class="co">#&gt; # A tibble: 0 × 8</span></span>
 <span><span class="co">#&gt; # Groups:   dataset, plate_id, column [0]</span></span>
@@ -255,23 +260,117 @@
 <span><span class="co">#&gt;  9 A12     Nmin    NO3_1F4  A     12     A12_NO3_1F4    NO3_1F4_col12   0.091</span></span>
 <span><span class="co">#&gt; 10 A12     Nmin    NO3_1F5  A     12     A12_NO3_1F5    NO3_1F5_col12   0.09</span></span></code></pre></div>
 </div>
+</section><section class="level2"><h3 id="quality-check-of-std_blank-outlier-removal">2.4 - Quality check of std_blank &amp; outlier removal<a class="anchor" aria-label="anchor" href="#quality-check-of-std_blank-outlier-removal"></a>
+</h3>
 <div>
 <blockquote>
 <p><strong>Check out untrusted standard blanks</strong></p>
 <p>The computation of <code>std_blank$average</code> is made on trusted blank wells only. It is therefore important to check curves containing “untrusted” blank wells and decide whether to keep them or not</p>
 </blockquote>
 </div>
-</section><section class="level2"><h3 id="quality-check-of-std_blank-outlier-removal">2.4 - Quality check of std_blank &amp; outlier removal<a class="anchor" aria-label="anchor" href="#quality-check-of-std_blank-outlier-removal"></a>
-</h3>
+<p>The function <code><a href="../reference/plot_std.html">plot_std()</a></code> allows the visualization of a subset of curves. Because there is no untrusted blank for now (<strong>Make sure there is a “bad” curve in the example dataset</strong>), we artificially take a subset of <code>std_blank$all</code> just for the purpose of demonstrating the plots.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Subset: create an artificial std_data</span></span>
+<span><span class="va">artificial_std</span> <span class="op">&lt;-</span> <span class="va">std_data</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span></span>
+<span>    <span class="va">unique_curve_id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">std_blank</span><span class="op">$</span><span class="va">all</span><span class="op">$</span><span class="va">unique_curve_id</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span><span class="op">)</span> </span>
+<span></span>
+<span><span class="co"># look at (fake) "suspicious" curves</span></span>
+<span><span class="va">artificial_std</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="../reference/plot_std.html">plot_std</a></span><span class="op">(</span>through_origin <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">plate_id</span>, scales <span class="op">=</span> <span class="st">"free"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="blank-correction_files/figure-html/unnamed-chunk-8-1.png" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>If the absorbance in well A is very obviously wrong, then remove those wells, either by keeping <code>std_blank$average</code> as is, or by using <code><a href="../reference/remove_wells.html">remove_wells()</a></code> and re-computing blank averages. Of course, this only works if there were several standard curves on problematic plates, otherwise you will be removing the only std_blank of the plate. In such cases, you must consider your options. If the inter-plate variability of std_blank is sufficiently small, taking an across-dataset or an across-batch mean might do the trick.</p>
+<p>Here is an example of how to re-compute average blanks in case we decide to trust some of the wells from <code>std_blank$untrusted</code>, replaced here by <code>artificial_blank_untrusted</code> because our untrusted example is empty (for now).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># create artificial version of std_blank$untrusted</span></span>
+<span><span class="op">(</span><span class="va">artificial_blank_untrusted</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="va">artificial_std</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/extract_std_blank.html">extract_std_blank</a></span><span class="op">(</span>std_def <span class="op">=</span> <span class="st">"Std"</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">all</span><span class="op">)</span></span>
+<span><span class="co">#&gt; # A tibble: 4 × 8</span></span>
+<span><span class="co">#&gt; # Groups:   dataset, plate_id, column [4]</span></span>
+<span><span class="co">#&gt;   well_id dataset plate_id row   column unique_well_id unique_curve_id   abs</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;          &lt;chr&gt;           &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 A1      Nmin    NO3_1F1  A     1      A1_NO3_1F1     NO3_1F1_col1    0.092</span></span>
+<span><span class="co">#&gt; 2 A1      Nmin    NO3_1F2  A     1      A1_NO3_1F2     NO3_1F2_col1    0.091</span></span>
+<span><span class="co">#&gt; 3 A1      Nmin    NO3_1F3  A     1      A1_NO3_1F3     NO3_1F3_col1    0.093</span></span>
+<span><span class="co">#&gt; 4 A1      Nmin    NO3_1F4  A     1      A1_NO3_1F4     NO3_1F4_col1    0.092</span></span>
+<span></span>
+<span><span class="co"># remove those untrusted wells from std_blank$all ~ new version of std_blank$trusted</span></span>
+<span><span class="op">(</span><span class="va">artificial_blank_clean</span> <span class="op">&lt;-</span> <span class="va">std_blank</span><span class="op">$</span><span class="va">all</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/remove_wells.html">remove_wells</a></span><span class="op">(</span><span class="va">artificial_blank_untrusted</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; # A tibble: 6 × 8</span></span>
+<span><span class="co">#&gt; # Groups:   dataset, plate_id, column [6]</span></span>
+<span><span class="co">#&gt;   well_id dataset plate_id row   column unique_well_id unique_curve_id   abs</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;          &lt;chr&gt;           &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 A1      Nmin    NO3_1F5  A     1      A1_NO3_1F5     NO3_1F5_col1    0.092</span></span>
+<span><span class="co">#&gt; 2 A12     Nmin    NO3_1F1  A     12     A12_NO3_1F1    NO3_1F1_col12   0.091</span></span>
+<span><span class="co">#&gt; 3 A12     Nmin    NO3_1F2  A     12     A12_NO3_1F2    NO3_1F2_col12   0.09 </span></span>
+<span><span class="co">#&gt; 4 A12     Nmin    NO3_1F3  A     12     A12_NO3_1F3    NO3_1F3_col12   0.09 </span></span>
+<span><span class="co">#&gt; 5 A12     Nmin    NO3_1F4  A     12     A12_NO3_1F4    NO3_1F4_col12   0.091</span></span>
+<span><span class="co">#&gt; 6 A12     Nmin    NO3_1F5  A     12     A12_NO3_1F5    NO3_1F5_col12   0.09</span></span>
+<span></span>
+<span><span class="co"># re-compute per-plate blank average from that new trusted table</span></span>
+<span><span class="va">artificial_std_blank_avg</span> <span class="op">&lt;-</span> <span class="va">artificial_blank_clean</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">ungroup</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span></span>
+<span>    .by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span><span class="op">)</span>,</span>
+<span>    blank_avg <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">abs</span><span class="op">)</span>,</span>
+<span>    blank_sdev <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">abs</span><span class="op">)</span></span>
+<span>  <span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>blank_coeff_var_percent <span class="op">=</span> <span class="fl">100</span> <span class="op">*</span> <span class="va">blank_sdev</span> <span class="op">/</span> <span class="va">blank_avg</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>In case of a manual re-computation of blank avergaes, all occurences of std_blank$average below should be replaced by this new <code>artificial_std_blank_avg</code>.</p>
 </section><section class="level2"><h3 id="blank-correction-of-standard-curve">2.5 - Blank-correction of Standard Curve<a class="anchor" aria-label="anchor" href="#blank-correction-of-standard-curve"></a>
 </h3>
-<section class="level3"><h4 id="extract_std_blanc-extract_std_data">extract_std_blanc() (&amp; extract_std_data()?)<a class="anchor" aria-label="anchor" href="#extract_std_blanc-extract_std_data"></a>
-</h4>
-</section><section class="level3"><h4 id="blank_correct_abs">blank_correct_abs()<a class="anchor" aria-label="anchor" href="#blank_correct_abs"></a>
-</h4>
-</section><section class="level3"><h4 id="out-correct_std_blank">OUT? correct_std_blank()<a class="anchor" aria-label="anchor" href="#out-correct_std_blank"></a>
-</h4>
-</section></section></section><section class="section level2"><h2 id="blank-correction-of-samples">3 - Blank-correction of samples<a class="anchor" aria-label="anchor" href="#blank-correction-of-samples"></a>
+<p>Once we are confident in our <code>std_blank</code>s, we can use the <code>std_blank$average</code> to blank-correct the raw absorbance values for the whole standard curves. This is done with the function <code><a href="../reference/blank_correct_abs.html">blank_correct_abs()</a></code>, which will also be used to correct sample absorbance data in the next section.</p>
+<p><code><a href="../reference/blank_correct_abs.html">blank_correct_abs()</a></code> takes 3 main arguments.</p>
+<ul>
+<li><p><code>raw_wells_data</code> takes the standard curves data. It should be ungrouped and contain only non-blank data (in the case of “top_down” pipetting, rows B to H)</p></li>
+<li><p><code>per_plate_avg_blank</code> takes the version of blank averages that we trust (e.g., <code>std_blank$average</code> or <code>artificial_std_blank_avg)</code></p></li>
+<li><p><code>map_to_exclude</code> tells which rows to exclude from <code>raw_wells_data</code> based on their value for the column “map”. Its default setting fits the blank-correction of sample data, not that of standard data, so we simply replace it by <code>""</code>, as we do not wish to exclude any rows here</p></li>
+</ul>
+<p>You can ignore the message <code>Joining with by = join_by(...)</code>, which just depends on the additional columns you may have in your data tables</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">std_corrected</span> <span class="op">&lt;-</span></span>
+<span>  <span class="fu"><a href="../reference/blank_correct_abs.html">blank_correct_abs</a></span><span class="op">(</span></span>
+<span>    raw_wells_data <span class="op">=</span> <span class="va">std_data</span> <span class="op">|&gt;</span></span>
+<span>      <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">ungroup</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>      <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter_out</a></span><span class="op">(</span><span class="va">row</span> <span class="op">==</span> <span class="st">"A"</span><span class="op">)</span>,</span>
+<span>    per_plate_avg_blank <span class="op">=</span> <span class="va">std_blank</span><span class="op">$</span><span class="va">average</span>,</span>
+<span>    map_to_exclude <span class="op">=</span> <span class="st">""</span></span>
+<span>  <span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="co"># only keep relevant columns (remove metadata clutter)</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">row</span><span class="op">:</span><span class="va">abs_corrected</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Joining with `by = join_by(dataset, plate_id)`</span></span>
+<span><span class="co">#&gt; Joining with `by = join_by(row, column, well_id, unique_well_id, dataset,</span></span>
+<span><span class="co">#&gt; plate_id, unique_curve_id, map, std_sp, std_unit, std_conc)`</span></span>
+<span><span class="va">std_corrected</span></span>
+<span><span class="co">#&gt; # A tibble: 70 × 9</span></span>
+<span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id unique_curve_id map  </span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;           &lt;chr&gt;</span></span>
+<span><span class="co">#&gt;  1 B     1      B1      B1_NO3_1F1     Nmin    NO3_1F1  NO3_1F1_col1    Std  </span></span>
+<span><span class="co">#&gt;  2 B     1      B1      B1_NO3_1F2     Nmin    NO3_1F2  NO3_1F2_col1    Std  </span></span>
+<span><span class="co">#&gt;  3 B     1      B1      B1_NO3_1F3     Nmin    NO3_1F3  NO3_1F3_col1    Std  </span></span>
+<span><span class="co">#&gt;  4 B     1      B1      B1_NO3_1F4     Nmin    NO3_1F4  NO3_1F4_col1    Std  </span></span>
+<span><span class="co">#&gt;  5 B     1      B1      B1_NO3_1F5     Nmin    NO3_1F5  NO3_1F5_col1    Std  </span></span>
+<span><span class="co">#&gt;  6 B     12     B12     B12_NO3_1F1    Nmin    NO3_1F1  NO3_1F1_col12   Std  </span></span>
+<span><span class="co">#&gt;  7 B     12     B12     B12_NO3_1F2    Nmin    NO3_1F2  NO3_1F2_col12   Std  </span></span>
+<span><span class="co">#&gt;  8 B     12     B12     B12_NO3_1F3    Nmin    NO3_1F3  NO3_1F3_col12   Std  </span></span>
+<span><span class="co">#&gt;  9 B     12     B12     B12_NO3_1F4    Nmin    NO3_1F4  NO3_1F4_col12   Std  </span></span>
+<span><span class="co">#&gt; 10 B     12     B12     B12_NO3_1F5    Nmin    NO3_1F5  NO3_1F5_col12   Std  </span></span>
+<span><span class="co">#&gt; # ℹ 60 more rows</span></span>
+<span><span class="co">#&gt; # ℹ 1 more variable: abs_corrected &lt;dbl&gt;</span></span></code></pre></div>
+</div>
+<p>Notice that the <code>abs</code> column has been removed to avoid mistaking it for corrected absorbance. Instead, it has been replaced by <code>abs_corrected</code>.</p>
+</section></section><section class="section level2"><h2 id="blank-correction-of-samples">3 - Blank-correction of samples<a class="anchor" aria-label="anchor" href="#blank-correction-of-samples"></a>
 </h2>
 <section class="level2"><h3 id="plot_blank_var_distrib-extractant_average">plot_blank_var_distrib() (&amp; extractant_average()?)<a class="anchor" aria-label="anchor" href="#plot_blank_var_distrib-extractant_average"></a>
 </h3>

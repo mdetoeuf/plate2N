@@ -92,7 +92,7 @@ plates will be considered "suspicious"</p></dd>
 <span class="r-in"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="va">tidy_plates</span></span></span>
 <span class="r-in"><span><span class="va">extractant_average</span> <span class="op">&lt;-</span> <span class="va">tidy_plates</span> <span class="op">|&gt;</span> <span class="fu"><a href="extractant_average.html">extractant_average</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">suspicious_plate_id</span> <span class="op">&lt;-</span> <span class="fu">qc_raw_extr</span><span class="op">(</span><span class="va">data</span>, max_coeff <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>There is a big variation in absorbance values for the blanc (more than 0.5%).</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>There is a big variation in absorbance values for the blank (more than 0.5%).</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span>         Remove the most unlikely values / remove outliers manually.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span>         Suspicious plate ID's are returned</span>
 </code></pre></div>
