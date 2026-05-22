@@ -23,6 +23,6 @@ Merge Data from Regression Equation on Standard Curve with Absorbance Data (samp
 }
 \examples{
 lm_table <- lm_output$lm_data
-abs_data <- abs_corrected
-reg_join_abs(lm_table, abs_data, target_sp = "N")
+sample_data <- sample_corrected
+reg_join_abs(lm_table, sample_data, target_sp = "N")
 }

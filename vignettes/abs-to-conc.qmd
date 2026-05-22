@@ -2,18 +2,26 @@
 title: "abs-to-conc"
 vignette: >
   %\VignetteIndexEntry{abs-to-conc}
-  %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{quarto::html}
 knitr:
   opts_chunk:
     collapse: true
     comment: '#>'
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r}
 #| label: setup
 library(plate2N)
 ```
+
+::: callout-caution
+## Work in progress
+
+This vignette is still under development, bugs are to be expected
+:::
 
 # Introduction
 
@@ -30,3 +38,35 @@ In this vignette, we cover the steps from blank-corrected absorbance to concentr
 
 - Outliers have been removed throughout that process, see previous vignettes and also `vignette("handling-outliers", package = "plate2N")`
 :::
+
+# 1 - Get blank-corrected data
+
+Little reminder how how the blank-corrected data looks like (see prerequisites)
+
+```{r}
+sample_corrected
+
+std_corrected
+```
+
+# 2 - Compute linear model on Standard Curves
+
+## lm_std_curve(), suspicious_lm() & plot_list_lm()
+
+## reg_join_abs() & convert_molec()
+
+## 2.1 - Compute linear model, round 1
+
+## 2.2 - QC Standard curves - check conditions of linear model
+
+## 2.3 - outlier removal
+
+## 2.4 - Per-dilution averages (if 2+ curves per plate)
+
+## 2.5 - Compute linear model + QC - round 2
+
+## 2.6 - Multiple curve QC
+
+# 3 - Infer sample concentration from regression equation
+
+# 4 - Epilogue

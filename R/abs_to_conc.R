@@ -16,8 +16,8 @@ utils::globalVariables(c("plate_id", "slope", "adj_r_squared", "lm_p", "dataset"
 #'
 #' @examples
 #' lm_table <- lm_output$lm_data
-#' abs_data <- abs_corrected
-#' reg_join_abs(lm_table, abs_data, target_sp = "N")
+#' sample_data <- sample_corrected
+#' reg_join_abs(lm_table, sample_data, target_sp = "N")
 reg_join_abs <- function(
     lm_table,
     abs_data,

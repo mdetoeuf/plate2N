@@ -152,7 +152,7 @@
 #'  \item{other columns}{Same columns as `tidy_plates`, + extractant average}
 ##' }
 #'
-"abs_corrected"
+"sample_corrected"
 
 #' Example of Outputs from the Linear Model of the Standard Curves
 #'
