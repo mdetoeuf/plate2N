@@ -36,13 +36,13 @@ extractant
 
 ``` r
 data = tidy_plates
-(extr_avg <- extractant_average(data))
+(blank_avg <- extractant_average(data))
 #> # A tibble: 5 × 5
-#>   plate_id map   extr_avg extr_sdev extr_coeff_var_percent
-#>   <chr>    <chr>    <dbl>     <dbl>                  <dbl>
-#> 1 NO3_1F1  extr    0.0828  0.000463                  0.559
-#> 2 NO3_1F2  extr    0.0821  0.000641                  0.780
-#> 3 NO3_1F3  extr    0.0846  0.00151                   1.78 
-#> 4 NO3_1F4  extr    0.0838  0.000463                  0.553
-#> 5 NO3_1F5  extr    0.0838  0.000463                  0.553
+#>   plate_id map   blank_avg blank_sdev blank_coeff_var_percent
+#>   <chr>    <chr>     <dbl>      <dbl>                   <dbl>
+#> 1 NO3_1F1  extr     0.0828   0.000463                   0.559
+#> 2 NO3_1F2  extr     0.0821   0.000641                   0.780
+#> 3 NO3_1F3  extr     0.0846   0.00151                    1.78 
+#> 4 NO3_1F4  extr     0.0838   0.000463                   0.553
+#> 5 NO3_1F5  extr     0.0838   0.000463                   0.553
 ```

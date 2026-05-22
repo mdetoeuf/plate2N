@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,15 +75,15 @@ deviation and coefficient of variation of raw absorbance of the extractant</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">data</span> <span class="op">=</span> <span class="va">tidy_plates</span></span></span>
-<span class="r-in"><span><span class="op">(</span><span class="va">extr_avg</span> <span class="op">&lt;-</span> <span class="fu">extractant_average</span><span class="op">(</span><span class="va">data</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">(</span><span class="va">blank_avg</span> <span class="op">&lt;-</span> <span class="fu">extractant_average</span><span class="op">(</span><span class="va">data</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 5 × 5</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   plate_id map   extr_avg extr_sdev extr_coeff_var_percent</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> NO3_1F1  extr    0.082<span style="text-decoration: underline;">8</span>  0.000<span style="text-decoration: underline;">463</span>                  0.559</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> NO3_1F2  extr    0.082<span style="text-decoration: underline;">1</span>  0.000<span style="text-decoration: underline;">641</span>                  0.780</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> NO3_1F3  extr    0.084<span style="text-decoration: underline;">6</span>  0.001<span style="text-decoration: underline;">51</span>                   1.78 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> NO3_1F4  extr    0.083<span style="text-decoration: underline;">8</span>  0.000<span style="text-decoration: underline;">463</span>                  0.553</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> NO3_1F5  extr    0.083<span style="text-decoration: underline;">8</span>  0.000<span style="text-decoration: underline;">463</span>                  0.553</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   plate_id map   blank_avg blank_sdev blank_coeff_var_percent</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> NO3_1F1  extr     0.082<span style="text-decoration: underline;">8</span>   0.000<span style="text-decoration: underline;">463</span>                   0.559</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> NO3_1F2  extr     0.082<span style="text-decoration: underline;">1</span>   0.000<span style="text-decoration: underline;">641</span>                   0.780</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> NO3_1F3  extr     0.084<span style="text-decoration: underline;">6</span>   0.001<span style="text-decoration: underline;">51</span>                    1.78 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> NO3_1F4  extr     0.083<span style="text-decoration: underline;">8</span>   0.000<span style="text-decoration: underline;">463</span>                   0.553</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> NO3_1F5  extr     0.083<span style="text-decoration: underline;">8</span>   0.000<span style="text-decoration: underline;">463</span>                   0.553</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

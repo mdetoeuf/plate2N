@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -89,7 +89,7 @@ than the input tibble (due to <code>map_to_exclude</code>)</p>
 <span class="r-in"><span><span class="va">extractant_average</span> <span class="op">&lt;-</span> <span class="va">tidy_plates</span> <span class="op">|&gt;</span> <span class="fu"><a href="extractant_average.html">extractant_average</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">blank_correct_abs</span><span class="op">(</span></span></span>
 <span class="r-in"><span>    raw_wells_data <span class="op">=</span> <span class="va">data</span>,</span></span>
-<span class="r-in"><span>    per_plate_avg_blank <span class="op">=</span> <span class="va">extractant_average</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename</a></span><span class="op">(</span>blank_avg <span class="op">=</span> <span class="va">extr_avg</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    per_plate_avg_blank <span class="op">=</span> <span class="va">extractant_average</span>,</span></span>
 <span class="r-in"><span>    map_to_exclude <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"empty"</span>,<span class="st">"Std"</span>,<span class="st">"extr"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Joining with `by = join_by(plate_id)`</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Joining with `by = join_by(row, column, well_id, unique_well_id, dataset,</span>
@@ -108,7 +108,7 @@ than the input tibble (due to <code>map_to_exclude</code>)</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> A     3      A3      A3_NO3_1F4     Nmin    NO3_1F4  82_t1_z3        0.054<span style="text-decoration: underline;">3</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> A     3      A3      A3_NO3_1F5     Nmin    NO3_1F5  98_t1_z3        0.023<span style="text-decoration: underline;">2</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 254 more rows</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 2 more variables: extr_sdev &lt;dbl&gt;, extr_coeff_var_percent &lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 2 more variables: blank_sdev &lt;dbl&gt;, blank_coeff_var_percent &lt;dbl&gt;</span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -47,7 +47,7 @@ data <- tidy_plates
 extractant_average <- tidy_plates |> extractant_average()
 blank_correct_abs(
     raw_wells_data = data,
-    per_plate_avg_blank = extractant_average |> dplyr::rename(blank_avg = extr_avg),
+    per_plate_avg_blank = extractant_average,
     map_to_exclude = c("empty","Std","extr"))
 #> Joining with `by = join_by(plate_id)`
 #> Joining with `by = join_by(row, column, well_id, unique_well_id, dataset,
@@ -66,5 +66,5 @@ blank_correct_abs(
 #>  9 A     3      A3      A3_NO3_1F4     Nmin    NO3_1F4  82_t1_z3        0.0543
 #> 10 A     3      A3      A3_NO3_1F5     Nmin    NO3_1F5  98_t1_z3        0.0232
 #> # ℹ 254 more rows
-#> # ℹ 2 more variables: extr_sdev <dbl>, extr_coeff_var_percent <dbl>
+#> # ℹ 2 more variables: blank_sdev <dbl>, blank_coeff_var_percent <dbl>
 ```
