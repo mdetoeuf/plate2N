@@ -58,7 +58,7 @@ qc_raw_extr <- function(
     # send a warning
     if (!suppress_warning) {
       warning(paste0(
-        "There is a big variation in absorbance values for the blanc (more than ",
+        "There is a big variation in absorbance values for the blank (more than ",
         max_coeff,
         "%).
         Remove the most unlikely values / remove outliers manually.

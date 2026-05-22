@@ -25,6 +25,8 @@ This vignette is still under development, bugs are to be expected
 
 # TO DO
 
+- Make sure there is a "bad" curve in the example dataset (with blank with higher absorbance than row B)
+
 # Introduction
 
 This vignette shows the basic functions that allow the correction of raw absorbance data (`abs`) to blank-corrected absorbance data, referred to as `abs_corrected` throughout this package.
@@ -94,7 +96,7 @@ std_data <- raw_meta |>
 std_data
 ```
 
-## 2.3 - Compute per-plate average of std_blank 
+## 2.3 - Compute per-plate average of std_blank
 
 `extract_std_blanc()` returns a list with several elements concerning standard blanks
 
@@ -110,13 +112,18 @@ std_data
 
 ```{r}
 std_blank <- std_data |> 
-  extract_std_blanc(
+  extract_std_blank(
     std_def = "Std",
     pipetting_direction = "top_down")
+
 std_blank$all
+
 std_blank$average
+
 std_blank$untrusted ; std_blank$trusted
 ```
+
+## 2.4 - Quality check of std_blank & outlier removal
 
 ::: callout-note
 ## Check out untrusted standard blanks
@@ -124,15 +131,79 @@ std_blank$untrusted ; std_blank$trusted
 The computation of `std_blank$average` is made on trusted blank wells only. It is therefore important to check curves containing "untrusted" blank wells and decide whether to keep them or not
 :::
 
-## 2.4 - Quality check of std_blank & outlier removal
+The function `plot_std()` allows the visualization of a subset of curves. Because there is no untrusted blank for now (**Make sure there is a "bad" curve in the example dataset**), we artificially take a subset of `std_blank$all` just for the purpose of demonstrating the plots.
+
+```{r}
+# Subset: create an artificial std_data
+artificial_std <- std_data |> 
+  dplyr::filter(
+    unique_curve_id %in% std_blank$all$unique_curve_id[1:4]) 
+
+# look at (fake) "suspicious" curves
+artificial_std |> 
+  plot_std(through_origin = FALSE) +
+  ggplot2::facet_wrap(~plate_id, scales = "free") +
+  ggplot2::theme(legend.position = "none")
+```
+
+If the absorbance in well A is very obviously wrong, then remove those wells, either by keeping `std_blank$average` as is, or by using `remove_wells()` and re-computing blank averages. Of course, this only works if there were several standard curves on problematic plates, otherwise you will be removing the only std_blank of the plate. In such cases, you must consider your options. If the inter-plate variability of std_blank is sufficiently small, taking an across-dataset or an across-batch mean might do the trick.
+
+Here is an example of how to re-compute average blanks in case we decide to trust some of the wells from `std_blank$untrusted`, replaced here by `artificial_blank_untrusted` because our untrusted example is empty (for now).
+
+```{r}
+# create artificial version of std_blank$untrusted
+(artificial_blank_untrusted <- (artificial_std |> extract_std_blank(std_def = "Std"))$all)
+
+# remove those untrusted wells from std_blank$all ~ new version of std_blank$trusted
+(artificial_blank_clean <- std_blank$all |> remove_wells(artificial_blank_untrusted))
+
+# re-compute per-plate blank average from that new trusted table
+artificial_std_blank_avg <- artificial_blank_clean |>
+  dplyr::ungroup() |> 
+  dplyr::summarise(
+    .by = c(dataset, plate_id),
+    blank_avg = mean(abs),
+    blank_sdev = stats::sd(abs)
+  ) |>
+  dplyr::mutate(blank_coeff_var_percent = 100 * blank_sdev / blank_avg)
+
+```
+
+In case of a manual re-computation of blank avergaes, all occurences of std_blank\$average below should be replaced by this new `artificial_std_blank_avg`.
 
 ## 2.5 - Blank-correction of Standard Curve
 
-### extract_std_blanc() (& extract_std_data()?)
+Once we are confident in our `std_blank`s, we can use the `std_blank$average` to blank-correct the raw absorbance values for the whole standard curves. This is done with the function `blank_correct_abs()`, which will also be used to correct sample absorbance data in the next section.
 
-### blank_correct_abs()
+`blank_correct_abs()` takes 3 main arguments.
 
-### OUT? correct_std_blank()
+- `raw_wells_data` takes the standard curves data. It should be ungrouped and contain only non-blank data (in the case of "top_down" pipetting, rows B to H)
+
+- `per_plate_avg_blank` takes the version of blank averages that we trust (e.g., `std_blank$average` or `artificial_std_blank_avg)`
+
+- `map_to_exclude` tells which rows to exclude from `raw_wells_data` based on their value for the column "map". Its default setting fits the blank-correction of sample data, not that of standard data, so we simply replace it by `""`, as we do not wish to exclude any rows here
+
+You can ignore the message `Joining with by = join_by(...)`, which just depends on the additional columns you may have in your data tables
+
+```{r}
+std_corrected <-
+  blank_correct_abs(
+    raw_wells_data = std_data |>
+      dplyr::ungroup() |>
+      dplyr::filter_out(row == "A"),
+    per_plate_avg_blank = std_blank$average,
+    map_to_exclude = ""
+  ) |> 
+  # only keep relevant columns (remove metadata clutter)
+  dplyr::select(row:abs_corrected)
+std_corrected
+```
+
+Notice that the `abs` column has been removed to avoid mistaking it for corrected absorbance. Instead, it has been replaced by `abs_corrected`.
+
+```{r}
+
+```
 
 # 3 - Blank-correction of samples
 

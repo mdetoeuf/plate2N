@@ -57,7 +57,7 @@ blank_correct_abs <- function(
     # dplyr::mutate(abs = as.numeric(abs)) |>
     dplyr::right_join(blank_avg_data) |>
     dplyr::mutate(abs_corrected = abs - blank_avg, .keep = "unused", .after = map) |>
-    # remove rows where no corrected absorbance data (untrusted or blancs)
+    # remove rows where no corrected absorbance data (untrusted or blanks)
     dplyr::filter(!is.na(abs_corrected))
 
   # check that no row has been lost (could happen, e.g., if "map_to_exclude" was incomplete)

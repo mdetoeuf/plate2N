@@ -46,7 +46,7 @@ extract_std_data <- function(data, std_def = "Std") {
 
 
 
-utils::globalVariables(c("row", "column", "well_id", "unique_well_id", "dataset", "plate_id", "map", "abs", "blanc_sdev", "blanc_avg", "unique_curve_id", "well_min"))
+utils::globalVariables(c("row", "column", "well_id", "unique_well_id", "dataset", "plate_id", "map", "abs", "blank_sdev", "blank_avg", "unique_curve_id", "well_min"))
 
 #' Extraction and Quality Check (QC) of blank values for standard curves
 #'
@@ -55,7 +55,7 @@ utils::globalVariables(c("row", "column", "well_id", "unique_well_id", "dataset"
 #' Here, each standard curve only has one well containing the blank value,
 #' usually pipetted in row A (`pipetting_direction = "top_down"`), or in row H (`pipetting_direction = "bottom_up"`).
 #'
-#' `extract_std_blanc()` works in a few steps:
+#' `extract_std_blank()` works in a few steps:
 #'     - First, data corresponding to wells containing the standard curve is extracted (as defined by parameter `std_def`)
 #'     - Second, within this "standard data", for each dataset, plate and column (= 1 curve), the smallest absorbance value is extracted.
 #'     - We then check that the smallest per-curve value is indeed found in plate row "A"
@@ -95,9 +95,9 @@ utils::globalVariables(c("row", "column", "well_id", "unique_well_id", "dataset"
 #' tidy_data <- vertical_to_tidy(joined_vertical)
 #'
 #' # run the function
-#' list <- tidy_data |> extract_std_blanc(std_def = "Std")
+#' list <- tidy_data |> extract_std_blank(std_def = "Std")
 #'
-extract_std_blanc <- function(
+extract_std_blank <- function(
     data, # data <- tidy_data
     std_def = "Std",
     pipetting_direction = "top_down"
@@ -113,7 +113,7 @@ extract_std_blanc <- function(
   # extract std data (only wells where the standard solutions have been pipetted)
   std_data <- extract_std_data(data, std_def)
 
-  # std_blanc_all <- std_data |>
+  # std_blank_all <- std_data |>
   #   # 1 group = 1 std curve
   #   dplyr::group_by(dataset, plate_id, column) |>
   #   dplyr::slice_min(
@@ -134,13 +134,13 @@ extract_std_blanc <- function(
     dplyr::select(well_min, dataset, plate_id, column, unique_curve_id)
 
   if (pipetting_direction == "top_down") {
-    std_blanc_all <- std_data |>
+    std_blank_all <- std_data |>
       # 1 group = 1 std curve
       dplyr::group_by(dataset, plate_id, column) |>
       dplyr::filter(row == "A") |>
       dplyr::select(well_id, dataset, plate_id, row, column, unique_well_id,unique_curve_id, abs)
   } else if (pipetting_direction == "bottom_up") {
-    std_blanc_all <- std_data |>
+    std_blank_all <- std_data |>
       # 1 group = 1 std curve
       dplyr::group_by(dataset, plate_id, column) |>
       dplyr::filter(row == "H") |>
@@ -149,49 +149,49 @@ extract_std_blanc <- function(
 
   blank_min_check <- std_min |>
     dplyr::left_join(
-      std_blanc_all,
+      std_blank_all,
       by = dplyr::join_by(column, dataset, plate_id, unique_curve_id)) |>
     dplyr::relocate(well_id, .after = well_min)
 
   #blank_min_check$well_min[2] <- "test"
-  std_blanc_untrusted <- blank_min_check |>
+  std_blank_untrusted <- blank_min_check |>
     dplyr::filter(well_id != well_min) |>
     dplyr::select(!well_min)
 
-  std_blanc_trusted <- std_blanc_all |>
+  std_blank_trusted <- std_blank_all |>
     dplyr::anti_join(
-      std_blanc_untrusted,
+      std_blank_untrusted,
       by = dplyr::join_by(column, well_id, dataset, plate_id, unique_curve_id)) |>
     dplyr::ungroup()
 
   #** End Tentative *
 
 
-  # std_blanc_untrusted <- std_blanc_all |> dplyr::filter(row != pipette_to_row(pipetting_direction))
+  # std_blank_untrusted <- std_blank_all |> dplyr::filter(row != pipette_to_row(pipetting_direction))
   #
-  # std_blanc_trusted <- std_blanc_all |>
+  # std_blank_trusted <- std_blank_all |>
   #   dplyr::anti_join(
-  #     std_blanc_untrusted,
+  #     std_blank_untrusted,
   #     by = dplyr::join_by(row, column, well_id, unique_well_id, dataset, plate_id, map, abs)) |>
   #   dplyr::ungroup()
 
-  # compute intra-plate mean for the blanc, st-dev and coefficient of variation in %
-  std_blanc_avg <- std_blanc_trusted |>
+  # compute intra-plate mean for the blank, st-dev and coefficient of variation in %
+  std_blank_avg <- std_blank_trusted |>
     dplyr::summarise(
       .by = c(dataset, plate_id),
-      blanc_avg = mean(abs),
-      blanc_sdev = stats::sd(abs)
+      blank_avg = mean(abs),
+      blank_sdev = stats::sd(abs)
     ) |>
-    dplyr::mutate(blanc_coeff_var_percent = 100 * blanc_sdev / blanc_avg)
+    dplyr::mutate(blank_coeff_var_percent = 100 * blank_sdev / blank_avg)
 
-  std_blanc <- list(
-    "all" = std_blanc_all,
-    "trusted" = std_blanc_trusted,
-    "untrusted" = std_blanc_untrusted,
-    "average" = std_blanc_avg
+  std_blank <- list(
+    "all" = std_blank_all,
+    "trusted" = std_blank_trusted,
+    "untrusted" = std_blank_untrusted,
+    "average" = std_blank_avg
   )
 
-  return(std_blanc)
+  return(std_blank)
 }
 
 
@@ -271,20 +271,29 @@ plot_std <- function(
    # show_R2 = FALSE
     ) {
 
+  # set parameters
   std_unit <- std_data$std_unit
+  y_range <- max(as.numeric(std_data$abs))-min(as.numeric(std_data$abs))
+
   std_data |>
-    ggplot2::ggplot(ggplot2::aes(x = as.numeric(std_conc), y = as.numeric(abs), group = column)) +
+    ggplot2::ggplot(ggplot2::aes(
+      x = as.numeric(std_conc), y = as.numeric(abs),
+      group = column, colour = column, fill = column)) +
     ggplot2::theme_minimal() +
     ggplot2::ylab("Absorbance") +
     ggplot2::xlab(paste0("Concentration of Standard Curve")) +
     ggplot2::geom_smooth(
       method = "lm",
       formula = if (through_origin) (y ~ x - 1) else (y ~ x) ,
-      alpha = 0.5, aes(colour = column)) +
+      aes(alpha = 0.5),
+      linewidth = 0.5, linetype = 2) +
     #geom_line()
     ggplot2::geom_point(aes(colour = column)) +
    # ggplot2::geom_line(ggplot2::aes(colour = column)) +
-    ggplot2::geom_text(ggplot2::aes(label = well_id, colour = column), alpha = 1, position = ggplot2::position_jitter())
+    ggplot2::geom_text(
+      ggplot2::aes(label = well_id, colour = column),
+      alpha = 1, position = ggplot2::position_nudge(y = y_range/20),
+      size = 4, fontface = "plain")
 }
 
 
@@ -294,7 +303,7 @@ utils::globalVariables(c("std_def", "abs_corrected"))
 
 #' Replaces raw absorbance data from standard curves by blank-corrected absorbance values.
 #'
-#' `correct_std_blank()` relies on [`plate2N::extract_std_blanc()`].
+#' `correct_std_blank()` relies on [`plate2N::extract_std_blank()`].
 #'
 #' @param data A tibble respecting the structure of [`tidy_table`]. `data` must have,
 #'     though not necessarily in that order, the following column names:
@@ -305,12 +314,12 @@ utils::globalVariables(c("std_def", "abs_corrected"))
 #'     with the smallest value (blank) in row A and the highest value in row H.
 #'     Conversely, bottom_up pipetting would have the blank in row H and the most concentrated solution in row A
 #' @param std_blank_average If NULL (default), it will be computed from `std_blank_trusted`.
-#'     Otherwise, `std_blank_average` should be a tibble in the same format as `extract_std_blanc(data)$average`
-#'     Changing the default value of `std_blanc_average` may be relevant if the previous
-#'     call to [`extract_std_blanc()`] has led the user to correct "trusted" blancs
-#'     in any way (see `?extract_std_blanc()` for more details)
+#'     Otherwise, `std_blank_average` should be a tibble in the same format as `extract_std_blank(data)$average`
+#'     Changing the default value of `std_blank_average` may be relevant if the previous
+#'     call to [`extract_std_blank()`] has led the user to correct "trusted" blanks
+#'     in any way (see `?extract_std_blank()` for more details)
 #' @param std_blank_trusted If NULL (default), it will be extracted from `std_blank`
-#' @param std_blank If NULL (default), it will be extracted/computed from `data`, using `extract_std_blanc()`.
+#' @param std_blank If NULL (default), it will be extracted/computed from `data`, using `extract_std_blank()`.
 #'
 #' @import dplyr
 #' @importFrom roperators %ni%
@@ -321,7 +330,7 @@ utils::globalVariables(c("std_def", "abs_corrected"))
 #'       - for which it only keeps values for non-blank wells once the correction is done,
 #'         which is why row A (top_down pipetting) or row H (bottom_up pipetting) are missing from this output table
 #' @export
-#' @seealso [extract_std_blanc()]
+#' @seealso [extract_std_blank()]
 #'
 #' @examples
 #' #tidy_plates
@@ -342,7 +351,7 @@ correct_std_blank <- function(
     if (is.null(std_blank_trusted)) {
       # if std_blank not provided, then compute it from data
       if (is.null(std_blank)) {
-        std_blank <- extract_std_blanc(data, std_def = std_def, pipetting_direction = pipetting_direction)
+        std_blank <- extract_std_blank(data, std_def = std_def, pipetting_direction = pipetting_direction)
       }
       # extract trusted
       std_blank_trusted <- std_blank$trusted
@@ -351,21 +360,21 @@ correct_std_blank <- function(
     std_blank_average <- std_blank_trusted |>
       dplyr::summarise(
         .by = c(dataset, plate_id),
-        blanc_avg = mean(abs),
-        blanc_sdev = stats::sd(abs)) |>
-      dplyr::mutate(blanc_coeff_var_percent = 100 * blanc_sdev / blanc_avg)
+        blank_avg = mean(abs),
+        blank_sdev = stats::sd(abs)) |>
+      dplyr::mutate(blank_coeff_var_percent = 100 * blank_sdev / blank_avg)
   }
 
   std_corrected <- extract_std_data(data) |>
     dplyr::mutate(abs = as.numeric(abs)) |>
-    # keep only data that is not from blanc wells
+    # keep only data that is not from blank wells
     dplyr::filter(
       # unique_well_id %ni% std_blank_untrusted$unique_well_id,
       row != pipette_to_row(pipetting_direction)
     ) |>
     dplyr::right_join(std_blank_average, by = dplyr::join_by(dataset, plate_id)) |>
-    dplyr::mutate(abs_corrected = abs - blanc_avg, .keep = "unused") |>
-    # remove rows where no corrected absorbance data (untrusted or blancs)
+    dplyr::mutate(abs_corrected = abs - blank_avg, .keep = "unused") |>
+    # remove rows where no corrected absorbance data (untrusted or blanks)
     dplyr::filter(!is.na(abs_corrected)) #|>
   # create unique curve_id which will be needed for downstream analysis
   #dplyr::mutate(unique_curve_id = paste0(plate_id, "_col", column), .after = plate_id)

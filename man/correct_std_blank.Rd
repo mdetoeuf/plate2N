@@ -26,14 +26,14 @@ with the smallest value (blank) in row A and the highest value in row H.
 Conversely, bottom_up pipetting would have the blank in row H and the most concentrated solution in row A}
 
 \item{std_blank_average}{If NULL (default), it will be computed from \code{std_blank_trusted}.
-Otherwise, \code{std_blank_average} should be a tibble in the same format as \code{extract_std_blanc(data)$average}
-Changing the default value of \code{std_blanc_average} may be relevant if the previous
-call to \code{\link[=extract_std_blanc]{extract_std_blanc()}} has led the user to correct "trusted" blancs
-in any way (see \code{?extract_std_blanc()} for more details)}
+Otherwise, \code{std_blank_average} should be a tibble in the same format as \code{extract_std_blank(data)$average}
+Changing the default value of \code{std_blank_average} may be relevant if the previous
+call to \code{\link[=extract_std_blank]{extract_std_blank()}} has led the user to correct "trusted" blanks
+in any way (see \code{?extract_std_blank()} for more details)}
 
 \item{std_blank_trusted}{If NULL (default), it will be extracted from \code{std_blank}}
 
-\item{std_blank}{If NULL (default), it will be extracted/computed from \code{data}, using \code{extract_std_blanc()}.}
+\item{std_blank}{If NULL (default), it will be extracted/computed from \code{data}, using \code{extract_std_blank()}.}
 }
 \value{
 A tibble with blank-corrected absorbance values for standard curves.
@@ -43,12 +43,12 @@ It has less rows than the input \code{data} because
 which is why row A (top_down pipetting) or row H (bottom_up pipetting) are missing from this output table
 }
 \description{
-\code{correct_std_blank()} relies on \code{\link[=extract_std_blanc]{extract_std_blanc()}}.
+\code{correct_std_blank()} relies on \code{\link[=extract_std_blank]{extract_std_blank()}}.
 }
 \examples{
 #tidy_plates
 #correct_std_blank(tidy_plates)
 }
 \seealso{
-\code{\link[=extract_std_blanc]{extract_std_blanc()}}
+\code{\link[=extract_std_blank]{extract_std_blank()}}
 }
