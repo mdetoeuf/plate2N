@@ -50,7 +50,7 @@ extractant_average <- function(
 
   # computing extractant data from data if missing
   if (is.null(extractant_data)) {
-    extractant_data <- extract_extractant(data)
+    extractant_data <- extract_extractant(data, extr_def = extr_def)
   }
 
   extractant_average <- extractant_data |>

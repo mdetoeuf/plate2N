@@ -197,7 +197,7 @@ extract_std_blanc <- function(
 
 
 
-utils::globalVariables(c("std_conc", "A", "H"))
+utils::globalVariables(c("dataset", "plate_id", "std_conc", "A", "H"))
 #' Get concentration of standard curve from metadata
 #'
 #' @param metadata A tibble following a similar structure as [`metadata`], see documentation of `metadata for more details
@@ -227,7 +227,7 @@ extract_curve <- function(
   }
 
   curve_concentration <- metadata |>
-    dplyr::select(plate_id, std_conc) |>
+    dplyr::select(dataset, plate_id, std_conc) |>
     tidyr::separate_wider_delim(std_conc, delim = "-", names = row_curve) |>
     tidyr::pivot_longer(
       cols = A:H,
@@ -246,6 +246,9 @@ extract_curve <- function(
 #'     columns `std_conc`, `abs`, `plate_id` and `well_id`. If the plot shows too
 #'     many curves, consider filtering the input data frame or adding a ggplot layer
 #'     to facet (see `?facet_wrap()` or `?facet_grid()`).
+#' @param through_origin Whether the smooth curve should be constrained to go
+#'     through the origin. Default to TRUE, which only makes sense for absorbance
+#'     data that has already been blank-corrected
 #'
 #' @import ggplot2
 #'
@@ -253,15 +256,17 @@ extract_curve <- function(
 #' @export
 #'
 #' @examples
-#' data <- tidy_plates |> dplyr::left_join(metadata, by = dplyr::join_by(plate_id))
+#' raw_meta <- tidy_plates |>
+#'     dplyr::left_join(metadata, by = dplyr::join_by(dataset,plate_id))
 #' curve_concentration <- extract_curve(metadata)
-#' std_data <- data |>
+#' std_data <- raw_meta |>
 #'   extract_std_data() |>
 #'   dplyr::select(!std_conc) |>
-#'   dplyr::left_join(curve_concentration, by = dplyr::join_by(row, plate_id))
-#' plot_std(std_data) + ggplot2::facet_wrap(~plate_id)
+#'   dplyr::left_join(curve_concentration, by = dplyr::join_by(row, dataset, plate_id))
+#' plot_std(std_data, through_origin = FALSE) + ggplot2::facet_wrap(~plate_id)
 plot_std <- function(
-    std_data
+    std_data,
+    through_origin = TRUE
   #  show_pval = FALSE,
    # show_R2 = FALSE
     ) {
@@ -272,11 +277,14 @@ plot_std <- function(
     ggplot2::theme_minimal() +
     ggplot2::ylab("Absorbance") +
     ggplot2::xlab(paste0("Concentration of Standard Curve")) +
-    ggplot2::geom_smooth(method = "lm", formula = y ~ x - 1, alpha = 0.5, aes(colour = column)) +
+    ggplot2::geom_smooth(
+      method = "lm",
+      formula = if (through_origin) (y ~ x - 1) else (y ~ x) ,
+      alpha = 0.5, aes(colour = column)) +
     #geom_line()
     ggplot2::geom_point(aes(colour = column)) +
    # ggplot2::geom_line(ggplot2::aes(colour = column)) +
-    ggplot2::geom_text(ggplot2::aes(label = well_id, colour = column, alpha = 1), position = ggplot2::position_jitter())
+    ggplot2::geom_text(ggplot2::aes(label = well_id, colour = column), alpha = 1, position = ggplot2::position_jitter())
 }
 
 

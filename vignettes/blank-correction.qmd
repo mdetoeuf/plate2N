@@ -1,0 +1,145 @@
+---
+title: "blank-correction"
+vignette: >
+  %\VignetteIndexEntry{blank-correction}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{quarto::html}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#| label: setup
+library(plate2N)
+```
+
+::: callout-caution
+## Work in progress
+
+This vignette is still under development, bugs are to be expected
+:::
+
+# TO DO
+
+# Introduction
+
+This vignette shows the basic functions that allow the correction of raw absorbance data (`abs`) to blank-corrected absorbance data, referred to as `abs_corrected` throughout this package.
+
+This pipeline is adapted to the case where the standard curve solutions were prepared with a different blank than the samples. Because of that, there are 2 parallel pipelines to perform the blank-correction, then data from standard curves and from samples are merged again.
+
+In theory, the "samples" pipeline should be adaptable to the case where all wells used the same blank (including those containing standard curve solutions), though this has yet to be tested, and bugs may occur. Feel free to contact the authors to suggest improvements.
+
+To avoid confusion between "blank of the standard curve" and "blank of the samples", the sample-blank is referred to as "extractant" or `extr` throughout this vignette, to refer to the solution that was used to extract N-compounds from soil samples and now serves as blank. The standard blank is referred to as `std_blank`.
+
+# 1 - Getting raw absorbance data
+
+The vignette `import-tidy` shows how to import and tidy absorbance data. The vignette `handling-outliers` shows how to run some preliminary quality checks and possibly remove some first outliers. To access those vignettes, run the following commands
+
+`vignette("import-tidy", package = "plate2N")`
+
+`vignette("handling-outliers", package = "plate2N")`
+
+```{r}
+tidy_plates
+```
+
+For blank-correction of the standard curve, we will also require some metadata for each 96-well plate containing at least the concentrations of the dilutions of the standard curve
+
+```{r}
+(meta <- metadata |> dplyr::select(dataset, plate_id, std_sp, std_unit, std_conc))
+```
+
+We now join (raw) plate data and metadata (meta)
+
+```{r}
+raw_meta <- tidy_plates |> 
+  dplyr::left_join(meta, by = dplyr::join_by(dataset, plate_id))
+```
+
+# 2 - Blank-correction of standard curves
+
+## 2.1 - Extract curve concentrations
+
+To fit in one row per plate, the concentrations for standard curve are, so far, stored in a compact manner, like this:
+
+```{r}
+raw_meta |> dplyr::select(plate_id, std_conc) |> head(n = 3)
+```
+
+Note that concentration values are separated by a `-` and digits are marked by a `.`, which is important in the function call to `extract_curve()`. Also, concentration values MUST be in ascending order in the metadata file. See also `?metadata` and `?extract_curve()`
+
+```{r}
+(curve_concentration <- extract_curve(meta, pipetting_direction = "top_down"))
+```
+
+::: callout-tip
+## Too many rows?
+
+A common mistake is to run `extract_curve()` on `raw_meta` instead of `meta`. But `meta` has one row per plate, whereas `raw_meta` has one row per well, so that calling `extract_curve(raw_meta)` would result on a table that is much too long (\~96 times too long). If you run into issues later, this might be the source.
+:::
+
+We now have curve concentrations connected to the dataset, plate_id and row of a plate, which we can use for all downstream steps. This goes under the assumption that standard curves are pipetted vertically in a complete column of the 96-well plate. Check `?extract_curve()` for more details.
+
+## 2.2 - Extract Standard data
+
+```{r}
+std_data <- raw_meta |> 
+  extract_std_data(std_def = "Std") |> 
+  dplyr::select(!std_conc) |> 
+  dplyr::left_join(curve_concentration, by = dplyr::join_by(row, dataset, plate_id))
+std_data
+```
+
+## 2.3 - Compute per-plate average of std_blank 
+
+`extract_std_blanc()` returns a list with several elements concerning standard blanks
+
+- `std_blank$all` fetches all wells that are expected to contain the standard blank (all standard data from plate-row A (`pipetting_direction = "top_down"`) or H (`pipetting_direction = "bottom_up"`)
+
+- `std_blank$untrusted` identifies expected blank wells that do not correspond to the lowest absorbance value of their standard curve[^1]. This item and may be empty
+
+- `std_blank$trusted` is the complement to `std_blank$untrusted`.
+
+- `std_blank$average` computes the per-plate average of standard blanks (relevant if there are several standard curves pipetted in one plate), as well as the standard deviation and the coefficient of variation.
+
+[^1]: This quality check was added because, in case of top_down pipetting, A1 often will contain the standard blank, but it is also often the first well to be filled during pipetting. With automated pipettes, a small ejection of liquid has to occur before dispensing the first dose of solution. Failure to intentionally eject will result in the first well receiving the "ejection" dose, which is not the correct volume. This can end up in various responses in terms of absorbance, depending on which reagent has been wrongly pipetted.
+
+```{r}
+std_blank <- std_data |> 
+  extract_std_blanc(
+    std_def = "Std",
+    pipetting_direction = "top_down")
+std_blank$all
+std_blank$average
+std_blank$untrusted ; std_blank$trusted
+```
+
+::: callout-note
+## Check out untrusted standard blanks
+
+The computation of `std_blank$average` is made on trusted blank wells only. It is therefore important to check curves containing "untrusted" blank wells and decide whether to keep them or not
+:::
+
+## 2.4 - Quality check of std_blank & outlier removal
+
+## 2.5 - Blank-correction of Standard Curve
+
+### extract_std_blanc() (& extract_std_data()?)
+
+### blank_correct_abs()
+
+### OUT? correct_std_blank()
+
+# 3 - Blank-correction of samples
+
+## plot_blank_var_distrib() (& extractant_average()?)
+
+## qc_raw_extr()
+
+## suspicious_extr()
+
+## plot extractant outliers with boxplot_outlier_extr() or multiplot_outlier_extr()

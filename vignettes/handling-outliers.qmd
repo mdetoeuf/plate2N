@@ -25,19 +25,13 @@ This vignette is still under development, bugs are to be expected
 
 # TO DO
 
-- introduce example data
-
-  - tidy_plates
-
-  - tidy_table
-
-  - failed_wells_example
+- Add reference to outlier steps for Std blank, std curve and extr blank
 
 # Introduction
 
 This vignette introduces the handling of several functions to help deal with outliers, at several steps of the data transformation pipeline.
 
-**--\> Briefly introduce all functions**
+[**--\> Briefly introduce all functions**]{.underline}
 
 # 1 - Manual removal of single wells
 

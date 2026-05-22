@@ -4,13 +4,17 @@
 \alias{plot_std}
 \title{Display one or more standard curve(s)}
 \usage{
-plot_std(std_data)
+plot_std(std_data, through_origin = TRUE)
 }
 \arguments{
 \item{std_data}{The table containing the data to be plotted. Must contain the
 columns \code{std_conc}, \code{abs}, \code{plate_id} and \code{well_id}. If the plot shows too
 many curves, consider filtering the input data frame or adding a ggplot layer
 to facet (see \code{?facet_wrap()} or \code{?facet_grid()}).}
+
+\item{through_origin}{Whether the smooth curve should be constrained to go
+through the origin. Default to TRUE, which only makes sense for absorbance
+data that has already been blank-corrected}
 }
 \value{
 A plot of one or several standard curves.
@@ -20,11 +24,12 @@ Plots raw absorbance (y-axis) vs concentration (x-axis), grouping the data by \c
 Uses the \code{ggplot2} package.
 }
 \examples{
-data <- tidy_plates |> dplyr::left_join(metadata, by = dplyr::join_by(plate_id))
+raw_meta <- tidy_plates |>
+    dplyr::left_join(metadata, by = dplyr::join_by(dataset,plate_id))
 curve_concentration <- extract_curve(metadata)
-std_data <- data |>
+std_data <- raw_meta |>
   extract_std_data() |>
   dplyr::select(!std_conc) |>
-  dplyr::left_join(curve_concentration, by = dplyr::join_by(row, plate_id))
-plot_std(std_data) + ggplot2::facet_wrap(~plate_id)
+  dplyr::left_join(curve_concentration, by = dplyr::join_by(row, dataset, plate_id))
+plot_std(std_data, through_origin = FALSE) + ggplot2::facet_wrap(~plate_id)
 }
