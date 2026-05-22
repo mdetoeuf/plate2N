@@ -24,5 +24,5 @@ Computing the per-plate average for raw absorbance of the extractant (blank for 
 }
 \examples{
 data = tidy_plates
-(extr_avg <- extractant_average(data))
+(blank_avg <- extractant_average(data))
 }

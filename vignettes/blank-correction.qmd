@@ -26,6 +26,7 @@ This vignette is still under development, bugs are to be expected
 # TO DO
 
 - Make sure there is a "bad" curve in the example dataset (with blank with higher absorbance than row B)
+- Make sure there is a funky well in some extractant to check out the outlier removal plot
 
 # Introduction
 
@@ -201,16 +202,173 @@ std_corrected
 
 Notice that the `abs` column has been removed to avoid mistaking it for corrected absorbance. Instead, it has been replaced by `abs_corrected`.
 
+# 3 - Blank-correction of samples
+
+## 3.1 - Extract extractant data (sample blank)
+
+In a real world, `raw_meta` will have probably undergone some cleaning steps (e.g., outlier removal). In this example dataset, there are always 8 wells attributed to the sample blank (or extractant), which is found because its mapping (column "map" in `raw_meta`) contains the string "extr".
+
 ```{r}
+raw_meta |> dplyr::filter(map == "extr")
+```
+
+This filtering is also what `extract_extractant()` does in the background
+
+```{r}
+extr_data <- extract_extractant(raw_meta)
 
 ```
 
-# 3 - Blank-correction of samples
+## 3.2 - Compute per-plate average of extractant 
 
-## plot_blank_var_distrib() (& extractant_average()?)
+First, extract data for wells containing extractant with `extract_extractant()` and have a look at its variation.
 
-## qc_raw_extr()
+This string "extr" is the default of the argument `extr_def` of `extractant_average()` and can be adapted to reflect your mapping. Like `extract_std_blank(..)$average`, `extractant_average()` computes the average, standard deviation and coefficient of variation (%) of the blanks.
 
-## suspicious_extr()
+```{r}
+(extr_avg <- extractant_average(raw_meta, extr_def = "extr")) 
+```
 
-## plot extractant outliers with boxplot_outlier_extr() or multiplot_outlier_extr()
+## 3.3 - Quality check of extractant and outlier removal
+
+`plot_blank_var_distrib()` plots a distribution of this coefficient of variation throughout the dataset (which becomes relevant in big data sets).
+
+```{r}
+plot_blank_var_distrib(extr_avg)
+```
+
+In big data sets, there is bound to be some plate where one or two wells went wrong in the lab, and seeing that there are some plates with much higher variation can be a sign that you need to investigate to remove outliers. You can take advantage of `dplyr::arrange(desc())` to quickly identify suspicious plates.
+
+```{r}
+extr_avg |> 
+  dplyr::arrange(desc(blank_coeff_var_percent))
+```
+
+`qc_raw_extr()`\` performs a quality check of raw absorbance data for extractant wells. It returns a vector containing the "suspicious" `plate_id`s of plates exceeding the user-defined threshold. For the sake of the example, we will test a `max_coeff` threshold of acceptable coefficient of variation at 5% (reasonable) and 0.5% (not really reasonable in the real world).
+
+With a reasonable threshold, we get a happy message.
+
+```{r}
+threshold <- 5
+
+suspicious_plate_ids <- raw_meta |> 
+  qc_raw_extr(suppress_message = FALSE, max_coeff = threshold)
+```
+
+With a very low threshold (for the sake of the example), we get a warning message (here, all plates are fakly "suspicious")
+
+```{r}
+threshold <- 0.5
+
+suspicious_plate_ids <- raw_meta |> 
+  qc_raw_extr(suppress_warning = FALSE, max_coeff = threshold)
+```
+
+Both message and warning can be suppressed, see `?qc_raw_extr()`.
+
+To obtain the full extractant data corresponding to those suspicious plate_ids, we can use `suspicious_extr()`.
+
+```{r}
+(suspicious_extr <- suspicious_extr(
+  raw_meta, 
+  suspicious_plate_id = suspicious_plate_ids, 
+  max_coeff = threshold))
+```
+
+Finally, we can use `boxplot_outlier_extr()` to plot extractant plates containing suspicious wells, so that we can decide whether of not to remove some outlier wells. To do so, we can, once more, take advantage of `remove_wells()`, see also above, `?remove_wells()` and the vignette `handling-outliers`. Should there be too many plates for a proper visualization, split `suspicious_extr` in subsets.
+
+```{r}
+# plot outliers
+suspicious_extr |> boxplot_outlier_extr(max_coeff = threshold)
+```
+
+**Now we don't see much, but when there is an outlier, we can directly spot which well, because its well_id is shown on the plot –\> needs improvement in the raw data here!**
+
+Let's say that we want to remove the well C8 of plate 1, wells A8 and B8 of plate 3 because they are a obvious outliers, and no wells in the other plates. the plot given by `boxplot_outlier_extr()` gives all necessary information to do so. First, we create a small tibble that will serve to construct the tibble of wells to remove: first get dataset and plate_ids from `suspicious_extr`, then add a column "plate_order" that will help checking which plate is which (compared to the plot, useful when several plates are plotted).
+
+```{r}
+# Construct tibble to remove
+(plate_ids <- suspicious_extr |> 
+  dplyr::ungroup() |> 
+  dplyr::select(dataset, plate_id) |> unique()) 
+(plate_ids <- plate_ids |> # save numbers for plate order in the plot
+  dplyr::mutate(plate_order = seq(1, nrow(plate_ids))))
+```
+
+Then, we create a vector with wells to remove (reading through boxplots from top to bottom).
+
+:::: callout-tip
+## Manually remove outliers
+
+::: {#tip-input-threshold-extr .callout-tip}
+In the following chunk, we need to manually decide which wells to remove, based on the boxplots produced above.
+
+- Make sure to deal appropriately with plates that require 2 outliers or no outlier to be removed (see example below)
+- Use a number \> nb of plates if there is no plate with 2 or zero outlier
+:::
+::::
+
+To remove well C8 from plate 1, and wells A8 and B8 from plate 3:
+
+```{r}
+#** !!! MANUAL INPUT !!! *
+
+# Which plate needs 2 outliers removed?
+plate_with_2_outliers <- c(3) 
+# Which plate needs no outlier removed?
+plate_without_outliers <- c(2, 4, 5) 
+
+# Which wells are outliers? 
+well_ids <- c("C8", "A8", "B8") # use NA for plates without outliers
+```
+
+Then we finish constructing the tibble of wells to be removed
+
+```{r}
+to_remove <- plate_ids |> 
+  dplyr::bind_rows(
+    plate_ids |> dplyr::filter(plate_order %in% plate_with_2_outliers)) |> 
+  dplyr::filter_out(plate_order %in% plate_without_outliers) |> #remove plate without outliers
+  dplyr::arrange(plate_order) |> #reorder plates (if needed)
+  dplyr::mutate(well_id = well_ids) |> 
+  dplyr::select(!plate_order)
+
+# check it out
+to_remove
+```
+
+And we remove it from extractant data (which is the same as removing 3 rows)
+
+```{r}
+extr_data_clean <- extr_data |> remove_wells(to_remove) 
+```
+
+Finally, we re-run the average on cleaned extractant data
+
+```{r}
+extr_avg_clean <- extractant_average(
+  extractant_data = extr_data_clean, extr_def = "extr") 
+```
+
+Check that the highest coefficient of variation are now indeed satisfactory
+
+```{r}
+extr_avg_clean |> dplyr::arrange(dplyr::desc(blank_coeff_var_percent)) |> head()
+```
+
+## 3.4 - Blank-correction of sample absorbance
+
+Now that we are confident in the per-plate average value of raw absorbance of extractant wells, we can finally blank-correct all sample data
+
+```{r}
+abs_corrected <- 
+  blank_correct_abs(
+    raw_wells_data = raw_meta, 
+    per_plate_avg_blank = extr_avg_clean,
+    map_to_exclude = c("empty","Std","extr")) 
+
+```
+
+# 4 - Epilogue
+
+We now have blank-corrected both standard data (`std_corrected`) and sample data (`abs_corrected`), and we can proceed to computing the linear model to obtain the regression equation to convert blank-corrected absorbance data to (N-species) concentration data, as is detailed in vignette **xxx - under development**

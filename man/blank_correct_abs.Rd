@@ -38,6 +38,6 @@ data <- tidy_plates
 extractant_average <- tidy_plates |> extractant_average()
 blank_correct_abs(
     raw_wells_data = data,
-    per_plate_avg_blank = extractant_average |> dplyr::rename(blank_avg = extr_avg),
+    per_plate_avg_blank = extractant_average,
     map_to_exclude = c("empty","Std","extr"))
 }

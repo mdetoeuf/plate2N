@@ -24,7 +24,7 @@
 #' extractant_average <- tidy_plates |> extractant_average()
 #' suspicious_plate_id <- qc_raw_extr(data, max_coeff = 0.5)
 qc_raw_extr <- function(
-    #extractant_average = NULL, # must be a tibble in format as `extractant_average(tidy_plates)$extr_avg`
+    #extractant_average = NULL, # must be a tibble in format as `extractant_average(tidy_plates)$blank_avg`
     data,
     max_coeff = 5,
     suppress_message = FALSE,
@@ -37,7 +37,7 @@ qc_raw_extr <- function(
  # }
 
   # if all coefficient of variation below thrsehold --> YAY
-  if (max(extractant_average$extr_coeff_var_percent) < max_coeff) {
+  if (max(extractant_average$blank_coeff_var_percent) < max_coeff) {
     if (!suppress_message) {
       message(paste0(
         "Good news: all plates show a satisfactorily small variation ",
@@ -48,11 +48,11 @@ qc_raw_extr <- function(
     }
 
   # ELSE, if threshold is passed
-  } else if (max(extractant_average$extr_coeff_var_percent) >= max_coeff)  {
+  } else if (max(extractant_average$blank_coeff_var_percent) >= max_coeff)  {
 
     # store id of problematic plates
     suspicious_plate_id <- extractant_average |>
-      dplyr::filter(extr_coeff_var_percent > max_coeff) |>
+      dplyr::filter(blank_coeff_var_percent > max_coeff) |>
       dplyr::select(plate_id) |> as.vector() |> magrittr::extract2(1)
 
     # send a warning

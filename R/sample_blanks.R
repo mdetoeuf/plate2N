@@ -24,7 +24,7 @@ extract_extractant <- function(
   return(extractant_data)
 }
 
-utils::globalVariables(c("extr_sdev", "extr_avg", "plate_id", "map", "abs"))
+utils::globalVariables(c("blank_sdev", "blank_avg", "plate_id", "map", "abs"))
 
 
 #' Computing the per-plate average for raw absorbance of the extractant (blank for samples)
@@ -41,7 +41,7 @@ utils::globalVariables(c("extr_sdev", "extr_avg", "plate_id", "map", "abs"))
 #'
 #' @examples
 #' data = tidy_plates
-#' (extr_avg <- extractant_average(data))
+#' (blank_avg <- extractant_average(data))
 extractant_average <- function(
     data = NULL, #either data or extractant_data must be provided
     extractant_data = NULL,
@@ -57,14 +57,14 @@ extractant_average <- function(
     dplyr::mutate(abs = as.numeric(abs)) |>
     dplyr::summarise(
       .by = c(plate_id, map),
-      extr_avg = mean(abs),
-      extr_sdev = stats::sd(abs)) |>
-    dplyr::mutate(extr_coeff_var_percent = 100 * extr_sdev / extr_avg)
+      blank_avg = mean(abs),
+      blank_sdev = stats::sd(abs)) |>
+    dplyr::mutate(blank_coeff_var_percent = 100 * blank_sdev / blank_avg)
 
   return(extractant_average)
 }
 
-utils::globalVariables(c("extr_coeff_var_percent"))
+utils::globalVariables(c("blank_coeff_var_percent"))
 
 
 
@@ -97,7 +97,7 @@ plot_blank_var_distrib <- function(
   }
 
   plot_distrib <- extractant_average |>
-    ggplot2::ggplot(aes(x = extr_coeff_var_percent)) +
+    ggplot2::ggplot(aes(x = blank_coeff_var_percent)) +
     ggplot2::theme_minimal() +
     ggplot2::geom_histogram(bins = 100) +
     #geom_density() +
