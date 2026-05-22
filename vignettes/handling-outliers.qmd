@@ -1,0 +1,125 @@
+---
+title: "handling-outliers"
+vignette: >
+  %\VignetteIndexEntry{handling-outliers}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{quarto::html}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#| label: setup
+library(plate2N)
+```
+
+::: callout-caution
+## Work in progress
+
+This vignette is still under development, bugs are to be expected
+:::
+
+# TO DO
+
+- introduce example data
+
+  - tidy_plates
+
+  - tidy_table
+
+  - failed_wells_example
+
+# Introduction
+
+This vignette introduces the handling of several functions to help deal with outliers, at several steps of the data transformation pipeline.
+
+**--\> Briefly introduce all functions**
+
+# 1 - Manual removal of single wells
+
+It is not unusual to have to manually remove wells from a data set. This is often due to pipetting errors, whether we know that we failed a well in the lab, or we identify aberrant values during data processing (see also **vignette xx - upcoming** for how to identify such wells). `remove_wells()` does just that.
+
+According to the logic of this package, 3 pieces of information uniquely define a well: `dataset`, `plate_id` and `well_id`. The function `remove_wells()` allows manual removal of wells from a table formated as `tidy_table`, taking a small tibble such as `failed_wells_example` to decide which wells to remove.
+
+```{r}
+# check out input
+tidy_table ; failed_wells_example
+
+# remove wells
+(clean_table <- tidy_table |> remove_wells(failed_wells_example))
+
+# check how many rows were removed
+tidy_table |> nrow() ; failed_wells_example |> nrow() ; clean_table |> nrow()
+```
+
+# 2 - Defining wells to remove
+
+In **vignette xx - upcoming**, we go in detail into how to identify potential outlier wells at various stages of the analytical pipeline. `failed_wells_example` has a very simple structure that can easily be created either in R or imported from a csv file.
+
+## 2.1 - From a csv
+
+It can he handy to have a printed table in the lab, to quickly fill in by hand the information on wells where we know that something went wrong. For this, the function `failed_wells_template()` quickly generates a table that can be exported as a csv, printed, then manually encoded and imported back into R. By default, it will generate a csv with 30 rows.
+
+```{r}
+(failed_wells_template <- failed_wells_template(nrow = 30))
+```
+
+Exporting as a csv can be done with
+
+`failed_wells_template |> readr::write_csv("path/to/folder/failed_wells_template.csv")`
+
+Importing it back can be done with
+
+`readr::read_csv("path/to/folder/failed_wells_lab.csv")`
+
+## 2.2 - Manually in R
+
+**Option 1:** use `dplyr::select()` and `dplyr::filter()` to extract `failed_wells` from an existing table
+
+```{r}
+failed_wells <- tidy_table |> 
+  dplyr::select(dataset, plate_id, well_id) |> 
+  dplyr::filter(
+    dataset == "expe1" &
+    ((plate_id == "M16" & well_id == "A1") |
+       (plate_id == "M23" & well_id == "H12"))
+  )
+```
+
+**Option 2:** Encode it manually from scratch, using `tibble::tibble()`.
+
+```{r}
+failed_wells <- tibble::tibble(
+  dataset = rep("expe1", 2),
+  plate_id = c("M16", "M23"),
+  well_id = c("A1", "H12")
+)
+```
+
+# 3 - Quality Check of raw absorbance readings
+
+There is a range of values that are deemed acceptable for absorbance readings. Whereas there is a long-lasting tradition of setting "acceptable" absorbance values between 0.1 and 1, in reality, the acceptable range will depend on experiment, usage and quality of the spectrophotomer. Note that for N dosage, values lower than 0.1 are not rare, especially for blanks and lower values in the standard curve.
+
+`qc_raw_abs()` checks raw absorbance values in a dataset and returns a table allowing the identification of suspicious wells.
+
+By default, `qc_raw_abs()` also draws a plot of the distribution of raw absorbance values in the data set, and sends either a message (all is well) or a warning (some wells are out of range). These outputs can be repressed. See `?qc_raw_abs()` for more details.
+
+Default range of accepted absorbance is \[0.1, 1\].
+
+```{r}
+# check out the raw table
+tidy_plates
+
+# run the function
+(suspicious_wells <- qc_raw_abs(tidy_plates, min_abs = 0.09, max_abs = 1))
+```
+
+It can happen that some wells are very striking, e.g., a single well with an absorbance of 3 where the rest of the dataset is around 1 and the experiment has been ran in 4 technical replicates (there should always be 4 wells for each value). In such cases, the output of `qc_raw_abs()` can be used in combination with `remove_wells()`, possibly with additional selection and filtering steps as shown above.
+
+```{r}
+tidy_plates |> remove_wells(suspicious_wells)
+```

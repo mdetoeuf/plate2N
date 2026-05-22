@@ -20,13 +20,7 @@ library(plate2N)
 
 # **TO DO**
 
-## introduce example data (tidy_plates, tidy_table, failed_wells_example, lm_outputs, molar_masses)
-
-## failed_wells_template()
-
-## remove_wells()
-
-## qc_raw_abs()
+## introduce example data (tidy_plates, tidy_table, lm_outputs, molar_masses)
 
 ## extract_std_blanc() (& extract_std_data()?)
 

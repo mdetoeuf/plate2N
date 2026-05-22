@@ -37,9 +37,9 @@ Imports:
     tidyselect
 Suggests: 
     knitr,
+    quarto,
     rmarkdown
-VignetteBuilder: 
-    knitr
+VignetteBuilder: knitr, quarto
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
