@@ -15,6 +15,9 @@ library(plate2N)
   with higher absorbance than row B)
 - Make sure there is a funky well in some extractant to check out the
   outlier removal plot
+- Split actions within extract_std_blank so that average computes in a
+  separate function, so it can be more easily re-run after outlier
+  removal, then adapt code of the re-run
 
 ## Introduction
 
@@ -48,6 +51,9 @@ vignettes, run the following commands
 [`vignette("import-tidy", package = "plate2N")`](https://mdetoeuf.github.io/plate2N/articles/import-tidy.md)
 
 [`vignette("handling-outliers", package = "plate2N")`](https://mdetoeuf.github.io/plate2N/articles/handling-outliers.md)
+
+Tidy data as imported according to `import-tidy` should look something
+like this:
 
 ``` r
 
@@ -518,7 +524,8 @@ threshold <- 5
 
 suspicious_plate_ids <- raw_meta |> 
   qc_raw_extr(suppress_message = FALSE, max_coeff = threshold)
-#> Good news: all plates show a satisfactorily small variation for raw blank (extractant) absorbance values. This means that the coefficient of variation is below the threshold of 5%.
+#> 
+#>         Good news: all plates show a satisfactorily small variation for raw blank (extractant) absorbance values. This means that the coefficient of variation is below the threshold of 5%.
 ```
 
 With a very low threshold (for the sake of the example), we get a
@@ -530,7 +537,8 @@ threshold <- 0.5
 
 suspicious_plate_ids <- raw_meta |> 
   qc_raw_extr(suppress_warning = FALSE, max_coeff = threshold)
-#> Warning in qc_raw_extr(raw_meta, suppress_warning = FALSE, max_coeff = threshold): There is a big variation in absorbance values for the blank (more than 0.5%).
+#> Warning in qc_raw_extr(raw_meta, suppress_warning = FALSE, max_coeff = threshold): 
+#>         There is a big variation in absorbance values for the blank (more than 0.5%).
 #>         Remove the most unlikely values / remove outliers manually.
 #>         Suspicious plate ID's are returned
 ```
@@ -587,7 +595,7 @@ suspicious_extr |> boxplot_outlier_extr(max_coeff = threshold)
 spot which well, because its well_id is shown on the plot –\> needs
 improvement in the raw data here!**
 
-Let’s say that we want to remove the well C8 of plate 1, wells A8 and B8
+Let’s say that we want to remove the well B8 of plate 1, wells A8 and C8
 of plate 3 because they are a obvious outliers, and no wells in the
 other plates. the plot given by
 [`boxplot_outlier_extr()`](https://mdetoeuf.github.io/plate2N/reference/boxplot_outlier_extr.md)
@@ -638,7 +646,7 @@ from top to bottom).
 > > - Use a number \> nb of plates if there is no plate with 2 or zero
 > >   outlier
 
-To remove well C8 from plate 1, and wells A8 and B8 from plate 3:
+To remove well B8 from plate 1, and wells A8 and C8 from plate 3:
 
 ``` r
 
@@ -650,7 +658,7 @@ plate_with_2_outliers <- c(3)
 plate_without_outliers <- c(2, 4, 5) 
 
 # Which wells are outliers? 
-well_ids <- c("C8", "A8", "B8") # use NA for plates without outliers
+well_ids <- c("B8", "A8", "C8") # only fill in well_ids that need to be removed, in the order of the plates
 ```
 
 Then we finish constructing the tibble of wells to be removed
@@ -670,9 +678,9 @@ to_remove
 #> # A tibble: 3 × 3
 #>   dataset plate_id well_id
 #>   <chr>   <chr>    <chr>  
-#> 1 Nmin    NO3_1F1  C8     
+#> 1 Nmin    NO3_1F1  B8     
 #> 2 Nmin    NO3_1F3  A8     
-#> 3 Nmin    NO3_1F3  B8
+#> 3 Nmin    NO3_1F3  C8
 ```
 
 And we remove it from extractant data (which is the same as removing 3
@@ -700,7 +708,7 @@ extr_avg_clean |> dplyr::arrange(dplyr::desc(blank_coeff_var_percent)) |> head()
 #> # A tibble: 5 × 5
 #>   plate_id map   blank_avg blank_sdev blank_coeff_var_percent
 #>   <chr>    <chr>     <dbl>      <dbl>                   <dbl>
-#> 1 NO3_1F3  extr     0.0847   0.00175                    2.07 
+#> 1 NO3_1F3  extr     0.0842   0.000753                   0.894
 #> 2 NO3_1F2  extr     0.0821   0.000641                   0.780
 #> 3 NO3_1F1  extr     0.0827   0.000488                   0.590
 #> 4 NO3_1F4  extr     0.0838   0.000463                   0.553
@@ -715,7 +723,7 @@ data
 
 ``` r
 
-abs_corrected <- 
+sample_corrected <- 
   blank_correct_abs(
     raw_wells_data = raw_meta, 
     per_plate_avg_blank = extr_avg_clean,
@@ -728,7 +736,7 @@ abs_corrected <-
 ## 4 - Epilogue
 
 We now have blank-corrected both standard data (`std_corrected`) and
-sample data (`abs_corrected`), and we can proceed to computing the
+sample data (`sample_corrected`), and we can proceed to computing the
 linear model to obtain the regression equation to convert
 blank-corrected absorbance data to (N-species) concentration data, as is
 detailed in vignette **xxx - under development**

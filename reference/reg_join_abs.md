@@ -35,8 +35,8 @@ A tibble joining linear model data with absorbance data
 
 ``` r
 lm_table <- lm_output$lm_data
-abs_data <- abs_corrected
-reg_join_abs(lm_table, abs_data, target_sp = "N")
+sample_data <- sample_corrected
+reg_join_abs(lm_table, sample_data, target_sp = "N")
 #> # A tibble: 528 × 10
 #>    dataset plate_id map      abs_corrected std_sp target_sp std_unit     slope
 #>    <chr>   <chr>    <chr>            <dbl> <chr>  <chr>     <chr>        <dbl>

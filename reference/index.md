@@ -2,8 +2,6 @@
 
 ## All functions
 
-- [`abs_corrected`](https://mdetoeuf.github.io/plate2N/reference/abs_corrected.md)
-  : Example of Blank-corrected Absorbance Data (samples)
 - [`blank_correct_abs()`](https://mdetoeuf.github.io/plate2N/reference/blank_correct_abs.md)
   : Transform Raw Absorbance Data into Blank-corrected Absorbance
 - [`boxplot_outlier_extr()`](https://mdetoeuf.github.io/plate2N/reference/boxplot_outlier_extr.md)
@@ -62,6 +60,8 @@
   Absorbance Data (samples)
 - [`remove_wells()`](https://mdetoeuf.github.io/plate2N/reference/remove_wells.md)
   : Clean a tidy table from undesired wells
+- [`sample_corrected`](https://mdetoeuf.github.io/plate2N/reference/sample_corrected.md)
+  : Example of Blank-corrected Absorbance Data (samples)
 - [`skanit_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/skanit_to_tibble.md)
   : Import 96-well plate data from Skanit format
 - [`std_corrected`](https://mdetoeuf.github.io/plate2N/reference/std_corrected.md)

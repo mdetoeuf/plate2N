@@ -35,7 +35,8 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/blank-correction.html">blank-correction</a></li>
+<li><a class="dropdown-item" href="../articles/abs-to-conc.html">abs-to-conc</a></li>
+    <li><a class="dropdown-item" href="../articles/blank-correction.html">blank-correction</a></li>
     <li><a class="dropdown-item" href="../articles/handling-outliers.html">handling-outliers</a></li>
     <li><a class="dropdown-item" href="../articles/import-tidy.html">import-tidy</a></li>
     <li><a class="dropdown-item" href="../articles/translate-abs.html">translate-abs</a></li>
@@ -85,6 +86,7 @@
 <ul>
 <li>Make sure there is a “bad” curve in the example dataset (with blank with higher absorbance than row B)</li>
 <li>Make sure there is a funky well in some extractant to check out the outlier removal plot</li>
+<li>Split actions within extract_std_blank so that average computes in a separate function, so it can be more easily re-run after outlier removal, then adapt code of the re-run</li>
 </ul></section><section class="section level2"><h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
 <p>This vignette shows the basic functions that allow the correction of raw absorbance data (<code>abs</code>) to blank-corrected absorbance data, referred to as <code>abs_corrected</code> throughout this package.</p>
@@ -96,6 +98,7 @@
 <p>The vignette <code>import-tidy</code> shows how to import and tidy absorbance data. The vignette <code>handling-outliers</code> shows how to run some preliminary quality checks and possibly remove some first outliers. To access those vignettes, run the following commands</p>
 <p><code><a href="../articles/import-tidy.html">vignette("import-tidy", package = "plate2N")</a></code></p>
 <p><code><a href="../articles/handling-outliers.html">vignette("handling-outliers", package = "plate2N")</a></code></p>
+<p>Tidy data as imported according to <code>import-tidy</code> should look something like this:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tidy_plates</span></span>
@@ -451,7 +454,8 @@
 <span></span>
 <span><span class="va">suspicious_plate_ids</span> <span class="op">&lt;-</span> <span class="va">raw_meta</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="../reference/qc_raw_extr.html">qc_raw_extr</a></span><span class="op">(</span>suppress_message <span class="op">=</span> <span class="cn">FALSE</span>, max_coeff <span class="op">=</span> <span class="va">threshold</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Good news: all plates show a satisfactorily small variation for raw blank (extractant) absorbance values. This means that the coefficient of variation is below the threshold of 5%.</span></span></code></pre></div>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;         Good news: all plates show a satisfactorily small variation for raw blank (extractant) absorbance values. This means that the coefficient of variation is below the threshold of 5%.</span></span></code></pre></div>
 </div>
 <p>With a very low threshold (for the sake of the example), we get a warning message (here, all plates are fakly “suspicious”)</p>
 <div class="cell">
@@ -460,7 +464,8 @@
 <span></span>
 <span><span class="va">suspicious_plate_ids</span> <span class="op">&lt;-</span> <span class="va">raw_meta</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="../reference/qc_raw_extr.html">qc_raw_extr</a></span><span class="op">(</span>suppress_warning <span class="op">=</span> <span class="cn">FALSE</span>, max_coeff <span class="op">=</span> <span class="va">threshold</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning in qc_raw_extr(raw_meta, suppress_warning = FALSE, max_coeff = threshold): There is a big variation in absorbance values for the blank (more than 0.5%).</span></span>
+<span><span class="co">#&gt; Warning in qc_raw_extr(raw_meta, suppress_warning = FALSE, max_coeff = threshold): </span></span>
+<span><span class="co">#&gt;         There is a big variation in absorbance values for the blank (more than 0.5%).</span></span>
 <span><span class="co">#&gt;         Remove the most unlikely values / remove outliers manually.</span></span>
 <span><span class="co">#&gt;         Suspicious plate ID's are returned</span></span></code></pre></div>
 </div>
@@ -502,7 +507,7 @@
 </div>
 </div>
 <p><strong>Now we don’t see much, but when there is an outlier, we can directly spot which well, because its well_id is shown on the plot –&gt; needs improvement in the raw data here!</strong></p>
-<p>Let’s say that we want to remove the well C8 of plate 1, wells A8 and B8 of plate 3 because they are a obvious outliers, and no wells in the other plates. the plot given by <code><a href="../reference/boxplot_outlier_extr.html">boxplot_outlier_extr()</a></code> gives all necessary information to do so. First, we create a small tibble that will serve to construct the tibble of wells to remove: first get dataset and plate_ids from <code>suspicious_extr</code>, then add a column “plate_order” that will help checking which plate is which (compared to the plot, useful when several plates are plotted).</p>
+<p>Let’s say that we want to remove the well B8 of plate 1, wells A8 and C8 of plate 3 because they are a obvious outliers, and no wells in the other plates. the plot given by <code><a href="../reference/boxplot_outlier_extr.html">boxplot_outlier_extr()</a></code> gives all necessary information to do so. First, we create a small tibble that will serve to construct the tibble of wells to remove: first get dataset and plate_ids from <code>suspicious_extr</code>, then add a column “plate_order” that will help checking which plate is which (compared to the plot, useful when several plates are plotted).</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Construct tibble to remove</span></span>
@@ -544,7 +549,7 @@
 </div>
 </blockquote>
 </div>
-<p>To remove well C8 from plate 1, and wells A8 and B8 from plate 3:</p>
+<p>To remove well B8 from plate 1, and wells A8 and C8 from plate 3:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">#** !!! MANUAL INPUT !!! *</span></span>
@@ -555,7 +560,7 @@
 <span><span class="va">plate_without_outliers</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">4</span>, <span class="fl">5</span><span class="op">)</span> </span>
 <span></span>
 <span><span class="co"># Which wells are outliers? </span></span>
-<span><span class="va">well_ids</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"C8"</span>, <span class="st">"A8"</span>, <span class="st">"B8"</span><span class="op">)</span> <span class="co"># use NA for plates without outliers</span></span></code></pre></div>
+<span><span class="va">well_ids</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"B8"</span>, <span class="st">"A8"</span>, <span class="st">"C8"</span><span class="op">)</span> <span class="co"># only fill in well_ids that need to be removed, in the order of the plates</span></span></code></pre></div>
 </div>
 <p>Then we finish constructing the tibble of wells to be removed</p>
 <div class="cell">
@@ -573,9 +578,9 @@
 <span><span class="co">#&gt; # A tibble: 3 × 3</span></span>
 <span><span class="co">#&gt;   dataset plate_id well_id</span></span>
 <span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;  </span></span>
-<span><span class="co">#&gt; 1 Nmin    NO3_1F1  C8     </span></span>
+<span><span class="co">#&gt; 1 Nmin    NO3_1F1  B8     </span></span>
 <span><span class="co">#&gt; 2 Nmin    NO3_1F3  A8     </span></span>
-<span><span class="co">#&gt; 3 Nmin    NO3_1F3  B8</span></span></code></pre></div>
+<span><span class="co">#&gt; 3 Nmin    NO3_1F3  C8</span></span></code></pre></div>
 </div>
 <p>And we remove it from extractant data (which is the same as removing 3 rows)</p>
 <div class="cell">
@@ -595,7 +600,7 @@
 <span><span class="co">#&gt; # A tibble: 5 × 5</span></span>
 <span><span class="co">#&gt;   plate_id map   blank_avg blank_sdev blank_coeff_var_percent</span></span>
 <span><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;     &lt;dbl&gt;      &lt;dbl&gt;                   &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1 NO3_1F3  extr     0.0847   0.00175                    2.07 </span></span>
+<span><span class="co">#&gt; 1 NO3_1F3  extr     0.0842   0.000753                   0.894</span></span>
 <span><span class="co">#&gt; 2 NO3_1F2  extr     0.0821   0.000641                   0.780</span></span>
 <span><span class="co">#&gt; 3 NO3_1F1  extr     0.0827   0.000488                   0.590</span></span>
 <span><span class="co">#&gt; 4 NO3_1F4  extr     0.0838   0.000463                   0.553</span></span>
@@ -606,7 +611,7 @@
 <p>Now that we are confident in the per-plate average value of raw absorbance of extractant wells, we can finally blank-correct all sample data</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">abs_corrected</span> <span class="op">&lt;-</span> </span>
+<code class="sourceCode R"><span><span class="va">sample_corrected</span> <span class="op">&lt;-</span> </span>
 <span>  <span class="fu"><a href="../reference/blank_correct_abs.html">blank_correct_abs</a></span><span class="op">(</span></span>
 <span>    raw_wells_data <span class="op">=</span> <span class="va">raw_meta</span>, </span>
 <span>    per_plate_avg_blank <span class="op">=</span> <span class="va">extr_avg_clean</span>,</span>
@@ -617,7 +622,7 @@
 </div>
 </section></section><section class="section level2"><h2 id="epilogue">4 - Epilogue<a class="anchor" aria-label="anchor" href="#epilogue"></a>
 </h2>
-<p>We now have blank-corrected both standard data (<code>std_corrected</code>) and sample data (<code>abs_corrected</code>), and we can proceed to computing the linear model to obtain the regression equation to convert blank-corrected absorbance data to (N-species) concentration data, as is detailed in vignette <strong>xxx - under development</strong></p>
+<p>We now have blank-corrected both standard data (<code>std_corrected</code>) and sample data (<code>sample_corrected</code>), and we can proceed to computing the linear model to obtain the regression equation to convert blank-corrected absorbance data to (N-species) concentration data, as is detailed in vignette <strong>xxx - under development</strong></p>
 </section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);

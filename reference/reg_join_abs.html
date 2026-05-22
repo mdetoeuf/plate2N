@@ -18,7 +18,8 @@
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/blank-correction.html">blank-correction</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/abs-to-conc.html">abs-to-conc</a></li>
+    <li><a class="dropdown-item" href="../articles/blank-correction.html">blank-correction</a></li>
     <li><a class="dropdown-item" href="../articles/handling-outliers.html">handling-outliers</a></li>
     <li><a class="dropdown-item" href="../articles/import-tidy.html">import-tidy</a></li>
     <li><a class="dropdown-item" href="../articles/translate-abs.html">translate-abs</a></li>
@@ -74,8 +75,8 @@ but containing only sample wells, no empty wells, standard curve wells or extrac
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">lm_table</span> <span class="op">&lt;-</span> <span class="va">lm_output</span><span class="op">$</span><span class="va">lm_data</span></span></span>
-<span class="r-in"><span><span class="va">abs_data</span> <span class="op">&lt;-</span> <span class="va">abs_corrected</span></span></span>
-<span class="r-in"><span><span class="fu">reg_join_abs</span><span class="op">(</span><span class="va">lm_table</span>, <span class="va">abs_data</span>, target_sp <span class="op">=</span> <span class="st">"N"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">sample_data</span> <span class="op">&lt;-</span> <span class="va">sample_corrected</span></span></span>
+<span class="r-in"><span><span class="fu">reg_join_abs</span><span class="op">(</span><span class="va">lm_table</span>, <span class="va">sample_data</span>, target_sp <span class="op">=</span> <span class="st">"N"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 528 × 10</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    dataset plate_id map      abs_corrected std_sp target_sp std_unit     slope</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
