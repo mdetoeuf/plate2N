@@ -4,10 +4,15 @@
 \alias{vertical_to_tidy}
 \title{From vertical plate data to tidy data using the tidyr package}
 \usage{
-vertical_to_tidy(vertical_data)
+vertical_to_tidy(vertical_data, abs_def = "abs", map_def = "map")
 }
 \arguments{
 \item{vertical_data}{As generated from either \code{\link[=verticalize_plates]{verticalize_plates()}} or \code{\link[=join_abs_map]{join_abs_map()}}.}
+
+\item{abs_def, map_def}{Strings defining the 2 types of data to be recovered.
+They correspond to the prefixes added to column names in a previous step
+with \code{join_abs_map()} (default "abs" and "map", respectively). \code{abs_def}
+and \code{map_def} also define column names in the output table}
 }
 \value{
 A table in a tidy format for downstream analysis
@@ -20,6 +25,8 @@ map_file <- system.file("extdata", "csv_map.csv", package = "plate2N")
 abs_folder <- system.file("extdata", "txt_examples/", package = "plate2N")
 map_tibble <- csv_to_tibble(map_file)
 abs_tibble <- txt_to_tibble(abs_folder)
-joined_vertical <- join_abs_map(abs_tibble, map_tibble, dataset = "Nmin-")
-tidy_data <- vertical_to_tidy(joined_vertical)
+joined_vertical <- join_abs_map(
+    abs_tibble, map_tibble,
+    dataset = "Nmin-", abs_map = c("abs-", "map-"))
+(tidy_data <- vertical_to_tidy(joined_vertical, abs_def = "abs", map_def = "map"))
 }
