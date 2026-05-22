@@ -40,7 +40,8 @@ qc_raw_extr <- function(
   if (max(extractant_average$blank_coeff_var_percent) < max_coeff) {
     if (!suppress_message) {
       message(paste0(
-        "Good news: all plates show a satisfactorily small variation ",
+        "
+        Good news: all plates show a satisfactorily small variation ",
         "for raw blank (extractant) absorbance values. ",
         "This means that the coefficient of variation is below the threshold of ",
         max_coeff,
@@ -58,7 +59,8 @@ qc_raw_extr <- function(
     # send a warning
     if (!suppress_warning) {
       warning(paste0(
-        "There is a big variation in absorbance values for the blank (more than ",
+        "
+        There is a big variation in absorbance values for the blank (more than ",
         max_coeff,
         "%).
         Remove the most unlikely values / remove outliers manually.

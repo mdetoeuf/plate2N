@@ -1,0 +1,32 @@
+---
+title: "abs-to-conc"
+vignette: >
+  %\VignetteIndexEntry{abs-to-conc}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+---
+
+```{r}
+#| label: setup
+library(plate2N)
+```
+
+# Introduction
+
+In this vignette, we cover the steps from blank-corrected absorbance to concentration in nitrogen \[mg N / L\], although this can easily be used for dosing other molecules, as long as the Beer-Lambert equation is respected (the relationship between absorbance and concentration is linear)[^1].
+
+[^1]: To adapt to other compounds, you may need to add molar masses into the data \`molar_masses\`, see later.
+
+::: callout-important
+## Prerequisites 
+
+- data has been imported and tidied, see `vignette("import-tidy", package = "plate2N")`
+
+- data has been blank-corrected, see `vignette("blank-correction", package = "plate2N")`
+
+- Outliers have been removed throughout that process, see previous vignettes and also `vignette("handling-outliers", package = "plate2N")`
+:::
