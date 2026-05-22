@@ -38,30 +38,30 @@ the `std_conc` column of `metadata`.
 
 ``` r
 metadata
-#> # A tibble: 5 × 16
-#>   plate_id date  time  sampling_time std_column std_sp std_unit    std_prep
-#>   <chr>    <lgl> <lgl> <chr>         <chr>      <chr>  <chr>       <chr>   
-#> 1 NO3_1F1  NA    NA    t1            1-12       NO3    mg NO3- L-1 H2O     
-#> 2 NO3_1F2  NA    NA    t1            1-12       NO3    mg NO3- L-1 H2O     
-#> 3 NO3_1F3  NA    NA    t1            1-12       NO3    mg NO3- L-1 H2O     
-#> 4 NO3_1F4  NA    NA    t1            1-12       NO3    mg NO3- L-1 H2O     
-#> 5 NO3_1F5  NA    NA    t1            1-12       NO3    mg NO3- L-1 H2O     
+#> # A tibble: 5 × 17
+#>   dataset plate_id date  time  sampling_time std_column std_sp std_unit std_prep
+#>   <chr>   <chr>    <lgl> <lgl> <chr>         <chr>      <chr>  <chr>    <chr>   
+#> 1 Nmin    NO3_1F1  NA    NA    t1            1-12       NO3    mg NO3-… H2O     
+#> 2 Nmin    NO3_1F2  NA    NA    t1            1-12       NO3    mg NO3-… H2O     
+#> 3 Nmin    NO3_1F3  NA    NA    t1            1-12       NO3    mg NO3-… H2O     
+#> 4 Nmin    NO3_1F4  NA    NA    t1            1-12       NO3    mg NO3-… H2O     
+#> 5 Nmin    NO3_1F5  NA    NA    t1            1-12       NO3    mg NO3-… H2O     
 #> # ℹ 8 more variables: std_conc <chr>, sample_dilution <chr>,
 #> #   extractant_column <lgl>, extractant_sp <chr>, extractant_unit <chr>,
 #> #   extractant_conc <dbl>, empty_column <lgl>, wait_min <chr>
 extract_curve(metadata)
-#> # A tibble: 40 × 3
-#>    plate_id row   std_conc
-#>    <chr>    <chr> <chr>   
-#>  1 NO3_1F1  A     0       
-#>  2 NO3_1F1  B     0.5     
-#>  3 NO3_1F1  C     1       
-#>  4 NO3_1F1  D     2       
-#>  5 NO3_1F1  E     4       
-#>  6 NO3_1F1  F     8       
-#>  7 NO3_1F1  G     16      
-#>  8 NO3_1F1  H     24      
-#>  9 NO3_1F2  A     0       
-#> 10 NO3_1F2  B     0.5     
+#> # A tibble: 40 × 4
+#>    dataset plate_id row   std_conc
+#>    <chr>   <chr>    <chr> <chr>   
+#>  1 Nmin    NO3_1F1  A     0       
+#>  2 Nmin    NO3_1F1  B     0.5     
+#>  3 Nmin    NO3_1F1  C     1       
+#>  4 Nmin    NO3_1F1  D     2       
+#>  5 Nmin    NO3_1F1  E     4       
+#>  6 Nmin    NO3_1F1  F     8       
+#>  7 Nmin    NO3_1F1  G     16      
+#>  8 Nmin    NO3_1F1  H     24      
+#>  9 Nmin    NO3_1F2  A     0       
+#> 10 Nmin    NO3_1F2  B     0.5     
 #> # ℹ 30 more rows
 ```
