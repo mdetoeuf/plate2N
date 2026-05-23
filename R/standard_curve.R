@@ -383,3 +383,43 @@ correct_std_blank <- function(
 }
 
 
+
+
+#' Compute per-dilution Averages for Standard Curves
+#'
+#' This needs better documentation!!
+#'
+#' @param std_data A tibble of std data
+#'
+#' @import dplyr tidyselect
+#'
+#' @returns Same, with less rows (bc average of same-dilution wells per plate).
+#'     Artificial column 13
+#' @export
+#'
+#' @examples
+#' std_corrected
+#' std_dilution_average(std_corrected)
+std_dilution_average <- function(
+    std_data) {
+
+  # compute per plate per std_conc mean
+  std_mean <- std_data |>
+    dplyr::group_by(plate_id, row) |>
+    dplyr::summarise(abs_mean = mean(abs_corrected))
+
+  # create a table to rejoin to the std mean, to get back the columns lost in the process
+  lost_columns <- std_data |> dplyr::arrange(plate_id, std_conc) |>
+    dplyr::select(!tidyselect::any_of(c("column", "unique_curve_id", "well_id", "unique_well_id", "abs_corrected"))) |> unique()
+
+  # rejoin the mean with the relevant lost columns and recreate fake columns sometimes needed for downstream steps: column = 13; well_id ; unique_curve_id
+  std_dilution_avg <- std_mean |>
+    dplyr::left_join(lost_columns, by = dplyr::join_by(plate_id, row)) |>
+    dplyr::mutate(
+      column = rep(13),
+      well_id = paste0(row, column),
+      unique_curve_id = paste0(plate_id, "_col", column),
+      .after = row)
+
+  return(std_dilution_avg)
+}
