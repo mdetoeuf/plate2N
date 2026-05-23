@@ -66,6 +66,8 @@
   : Import 96-well plate data from Skanit format
 - [`std_corrected`](https://mdetoeuf.github.io/plate2N/reference/std_corrected.md)
   : Example of Blank-corrected Data for Standard Curve
+- [`std_dilution_average()`](https://mdetoeuf.github.io/plate2N/reference/std_dilution_average.md)
+  : Compute per-dilution Averages for Standard Curves
 - [`suspicious_extr()`](https://mdetoeuf.github.io/plate2N/reference/suspicious_extr.md)
   : Extract suspicious extractant wells
 - [`suspicious_lm()`](https://mdetoeuf.github.io/plate2N/reference/suspicious_lm.md)

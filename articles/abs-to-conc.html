@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,13 +75,20 @@
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mdetoeuf.github.io/plate2N/">plate2N</a></span><span class="op">)</span></span></code></pre></div>
 </div>
+<section class="section level2"><h2 id="todo">TODO<a class="anchor" aria-label="anchor" href="#todo"></a>
+</h2>
+<ul>
+<li><p>write out last sections: 2.6, 3 and 4</p></li>
+<li><p>Consider creating a function for the multiple-curve QC (+ explain idea why it is relevant to look at it)</p></li>
+<li><p>For conversion: explain well difference btw mg N-sp/L and mg N/L, and how it relates to molar masses</p></li>
+</ul>
 <div>
 <blockquote>
 <p><strong>Work in progress</strong></p>
 <p>This vignette is still under development, bugs are to be expected</p>
 </blockquote>
 </div>
-<section class="section level2"><h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
+</section><section class="section level2"><h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
 <p>In this vignette, we cover the steps from blank-corrected absorbance to concentration in nitrogen [mg N / L], although this can easily be used for dosing other molecules, as long as the Beer-Lambert equation is respected (the relationship between absorbance and concentration is linear)<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;To adapt to other compounds, you may need to add molar masses into the data `molar_masses`, see later.&lt;/p&gt;"><sup>1</sup></a>.</p>
 <div>
@@ -145,26 +152,281 @@
 </div>
 </section><section class="section level2"><h2 id="compute-linear-model-on-standard-curves">2 - Compute linear model on Standard Curves<a class="anchor" aria-label="anchor" href="#compute-linear-model-on-standard-curves"></a>
 </h2>
-<section class="level2"><h3 id="lm_std_curve-suspicious_lm-plot_list_lm">lm_std_curve(), suspicious_lm() &amp; plot_list_lm()<a class="anchor" aria-label="anchor" href="#lm_std_curve-suspicious_lm-plot_list_lm"></a>
+<p><code><a href="../reference/lm_std_curve.html">lm_std_curve()</a></code> computes a per-curve linear regression between 2 columns of the input data with <code>lm(abs_corrected ~ 0 + std_conc, data = curve)</code> which is the linear model that constraints the curve to go through the origin. <code><a href="../reference/lm_std_curve.html">lm_std_curve()</a></code> returns a table containing one row per standard curve, and a series of information characterizing the performance of the linear model for that curve (see below and also <code>?lm_std_curve()</code>.</p>
+<section class="level2"><h3 id="compute-linear-model-round-1">2.1 - Compute linear model, round 1<a class="anchor" aria-label="anchor" href="#compute-linear-model-round-1"></a>
 </h3>
-</section><section class="level2"><h3 id="reg_join_abs-convert_molec">reg_join_abs() &amp; convert_molec()<a class="anchor" aria-label="anchor" href="#reg_join_abs-convert_molec"></a>
-</h3>
-</section><section class="level2"><h3 id="compute-linear-model-round-1">2.1 - Compute linear model, round 1<a class="anchor" aria-label="anchor" href="#compute-linear-model-round-1"></a>
-</h3>
+<p><code><a href="../reference/lm_std_curve.html">lm_std_curve()</a></code> defines the curve based on the groups (<code><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">dplyr::group_by()</a></code>) of the input data (<code>std_corrected</code> in the example below). Additionally to the columns <code>abs_corrected</code> and <code>std_conc</code> (numeric), the function also requires the column <code>unique_curve_id</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="op">(</span><span class="va">lm_table_raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lm_std_curve.html">lm_std_curve</a></span><span class="op">(</span><span class="va">std_corrected</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">plate_id</span>, <span class="va">column</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; # A tibble: 10 × 11</span></span>
+<span><span class="co">#&gt;    plate_id unique_curve_id  slope r_squared adj_r_squared     lm_p</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt;    &lt;chr&gt;            &lt;dbl&gt;     &lt;dbl&gt;         &lt;dbl&gt;    &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt;  1 NO3_1F1  NO3_1F1_col1    0.0189         1         0.999 6.49e-11</span></span>
+<span><span class="co">#&gt;  2 NO3_1F1  NO3_1F1_col12   0.0179         1         0.999 2.79e-10</span></span>
+<span><span class="co">#&gt;  3 NO3_1F2  NO3_1F2_col1    0.0178         1         0.999 6.03e-11</span></span>
+<span><span class="co">#&gt;  4 NO3_1F2  NO3_1F2_col12   0.0190         1         0.999 1.64e-10</span></span>
+<span><span class="co">#&gt;  5 NO3_1F3  NO3_1F3_col1    0.0186         1         0.999 2.07e-10</span></span>
+<span><span class="co">#&gt;  6 NO3_1F3  NO3_1F3_col12   0.0184         1         0.999 4.07e-10</span></span>
+<span><span class="co">#&gt;  7 NO3_1F4  NO3_1F4_col1    0.0178         1         0.999 2.16e-10</span></span>
+<span><span class="co">#&gt;  8 NO3_1F4  NO3_1F4_col12   0.0188         1         0.999 2.43e-10</span></span>
+<span><span class="co">#&gt;  9 NO3_1F5  NO3_1F5_col1    0.0194         1         0.999 1.31e-10</span></span>
+<span><span class="co">#&gt; 10 NO3_1F5  NO3_1F5_col12   0.0185         1         0.999 3.49e-10</span></span>
+<span><span class="co">#&gt; # ℹ 5 more variables: normality_lm_residuals &lt;chr&gt;, shapiro_p &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   outlier_rstudent &lt;dbl&gt;</span></span></code></pre></div>
+</div>
 </section><section class="level2"><h3 id="qc-standard-curves---check-conditions-of-linear-model">2.2 - QC Standard curves - check conditions of linear model<a class="anchor" aria-label="anchor" href="#qc-standard-curves---check-conditions-of-linear-model"></a>
 </h3>
+<p>The function <code><a href="../reference/suspicious_lm.html">suspicious_lm()</a></code> extracts from an <code>lm_table</code>` as produced above all plates where the linear model is not optimal, i.e., either the p-value of the model is above 0.05, or its residuals are not normally distributed, or there is heteroscedasticity of residuals. lm_table_suspicious can serve for identification of outliers</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># extract all plates where "something" is not perfect </span></span>
+<span><span class="op">(</span><span class="va">lm_table_suspicious</span> <span class="op">&lt;-</span> <span class="va">lm_table_raw</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/suspicious_lm.html">suspicious_lm</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; # A tibble: 1 × 11</span></span>
+<span><span class="co">#&gt;   plate_id unique_curve_id  slope r_squared adj_r_squared     lm_p</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;            &lt;dbl&gt;     &lt;dbl&gt;         &lt;dbl&gt;    &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 NO3_1F1  NO3_1F1_col12   0.0179         1         0.999 2.79e-10</span></span>
+<span><span class="co">#&gt; # ℹ 5 more variables: normality_lm_residuals &lt;chr&gt;, shapiro_p &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   outlier_rstudent &lt;dbl&gt;</span></span></code></pre></div>
+</div>
+<p>For visual aid (useful for larger data sets, <code><a href="../reference/plot_list_lm.html">plot_list_lm()</a></code> creates a list of plots of each curve given as argument (here: suspicious lm’s). Calling individual plots can help spotting possible outlier wells, which can be removed with similar steps as shown above.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">suspicious_lm_plotlist</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plot_list_lm.html">plot_list_lm</a></span><span class="op">(</span></span>
+<span>  lm_data <span class="op">=</span> <span class="va">lm_table_suspicious</span>,</span>
+<span>  std_data <span class="op">=</span> <span class="va">std_corrected</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># check one plot out</span></span>
+<span><span class="va">suspicious_lm_plotlist</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-4-1.png" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>When there are numerous suspicious curves, we can take advantage of the package <code>patchwork</code>` to display multiple plots (example hereunder with the whole lm_table)</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">full_plotlist</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plot_list_lm.html">plot_list_lm</a></span><span class="op">(</span></span>
+<span>  lm_data <span class="op">=</span> <span class="va">lm_table_raw</span>,</span>
+<span>  std_data <span class="op">=</span> <span class="va">std_corrected</span><span class="op">)</span></span>
+<span></span>
+<span></span>
+<span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span><span class="va">full_plotlist</span>, axis_titles <span class="op">=</span> <span class="st">"collect_y"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>     <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_annotation.html" class="external-link">plot_annotation</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Plots of suspicious Standard curves"</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-5-1.png" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
 </section><section class="level2"><h3 id="outlier-removal">2.3 - outlier removal<a class="anchor" aria-label="anchor" href="#outlier-removal"></a>
 </h3>
+<p>At this point, you may want to remove obvious outlier wells. Follow steps as shown in vignettes from prerequisites to <code><a href="../reference/remove_wells.html">remove_wells()</a></code>.</p>
+<p>Let’s say that we want to remove well E12 from plate NO3_1F1 in dataset Nmin:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">to_remove</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
+<span>  dataset <span class="op">=</span> <span class="st">"Nmin"</span>,</span>
+<span>  plate_id <span class="op">=</span> <span class="st">"NO3_1F1"</span>,</span>
+<span>  well_id <span class="op">=</span> <span class="st">"E12"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">std_corrected_wash1</span> <span class="op">&lt;-</span> <span class="va">std_corrected</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/remove_wells.html">remove_wells</a></span><span class="op">(</span><span class="va">to_remove</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>From now on, we no longer use <code>std_corrected</code>, but only <code>std_corrected_wash1</code>. We recommend always running one more round of quality check on the cleaned datasets before approving regression equations.</p>
 </section><section class="level2"><h3 id="per-dilution-averages-if-2-curves-per-plate">2.4 - Per-dilution averages (if 2+ curves per plate)<a class="anchor" aria-label="anchor" href="#per-dilution-averages-if-2-curves-per-plate"></a>
 </h3>
+<p>Once the very few monstrously wrong wells have been removed from single curves, in the case where several curves were pipetted per 96-well plate, we still need to perform a per-dilution average of absorbance. Indeed, there have been 2 events of pipetting of the same dilution, rather than 2 successive dilutions.</p>
+<div>
+<blockquote>
+<p><strong>WARNING</strong></p>
+<p>The next step computes per plate per row means for the standard curves.</p>
+<p>If some wells have been swapped in some plates, this may cause problems. Make sure there was no pipetting issue, or correct raw data or solve it through code</p>
+</blockquote>
+</div>
+<p><code><a href="../reference/std_dilution_average.html">std_dilution_average()</a></code> does that and creates an artificial “column 13”.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">std_dilution_avg</span> <span class="op">&lt;-</span> <span class="va">std_corrected_wash1</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/std_dilution_average.html">std_dilution_average</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+</div>
 </section><section class="level2"><h3 id="compute-linear-model-qc---round-2">2.5 - Compute linear model + QC - round 2<a class="anchor" aria-label="anchor" href="#compute-linear-model-qc---round-2"></a>
 </h3>
+<p>We can now rerun the linear model on the cleaned and (if required) per-dilution averaged, by repeating the same steps as above: computation of linear model, identification of suspicious curves and plotting</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="op">(</span><span class="va">lm_std_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lm_std_curve.html">lm_std_curve</a></span><span class="op">(</span><span class="va">std_dilution_avg</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename</a></span><span class="op">(</span>abs_corrected <span class="op">=</span> <span class="va">abs_mean</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; # A tibble: 5 × 11</span></span>
+<span><span class="co">#&gt;   plate_id unique_curve_id  slope r_squared adj_r_squared     lm_p</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;            &lt;dbl&gt;     &lt;dbl&gt;         &lt;dbl&gt;    &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 NO3_1F1  NO3_1F1_col13   0.0184         1         0.999 7.36e-11</span></span>
+<span><span class="co">#&gt; 2 NO3_1F2  NO3_1F2_col13   0.0184         1         0.999 6.32e-11</span></span>
+<span><span class="co">#&gt; 3 NO3_1F3  NO3_1F3_col13   0.0185         1         0.999 2.47e-10</span></span>
+<span><span class="co">#&gt; 4 NO3_1F4  NO3_1F4_col13   0.0183         1         0.999 2.23e-10</span></span>
+<span><span class="co">#&gt; 5 NO3_1F5  NO3_1F5_col13   0.0190         1         0.999 2.09e-10</span></span>
+<span><span class="co">#&gt; # ℹ 5 more variables: normality_lm_residuals &lt;chr&gt;, shapiro_p &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   outlier_rstudent &lt;dbl&gt;</span></span>
+<span><span class="op">(</span><span class="va">lm_suspicious_mean</span> <span class="op">&lt;-</span> <span class="va">lm_std_mean</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/suspicious_lm.html">suspicious_lm</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; # A tibble: 0 × 11</span></span>
+<span><span class="co">#&gt; # ℹ 11 variables: plate_id &lt;chr&gt;, unique_curve_id &lt;chr&gt;, slope &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   r_squared &lt;dbl&gt;, adj_r_squared &lt;dbl&gt;, lm_p &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   normality_lm_residuals &lt;chr&gt;, shapiro_p &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   outlier_rstudent &lt;dbl&gt;</span></span></code></pre></div>
+</div>
+<p>Good news, there are no more suspicious linear models anymore. Should there be any, one more round of QC as described above can still be helpful (<code><a href="../reference/plot_list_lm.html">plot_list_lm()</a></code>).</p>
+<p>Let’s store the last correction into a clean variable name to reduce possible confusion, and let’s compute all the plots in a big list, for storage purposes. We could then export this as one output data in a single list with <code><a href="https://readr.tidyverse.org/reference/read_rds.html" class="external-link">readr::write_rds()</a></code>`.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">std_data_clean</span> <span class="op">&lt;-</span> <span class="va">std_dilution_avg</span></span>
+<span><span class="va">lm_table_clean</span> <span class="op">&lt;-</span> <span class="va">lm_std_mean</span></span>
+<span><span class="va">lm_plots_clean</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plot_list_lm.html">plot_list_lm</a></span><span class="op">(</span></span>
+<span>  <span class="va">lm_table_clean</span>, <span class="va">std_data_clean</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename</a></span><span class="op">(</span>abs_corrected <span class="op">=</span> <span class="va">abs_mean</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">lm_output</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="st">"std_data_clean"</span> <span class="op">=</span> <span class="va">std_data_clean</span>,</span>
+<span>  <span class="st">"lm_table_clean"</span> <span class="op">=</span> <span class="va">lm_table_clean</span>,</span>
+<span>  <span class="st">"lm_plots_clean"</span> <span class="op">=</span> <span class="va">lm_plots_clean</span>,</span>
+<span>  <span class="st">"sample_corrected"</span> <span class="op">=</span> <span class="va">sample_corrected</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># just an example of how to save this in a file for downstream steps</span></span>
+<span><span class="co">#lm_output |&gt; write_rds("output/data/lm_output.rds")</span></span></code></pre></div>
+</div>
 </section><section class="level2"><h3 id="multiple-curve-qc">2.6 - Multiple curve QC<a class="anchor" aria-label="anchor" href="#multiple-curve-qc"></a>
 </h3>
+<p>TODO –&gt; make a function? Remove this?</p>
+<p>First, let’s look at the distribution of p-values of the std curve regressions</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">p_threshold</span> <span class="op">&lt;-</span> <span class="fl">0.05</span></span>
+<span></span>
+<span><span class="va">lm_output</span><span class="op">$</span><span class="va">lm_table_clean</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/separate_wider_delim.html" class="external-link">separate_wider_delim</a></span><span class="op">(</span></span>
+<span>    cols <span class="op">=</span> <span class="va">unique_curve_id</span>, delim <span class="op">=</span> <span class="st">"_"</span>, </span>
+<span>    names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"n_sp"</span>, <span class="st">"rest"</span><span class="op">)</span>, too_many <span class="op">=</span> <span class="st">"merge"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">lm_p</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="co"># geom_histogram() +</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_density.html" class="external-link">geom_density</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_vline</a></span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>xintercept <span class="op">=</span> <span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">p_threshold</span><span class="op">)</span><span class="op">)</span>, linetype <span class="op">=</span> <span class="fl">2</span>, colour <span class="op">=</span> <span class="st">"purple"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/annotate.html" class="external-link">annotate</a></span><span class="op">(</span></span>
+<span>    geom <span class="op">=</span> <span class="st">"label"</span>, label <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"p-val = "</span>, <span class="va">p_threshold</span><span class="op">)</span>,</span>
+<span>    x <span class="op">=</span> <span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">p_threshold</span><span class="op">)</span>, y <span class="op">=</span> <span class="fl">0.15</span>, hjust <span class="op">=</span> <span class="fl">0.25</span>, colour <span class="op">=</span> <span class="st">"purple"</span> <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">n_sp</span>, nrow <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">xlim</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">lm_output</span><span class="op">$</span><span class="va">lm_table_clean</span><span class="op">$</span><span class="va">lm_p</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"-log(p-value of linear model)"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
+<span>    title <span class="op">=</span> <span class="st">"Distribution of p-values of the linear model"</span>,</span>
+<span>    subtitle <span class="op">=</span> <span class="st">"logarithmic scale"</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-10-1.png" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Then, same with R_squared (or adjusted?)</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">threshold</span> <span class="op">&lt;-</span> <span class="fl">95</span></span>
+<span></span>
+<span><span class="va">lm_output</span><span class="op">$</span><span class="va">lm_table_clean</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/separate_wider_delim.html" class="external-link">separate_wider_delim</a></span><span class="op">(</span></span>
+<span>    cols <span class="op">=</span> <span class="va">unique_curve_id</span>, delim <span class="op">=</span> <span class="st">"_"</span>, </span>
+<span>    names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"n_sp"</span>, <span class="st">"rest"</span><span class="op">)</span>, too_many <span class="op">=</span> <span class="st">"merge"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">adj_r_squared</span>, colour <span class="op">=</span> <span class="va">n_sp</span>, fill <span class="op">=</span> <span class="va">n_sp</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="co">#geom_histogram() +</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_density.html" class="external-link">geom_density</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_vline</a></span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>xintercept <span class="op">=</span> <span class="fl">0.95</span><span class="op">)</span>, linetype <span class="op">=</span> <span class="fl">2</span>, colour <span class="op">=</span> <span class="st">"purple"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/annotate.html" class="external-link">annotate</a></span><span class="op">(</span></span>
+<span>    geom <span class="op">=</span> <span class="st">"label"</span>, label <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"adjusted R2 = "</span>, <span class="va">threshold</span>, <span class="st">"%"</span><span class="op">)</span>,</span>
+<span>    x <span class="op">=</span> <span class="va">threshold</span><span class="op">/</span><span class="fl">100</span>, y <span class="op">=</span> <span class="fl">500</span>, hjust <span class="op">=</span> <span class="fl">0.25</span>, colour <span class="op">=</span> <span class="st">"purple"</span> <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="co">#facet_wrap(~n_sp, nrow = 3, scales = "free_y") +</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">xlim</a></span><span class="op">(</span></span>
+<span>    <span class="fl">0.945</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">lm_output</span><span class="op">$</span><span class="va">lm_table_clean</span><span class="op">$</span><span class="va">adj_r_squared</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"Adjusted R2"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
+<span>    title <span class="op">=</span> <span class="st">"Distribution of adjusted R2 values of the linear model"</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-11-1.png" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Now we plot all curves on same plot</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">colors</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#7FC97F"</span>, <span class="st">"#BEAED4"</span>, <span class="st">"#FDC086"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">lm_output</span><span class="op">$</span><span class="va">std_data_clean</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter_out</a></span><span class="op">(</span><span class="va">dataset</span> <span class="op">==</span> <span class="st">"TDN"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">std_conc</span><span class="op">)</span>, y <span class="op">=</span> <span class="va">abs_mean</span>, groups <span class="op">=</span> <span class="va">plate_id</span>, colour <span class="op">=</span> <span class="va">dataset</span>, fill <span class="op">=</span> <span class="va">dataset</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span><span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_smooth.html" class="external-link">geom_smooth</a></span><span class="op">(</span></span>
+<span>    formula <span class="op">=</span> <span class="va">y</span><span class="op">~</span><span class="va">x</span><span class="op">-</span><span class="fl">1</span>, method <span class="op">=</span> <span class="st">"lm"</span>, se <span class="op">=</span> <span class="cn">TRUE</span>, </span>
+<span>    alpha <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">std_sp</span>, scales <span class="op">=</span> <span class="st">"free"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_colour_discrete.html" class="external-link">scale_color_discrete</a></span><span class="op">(</span>palette <span class="op">=</span> <span class="va">colors</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_colour_discrete.html" class="external-link">scale_fill_discrete</a></span><span class="op">(</span>palette <span class="op">=</span> <span class="va">colors</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span> </span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-12-1.png" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Now, finally, I decide that I am happy with my standard curves, so I can move on to apply the equations on my data</p>
 </section></section><section class="section level2"><h2 id="infer-sample-concentration-from-regression-equation">3 - Infer sample concentration from regression equation<a class="anchor" aria-label="anchor" href="#infer-sample-concentration-from-regression-equation"></a>
 </h2>
+<p>Check that we are now left with only one curve per plate (i.e., we indeed took a per-dilution average)</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span></span>
+<span>  <span class="op">(</span><span class="va">lm_output</span><span class="op">$</span><span class="va">std_data_clean</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">plate_id</span><span class="op">)</span> <span class="op">|&gt;</span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_data.html" class="external-link">n_groups</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">==</span> </span>
+<span>  <span class="op">(</span><span class="va">lm_output</span><span class="op">$</span><span class="va">std_data_clean</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">unique_curve_id</span><span class="op">)</span> <span class="op">|&gt;</span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_data.html" class="external-link">n_groups</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span> <span class="op">{</span><span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"All good: there is exactly one curve per plate"</span><span class="op">)</span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
+<span>  <span class="kw"><a href="https://rdrr.io/r/base/warning.html" class="external-link">warning</a></span><span class="op">(</span><span class="st">"Warning: there is at least one plate with several curves"</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="co">#&gt; All good: there is exactly one curve per plate</span></span></code></pre></div>
+</div>
+<p>Regression equation is Abs = slope * Concentration</p>
+<p>There is a default vector containing relevant molar masses. Make sure to append it with values that are relevant for your study. This is needed to convert concentrations from mg <em>molecule</em> per L to mg <em>element</em> per L (e.g., mg NO3/L to mg N/L)</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">molar_masses</span></span>
+<span><span class="co">#&gt;       N     NO3     NO2     NH4 </span></span>
+<span><span class="co">#&gt; 14.0069 62.0051 46.0057 36.0775</span></span></code></pre></div>
+</div>
+<p>Here, we</p>
+<ul>
+<li><p>connect regression data to sample absorbance data with <code><a href="../reference/reg_join_abs.html">reg_join_abs()</a></code>.</p></li>
+<li><p>apply the regression equation to go from absorbance to concentration in mg N-sp per L</p></li>
+<li><p>convert unit to mg N per L using <code>molar_masses</code> and <code><a href="../reference/convert_molec.html">convert_molec()</a></code>.</p></li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">data_mg_N_L</span> <span class="op">&lt;-</span> </span>
+<span>  <span class="co"># add slope + info regression (p-val and R2) to absorbance data</span></span>
+<span>  <span class="fu"><a href="../reference/reg_join_abs.html">reg_join_abs</a></span><span class="op">(</span><span class="va">lm_output</span><span class="op">$</span><span class="va">lm_table_clean</span>, <span class="va">lm_output</span><span class="op">$</span><span class="va">sample_corrected</span>, target_sp <span class="op">=</span> <span class="st">"N"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="co"># compute concentration from absorbance</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>conc_mgNsp_L <span class="op">=</span> <span class="va">abs_corrected</span> <span class="op">/</span> <span class="va">slope</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="../reference/convert_molec.html">convert_molec</a></span><span class="op">(</span>masses <span class="op">=</span> <span class="va">molar_masses</span><span class="op">)</span></span></code></pre></div>
+</div>
 </section><section class="section level2"><h2 id="epilogue">4 - Epilogue<a class="anchor" aria-label="anchor" href="#epilogue"></a>
 </h2>
+<p>We now have clean and tidy concentration data</p>
 </section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
