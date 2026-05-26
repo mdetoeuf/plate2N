@@ -16,7 +16,7 @@ A table containing relevant parameters of the linear model, with
 - 1 row per "group" (e.g., plate * column, which is relevant to spot outliers).
 - columns: \code{unique_curve_id}, \code{slope}, \code{r_squared}, \code{adj_r_squared}, \code{lm_p},
 \code{normality_lm_residuals}, \code{shapiro_p}, \code{homoscedasticity_lm_residuals},
-\code{breusch_pagan_p}, \code{outlier_rstudent}
+\code{breusch_pagan_p}
 }
 \description{
 The linear model is based on the function \code{lm()} and fits the curve to go through

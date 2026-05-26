@@ -17,7 +17,7 @@ editor_options:
 library(plate2N)
 ```
 
-# TODO 
+# TODO
 
 - write out last sections: 2.6, 3 and 4
 
@@ -280,6 +280,8 @@ data_mg_N_L <-
   # compute concentration from absorbance
   dplyr::mutate(conc_mgNsp_L = abs_corrected / slope) |> 
   convert_molec(masses = molar_masses)
+
+data_mg_N_L
 ```
 
 # 4 - Epilogue

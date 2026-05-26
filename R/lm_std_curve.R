@@ -19,7 +19,7 @@ utils::globalVariables(c("std_conc", "unique_curve_id", "abs_corrected"))
 #'     - 1 row per "group" (e.g., plate * column, which is relevant to spot outliers).
 #'     - columns: `unique_curve_id`, `slope`, `r_squared`, `adj_r_squared`, `lm_p`,
 #'       `normality_lm_residuals`, `shapiro_p`, `homoscedasticity_lm_residuals`,
-#'       `breusch_pagan_p`, `outlier_rstudent`
+#'       `breusch_pagan_p`
 #'
 #' @export
 #'
@@ -43,8 +43,8 @@ lm_std_curve <- function(
     normality_lm_residuals = character(),
     shapiro_p = numeric(),
     homoscedasticity_lm_residuals = character(),
-    breusch_pagan_p = numeric(),
-    outlier_rstudent = numeric()
+    breusch_pagan_p = numeric()#,
+   # outlier_rstudent = numeric()
   )
 
   for (i in 1:dplyr::n_groups(full_data)) {
@@ -77,7 +77,7 @@ lm_std_curve <- function(
     if (breusch_pagan_p < 0.05) {homoscedasticity_lm_residuals <- "Heteroscedasticity"} else {homoscedasticity_lm_residuals <- "Homooscedasticity"}
 
     # test for outliers - ideally between -3 and 3 or even -5 and 5 (usage a bit unclear)
-    outlier_rstudent <- (car::outlierTest(my_lm))$rstudent |> as.numeric() |> round(digits = 3)#
+   # outlier_rstudent <- (car::outlierTest(my_lm))$rstudent |> as.numeric() |> round(digits = 3)#
 
     # Store all of it in a vector
     new_row <- tibble::tibble(
@@ -90,8 +90,8 @@ lm_std_curve <- function(
       normality_lm_residuals,
       shapiro_p,
       homoscedasticity_lm_residuals,
-      breusch_pagan_p,
-      outlier_rstudent
+      breusch_pagan_p #,
+     # outlier_rstudent
     )
 
     lm_data <- lm_data |> dplyr::bind_rows(new_row)
