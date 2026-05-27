@@ -4,12 +4,15 @@
 \alias{lm_std_curve}
 \title{Perform Linear Model for Standard Curve}
 \usage{
-lm_std_curve(grouped_data)
+lm_std_curve(grouped_data, model = "linear")
 }
 \arguments{
 \item{grouped_data}{A tibble, grouped per curve (e.g., use \code{dplyr::group_by(plate_id, column)}
 on your data before calling the function). Must contain columns \code{std_conc},
 \code{unique_curve_id} and \code{abs_corrected}}
+
+\item{model}{Which model to use. Accepts either \code{linear} (default) or \code{poly}
+for polynomial model.}
 }
 \value{
 A table containing relevant parameters of the linear model, with
@@ -21,6 +24,15 @@ A table containing relevant parameters of the linear model, with
 \description{
 The linear model is based on the function \code{lm()} and fits the curve to go through
 the origin (0,0), which only makes sense for blank-corrected absorbance data.
+}
+\details{
+Formula within \code{lm()}.
+For linear model: \code{y = m*x + c};
+For polynomial model: \code{y = a*x^2 + b*x + c};
+With
+- y = blank-corrected absorbance
+- x = concentration
+- c = 0 because we use blank-corrected absorbance data
 }
 \examples{
 data <- std_corrected |> dplyr::group_by(plate_id, column)

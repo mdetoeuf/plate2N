@@ -232,7 +232,8 @@ extract_curve <- function(
     tidyr::pivot_longer(
       cols = A:H,
       names_to = "row",
-      values_to = "std_conc")
+      values_to = "std_conc") |>
+    dplyr::mutate(std_conc = as.double(std_conc))
 
   return(curve_concentration)
 }
@@ -249,6 +250,9 @@ extract_curve <- function(
 #' @param through_origin Whether the smooth curve should be constrained to go
 #'     through the origin. Default to TRUE, which only makes sense for absorbance
 #'     data that has already been blank-corrected
+#' @param model Which model to use for the smooth curve. Accepts either `linear`
+#'     (default) or `poly` for polynomial model (y = ax + bx^2 + c, with c = 0
+#'     if `through_origin = TRUE`)
 #'
 #' @import ggplot2
 #'
@@ -263,13 +267,14 @@ extract_curve <- function(
 #'   extract_std_data() |>
 #'   dplyr::select(!std_conc) |>
 #'   dplyr::left_join(curve_concentration, by = dplyr::join_by(row, dataset, plate_id))
-#' plot_std(std_data, through_origin = FALSE) + ggplot2::facet_wrap(~plate_id)
+#' plot_std(std_data, through_origin = FALSE, model = "linear") + ggplot2::facet_wrap(~plate_id)
 plot_std <- function(
     std_data,
-    through_origin = TRUE
-  #  show_pval = FALSE,
-   # show_R2 = FALSE
-    ) {
+    through_origin = TRUE,
+    model = "linear"
+    #  show_pval = FALSE,
+    # show_R2 = FALSE
+) {
 
   # set parameters
   std_unit <- std_data$std_unit
@@ -284,12 +289,16 @@ plot_std <- function(
     ggplot2::xlab(paste0("Concentration of Standard Curve")) +
     ggplot2::geom_smooth(
       method = "lm",
-      formula = if (through_origin) (y ~ x - 1) else (y ~ x) ,
-      aes(alpha = 0.5),
+      formula =
+        if (through_origin & model == "linear") (y ~ 0 + x)
+      else if (through_origin & model == "poly") (y ~ 0 + x + I(x^2))
+      else if (model == "linear") (y ~x)
+      else if (model == "poly") (y ~ x + I(x^2)),
+      alpha = 0.3,
       linewidth = 0.5, linetype = 2) +
     #geom_line()
     ggplot2::geom_point(aes(colour = column)) +
-   # ggplot2::geom_line(ggplot2::aes(colour = column)) +
+    # ggplot2::geom_line(ggplot2::aes(colour = column)) +
     ggplot2::geom_text(
       ggplot2::aes(label = well_id, colour = column),
       alpha = 1, position = ggplot2::position_nudge(y = y_range/20),

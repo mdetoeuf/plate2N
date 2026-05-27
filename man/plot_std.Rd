@@ -4,7 +4,7 @@
 \alias{plot_std}
 \title{Display one or more standard curve(s)}
 \usage{
-plot_std(std_data, through_origin = TRUE)
+plot_std(std_data, through_origin = TRUE, model = "linear")
 }
 \arguments{
 \item{std_data}{The table containing the data to be plotted. Must contain the
@@ -15,6 +15,10 @@ to facet (see \code{?facet_wrap()} or \code{?facet_grid()}).}
 \item{through_origin}{Whether the smooth curve should be constrained to go
 through the origin. Default to TRUE, which only makes sense for absorbance
 data that has already been blank-corrected}
+
+\item{model}{Which model to use for the smooth curve. Accepts either \code{linear}
+(default) or \code{poly} for polynomial model (y = ax + bx^2 + c, with c = 0
+if \code{through_origin = TRUE})}
 }
 \value{
 A plot of one or several standard curves.
@@ -31,5 +35,5 @@ std_data <- raw_meta |>
   extract_std_data() |>
   dplyr::select(!std_conc) |>
   dplyr::left_join(curve_concentration, by = dplyr::join_by(row, dataset, plate_id))
-plot_std(std_data, through_origin = FALSE) + ggplot2::facet_wrap(~plate_id)
+plot_std(std_data, through_origin = FALSE, model = "linear") + ggplot2::facet_wrap(~plate_id)
 }

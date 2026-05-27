@@ -28,6 +28,7 @@ This vignette is still under development, bugs are to be expected
 - Make sure there is a "bad" curve in the example dataset (with blank with higher absorbance than row B)
 - Make sure there is a funky well in some extractant to check out the outlier removal plot
 - Split actions within extract_std_blank so that average computes in a separate function, so it can be more easily re-run after outlier removal, then adapt code of the re-run
+- Add warning about removing "A1" when there is only 1 std curve per plate
 
 # Introduction
 
