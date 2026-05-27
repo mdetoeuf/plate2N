@@ -159,22 +159,21 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">lm_table_raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lm_std_curve.html">lm_std_curve</a></span><span class="op">(</span><span class="va">std_corrected</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">plate_id</span>, <span class="va">column</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 10 × 11</span></span>
+<span><span class="co">#&gt; # A tibble: 10 × 10</span></span>
 <span><span class="co">#&gt;    plate_id unique_curve_id  slope r_squared adj_r_squared     lm_p</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;    &lt;chr&gt;            &lt;dbl&gt;     &lt;dbl&gt;         &lt;dbl&gt;    &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt;  1 NO3_1F1  NO3_1F1_col1    0.0189         1         0.999 6.49e-11</span></span>
-<span><span class="co">#&gt;  2 NO3_1F1  NO3_1F1_col12   0.0179         1         0.999 2.79e-10</span></span>
-<span><span class="co">#&gt;  3 NO3_1F2  NO3_1F2_col1    0.0178         1         0.999 6.03e-11</span></span>
-<span><span class="co">#&gt;  4 NO3_1F2  NO3_1F2_col12   0.0190         1         0.999 1.64e-10</span></span>
-<span><span class="co">#&gt;  5 NO3_1F3  NO3_1F3_col1    0.0186         1         0.999 2.07e-10</span></span>
-<span><span class="co">#&gt;  6 NO3_1F3  NO3_1F3_col12   0.0184         1         0.999 4.07e-10</span></span>
-<span><span class="co">#&gt;  7 NO3_1F4  NO3_1F4_col1    0.0178         1         0.999 2.16e-10</span></span>
-<span><span class="co">#&gt;  8 NO3_1F4  NO3_1F4_col12   0.0188         1         0.999 2.43e-10</span></span>
-<span><span class="co">#&gt;  9 NO3_1F5  NO3_1F5_col1    0.0194         1         0.999 1.31e-10</span></span>
-<span><span class="co">#&gt; 10 NO3_1F5  NO3_1F5_col12   0.0185         1         0.999 3.49e-10</span></span>
-<span><span class="co">#&gt; # ℹ 5 more variables: normality_lm_residuals &lt;chr&gt;, shapiro_p &lt;dbl&gt;,</span></span>
-<span><span class="co">#&gt; #   homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;,</span></span>
-<span><span class="co">#&gt; #   outlier_rstudent &lt;dbl&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt;  1 NO3_1F1  NO3_1F1_col1    0.0189     0.999         0.999 6.49e-11</span></span>
+<span><span class="co">#&gt;  2 NO3_1F1  NO3_1F1_col12   0.0179     0.999         0.999 2.79e-10</span></span>
+<span><span class="co">#&gt;  3 NO3_1F2  NO3_1F2_col1    0.0178     0.999         0.999 6.03e-11</span></span>
+<span><span class="co">#&gt;  4 NO3_1F2  NO3_1F2_col12   0.0190     0.999         0.999 1.64e-10</span></span>
+<span><span class="co">#&gt;  5 NO3_1F3  NO3_1F3_col1    0.0186     0.999         0.999 2.07e-10</span></span>
+<span><span class="co">#&gt;  6 NO3_1F3  NO3_1F3_col12   0.0184     0.999         0.999 4.07e-10</span></span>
+<span><span class="co">#&gt;  7 NO3_1F4  NO3_1F4_col1    0.0178     0.999         0.999 2.16e-10</span></span>
+<span><span class="co">#&gt;  8 NO3_1F4  NO3_1F4_col12   0.0188     0.999         0.999 2.43e-10</span></span>
+<span><span class="co">#&gt;  9 NO3_1F5  NO3_1F5_col1    0.0194     0.999         0.999 1.31e-10</span></span>
+<span><span class="co">#&gt; 10 NO3_1F5  NO3_1F5_col12   0.0185     0.999         0.999 3.49e-10</span></span>
+<span><span class="co">#&gt; # ℹ 4 more variables: normality_lm_residuals &lt;chr&gt;, shapiro_p &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h3 id="qc-standard-curves---check-conditions-of-linear-model">2.2 - QC Standard curves - check conditions of linear model<a class="anchor" aria-label="anchor" href="#qc-standard-curves---check-conditions-of-linear-model"></a>
 </h3>
@@ -183,13 +182,21 @@
 <div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># extract all plates where "something" is not perfect </span></span>
 <span><span class="op">(</span><span class="va">lm_table_suspicious</span> <span class="op">&lt;-</span> <span class="va">lm_table_raw</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/suspicious_lm.html">suspicious_lm</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 1 × 11</span></span>
-<span><span class="co">#&gt;   plate_id unique_curve_id  slope r_squared adj_r_squared     lm_p</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;            &lt;dbl&gt;     &lt;dbl&gt;         &lt;dbl&gt;    &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1 NO3_1F1  NO3_1F1_col12   0.0179         1         0.999 2.79e-10</span></span>
-<span><span class="co">#&gt; # ℹ 5 more variables: normality_lm_residuals &lt;chr&gt;, shapiro_p &lt;dbl&gt;,</span></span>
-<span><span class="co">#&gt; #   homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;,</span></span>
-<span><span class="co">#&gt; #   outlier_rstudent &lt;dbl&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt; # A tibble: 10 × 10</span></span>
+<span><span class="co">#&gt;    plate_id unique_curve_id  slope r_squared adj_r_squared     lm_p</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt;    &lt;chr&gt;            &lt;dbl&gt;     &lt;dbl&gt;         &lt;dbl&gt;    &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt;  1 NO3_1F1  NO3_1F1_col1    0.0189     0.999         0.999 6.49e-11</span></span>
+<span><span class="co">#&gt;  2 NO3_1F1  NO3_1F1_col12   0.0179     0.999         0.999 2.79e-10</span></span>
+<span><span class="co">#&gt;  3 NO3_1F2  NO3_1F2_col1    0.0178     0.999         0.999 6.03e-11</span></span>
+<span><span class="co">#&gt;  4 NO3_1F2  NO3_1F2_col12   0.0190     0.999         0.999 1.64e-10</span></span>
+<span><span class="co">#&gt;  5 NO3_1F3  NO3_1F3_col1    0.0186     0.999         0.999 2.07e-10</span></span>
+<span><span class="co">#&gt;  6 NO3_1F3  NO3_1F3_col12   0.0184     0.999         0.999 4.07e-10</span></span>
+<span><span class="co">#&gt;  7 NO3_1F4  NO3_1F4_col1    0.0178     0.999         0.999 2.16e-10</span></span>
+<span><span class="co">#&gt;  8 NO3_1F4  NO3_1F4_col12   0.0188     0.999         0.999 2.43e-10</span></span>
+<span><span class="co">#&gt;  9 NO3_1F5  NO3_1F5_col1    0.0194     0.999         0.999 1.31e-10</span></span>
+<span><span class="co">#&gt; 10 NO3_1F5  NO3_1F5_col12   0.0185     0.999         0.999 3.49e-10</span></span>
+<span><span class="co">#&gt; # ℹ 4 more variables: normality_lm_residuals &lt;chr&gt;, shapiro_p &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;</span></span></code></pre></div>
 </div>
 <p>For visual aid (useful for larger data sets, <code><a href="../reference/plot_list_lm.html">plot_list_lm()</a></code> creates a list of plots of each curve given as argument (here: suspicious lm’s). Calling individual plots can help spotting possible outlier wells, which can be removed with similar steps as shown above.</p>
 <div class="cell">
@@ -260,24 +267,27 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">lm_std_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lm_std_curve.html">lm_std_curve</a></span><span class="op">(</span><span class="va">std_dilution_avg</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename</a></span><span class="op">(</span>abs_corrected <span class="op">=</span> <span class="va">abs_mean</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 5 × 11</span></span>
+<span><span class="co">#&gt; # A tibble: 5 × 10</span></span>
 <span><span class="co">#&gt;   plate_id unique_curve_id  slope r_squared adj_r_squared     lm_p</span></span>
 <span><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;            &lt;dbl&gt;     &lt;dbl&gt;         &lt;dbl&gt;    &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1 NO3_1F1  NO3_1F1_col13   0.0184         1         0.999 7.36e-11</span></span>
-<span><span class="co">#&gt; 2 NO3_1F2  NO3_1F2_col13   0.0184         1         0.999 6.32e-11</span></span>
-<span><span class="co">#&gt; 3 NO3_1F3  NO3_1F3_col13   0.0185         1         0.999 2.47e-10</span></span>
-<span><span class="co">#&gt; 4 NO3_1F4  NO3_1F4_col13   0.0183         1         0.999 2.23e-10</span></span>
-<span><span class="co">#&gt; 5 NO3_1F5  NO3_1F5_col13   0.0190         1         0.999 2.09e-10</span></span>
-<span><span class="co">#&gt; # ℹ 5 more variables: normality_lm_residuals &lt;chr&gt;, shapiro_p &lt;dbl&gt;,</span></span>
-<span><span class="co">#&gt; #   homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;,</span></span>
-<span><span class="co">#&gt; #   outlier_rstudent &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 NO3_1F1  NO3_1F1_col13   0.0184     0.999         0.999 7.36e-11</span></span>
+<span><span class="co">#&gt; 2 NO3_1F2  NO3_1F2_col13   0.0184     0.999         0.999 6.32e-11</span></span>
+<span><span class="co">#&gt; 3 NO3_1F3  NO3_1F3_col13   0.0185     0.999         0.999 2.47e-10</span></span>
+<span><span class="co">#&gt; 4 NO3_1F4  NO3_1F4_col13   0.0183     0.999         0.999 2.23e-10</span></span>
+<span><span class="co">#&gt; 5 NO3_1F5  NO3_1F5_col13   0.0190     0.999         0.999 2.09e-10</span></span>
+<span><span class="co">#&gt; # ℹ 4 more variables: normality_lm_residuals &lt;chr&gt;, shapiro_p &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;</span></span>
 <span><span class="op">(</span><span class="va">lm_suspicious_mean</span> <span class="op">&lt;-</span> <span class="va">lm_std_mean</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/suspicious_lm.html">suspicious_lm</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 0 × 11</span></span>
-<span><span class="co">#&gt; # ℹ 11 variables: plate_id &lt;chr&gt;, unique_curve_id &lt;chr&gt;, slope &lt;dbl&gt;,</span></span>
-<span><span class="co">#&gt; #   r_squared &lt;dbl&gt;, adj_r_squared &lt;dbl&gt;, lm_p &lt;dbl&gt;,</span></span>
-<span><span class="co">#&gt; #   normality_lm_residuals &lt;chr&gt;, shapiro_p &lt;dbl&gt;,</span></span>
-<span><span class="co">#&gt; #   homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;,</span></span>
-<span><span class="co">#&gt; #   outlier_rstudent &lt;dbl&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt; # A tibble: 5 × 10</span></span>
+<span><span class="co">#&gt;   plate_id unique_curve_id  slope r_squared adj_r_squared     lm_p</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;            &lt;dbl&gt;     &lt;dbl&gt;         &lt;dbl&gt;    &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 NO3_1F1  NO3_1F1_col13   0.0184     0.999         0.999 7.36e-11</span></span>
+<span><span class="co">#&gt; 2 NO3_1F2  NO3_1F2_col13   0.0184     0.999         0.999 6.32e-11</span></span>
+<span><span class="co">#&gt; 3 NO3_1F3  NO3_1F3_col13   0.0185     0.999         0.999 2.47e-10</span></span>
+<span><span class="co">#&gt; 4 NO3_1F4  NO3_1F4_col13   0.0183     0.999         0.999 2.23e-10</span></span>
+<span><span class="co">#&gt; 5 NO3_1F5  NO3_1F5_col13   0.0190     0.999         0.999 2.09e-10</span></span>
+<span><span class="co">#&gt; # ℹ 4 more variables: normality_lm_residuals &lt;chr&gt;, shapiro_p &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;</span></span></code></pre></div>
 </div>
 <p>Good news, there are no more suspicious linear models anymore. Should there be any, one more round of QC as described above can still be helpful (<code><a href="../reference/plot_list_lm.html">plot_list_lm()</a></code>).</p>
 <p>Let’s store the last correction into a clean variable name to reduce possible confusion, and let’s compute all the plots in a big list, for storage purposes. We could then export this as one output data in a single list with <code><a href="https://readr.tidyverse.org/reference/read_rds.html" class="external-link">readr::write_rds()</a></code>`.</p>
@@ -422,7 +432,25 @@
 <span>  <span class="fu"><a href="../reference/reg_join_abs.html">reg_join_abs</a></span><span class="op">(</span><span class="va">lm_output</span><span class="op">$</span><span class="va">lm_table_clean</span>, <span class="va">lm_output</span><span class="op">$</span><span class="va">sample_corrected</span>, target_sp <span class="op">=</span> <span class="st">"N"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="co"># compute concentration from absorbance</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>conc_mgNsp_L <span class="op">=</span> <span class="va">abs_corrected</span> <span class="op">/</span> <span class="va">slope</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu"><a href="../reference/convert_molec.html">convert_molec</a></span><span class="op">(</span>masses <span class="op">=</span> <span class="va">molar_masses</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/convert_molec.html">convert_molec</a></span><span class="op">(</span>masses <span class="op">=</span> <span class="va">molar_masses</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">data_mg_N_L</span></span>
+<span><span class="co">#&gt; # A tibble: 264 × 12</span></span>
+<span><span class="co">#&gt;    dataset plate_id map      abs_corrected std_sp target_sp std_unit     slope</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;     &lt;chr&gt;        &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt;  1 Nmin    NO3_1F1  81_t1_z2        0.0312 NO3    N         mg NO3- L-1 0.0184</span></span>
+<span><span class="co">#&gt;  2 Nmin    NO3_1F2  97_t1_z1        0.0249 NO3    N         mg NO3- L-1 0.0184</span></span>
+<span><span class="co">#&gt;  3 Nmin    NO3_1F3  89_t1_z3        0.0104 NO3    N         mg NO3- L-1 0.0185</span></span>
+<span><span class="co">#&gt;  4 Nmin    NO3_1F4  81_t1_z1        0.0342 NO3    N         mg NO3- L-1 0.0183</span></span>
+<span><span class="co">#&gt;  5 Nmin    NO3_1F5  Std_3_t1        0.0832 NO3    N         mg NO3- L-1 0.0190</span></span>
+<span><span class="co">#&gt;  6 Nmin    NO3_1F1  82_t1_z2        0.0452 NO3    N         mg NO3- L-1 0.0184</span></span>
+<span><span class="co">#&gt;  7 Nmin    NO3_1F2  98_t1_z1        0.0219 NO3    N         mg NO3- L-1 0.0184</span></span>
+<span><span class="co">#&gt;  8 Nmin    NO3_1F3  90_t1_z3        0.0124 NO3    N         mg NO3- L-1 0.0185</span></span>
+<span><span class="co">#&gt;  9 Nmin    NO3_1F4  82_t1_z3        0.0543 NO3    N         mg NO3- L-1 0.0183</span></span>
+<span><span class="co">#&gt; 10 Nmin    NO3_1F5  98_t1_z3        0.0232 NO3    N         mg NO3- L-1 0.0190</span></span>
+<span><span class="co">#&gt; # ℹ 254 more rows</span></span>
+<span><span class="co">#&gt; # ℹ 4 more variables: adj_r_squared &lt;dbl&gt;, lm_p &lt;dbl&gt;, conc_mgNsp_L &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   conc_mgN_L &lt;dbl&gt;</span></span></code></pre></div>
 </div>
 </section><section class="section level2"><h2 id="epilogue">4 - Epilogue<a class="anchor" aria-label="anchor" href="#epilogue"></a>
 </h2>

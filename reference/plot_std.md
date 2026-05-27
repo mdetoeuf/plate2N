@@ -6,7 +6,7 @@ data by `plate_id`. Uses the `ggplot2` package.
 ## Usage
 
 ``` r
-plot_std(std_data, through_origin = TRUE)
+plot_std(std_data, through_origin = TRUE, model = "linear")
 ```
 
 ## Arguments
@@ -24,6 +24,12 @@ plot_std(std_data, through_origin = TRUE)
   origin. Default to TRUE, which only makes sense for absorbance data
   that has already been blank-corrected
 
+- model:
+
+  Which model to use for the smooth curve. Accepts either `linear`
+  (default) or `poly` for polynomial model (y = ax + bx^2 + c, with c =
+  0 if `through_origin = TRUE`)
+
 ## Value
 
 A plot of one or several standard curves.
@@ -38,5 +44,5 @@ std_data <- raw_meta |>
   extract_std_data() |>
   dplyr::select(!std_conc) |>
   dplyr::left_join(curve_concentration, by = dplyr::join_by(row, dataset, plate_id))
-plot_std(std_data, through_origin = FALSE) + ggplot2::facet_wrap(~plate_id)
+plot_std(std_data, through_origin = FALSE, model = "linear") + ggplot2::facet_wrap(~plate_id)
 ```

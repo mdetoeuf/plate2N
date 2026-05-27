@@ -87,6 +87,7 @@
 <li>Make sure there is a “bad” curve in the example dataset (with blank with higher absorbance than row B)</li>
 <li>Make sure there is a funky well in some extractant to check out the outlier removal plot</li>
 <li>Split actions within extract_std_blank so that average computes in a separate function, so it can be more easily re-run after outlier removal, then adapt code of the re-run</li>
+<li>Add warning about removing “A1” when there is only 1 std curve per plate</li>
 </ul></section><section class="section level2"><h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
 <p>This vignette shows the basic functions that allow the correction of raw absorbance data (<code>abs</code>) to blank-corrected absorbance data, referred to as <code>abs_corrected</code> throughout this package.</p>
@@ -157,17 +158,17 @@
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">curve_concentration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_curve.html">extract_curve</a></span><span class="op">(</span><span class="va">meta</span>, pipetting_direction <span class="op">=</span> <span class="st">"top_down"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 40 × 4</span></span>
 <span><span class="co">#&gt;    dataset plate_id row   std_conc</span></span>
-<span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt; &lt;chr&gt;   </span></span>
-<span><span class="co">#&gt;  1 Nmin    NO3_1F1  A     0       </span></span>
-<span><span class="co">#&gt;  2 Nmin    NO3_1F1  B     0.5     </span></span>
-<span><span class="co">#&gt;  3 Nmin    NO3_1F1  C     1       </span></span>
-<span><span class="co">#&gt;  4 Nmin    NO3_1F1  D     2       </span></span>
-<span><span class="co">#&gt;  5 Nmin    NO3_1F1  E     4       </span></span>
-<span><span class="co">#&gt;  6 Nmin    NO3_1F1  F     8       </span></span>
-<span><span class="co">#&gt;  7 Nmin    NO3_1F1  G     16      </span></span>
-<span><span class="co">#&gt;  8 Nmin    NO3_1F1  H     24      </span></span>
-<span><span class="co">#&gt;  9 Nmin    NO3_1F2  A     0       </span></span>
-<span><span class="co">#&gt; 10 Nmin    NO3_1F2  B     0.5     </span></span>
+<span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;    &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt;  1 Nmin    NO3_1F1  A          0  </span></span>
+<span><span class="co">#&gt;  2 Nmin    NO3_1F1  B          0.5</span></span>
+<span><span class="co">#&gt;  3 Nmin    NO3_1F1  C          1  </span></span>
+<span><span class="co">#&gt;  4 Nmin    NO3_1F1  D          2  </span></span>
+<span><span class="co">#&gt;  5 Nmin    NO3_1F1  E          4  </span></span>
+<span><span class="co">#&gt;  6 Nmin    NO3_1F1  F          8  </span></span>
+<span><span class="co">#&gt;  7 Nmin    NO3_1F1  G         16  </span></span>
+<span><span class="co">#&gt;  8 Nmin    NO3_1F1  H         24  </span></span>
+<span><span class="co">#&gt;  9 Nmin    NO3_1F2  A          0  </span></span>
+<span><span class="co">#&gt; 10 Nmin    NO3_1F2  B          0.5</span></span>
 <span><span class="co">#&gt; # ℹ 30 more rows</span></span></code></pre></div>
 </div>
 <div>
@@ -201,7 +202,7 @@
 <span><span class="co">#&gt;  9 A     12     A12     A12_NO3_1F4    Nmin    NO3_1F4  NO3_1F4_col12   Std  </span></span>
 <span><span class="co">#&gt; 10 A     12     A12     A12_NO3_1F5    Nmin    NO3_1F5  NO3_1F5_col12   Std  </span></span>
 <span><span class="co">#&gt; # ℹ 70 more rows</span></span>
-<span><span class="co">#&gt; # ℹ 4 more variables: abs &lt;chr&gt;, std_sp &lt;chr&gt;, std_unit &lt;chr&gt;, std_conc &lt;chr&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt; # ℹ 4 more variables: abs &lt;chr&gt;, std_sp &lt;chr&gt;, std_unit &lt;chr&gt;, std_conc &lt;dbl&gt;</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h3 id="compute-per-plate-average-of-std_blank">2.3 - Compute per-plate average of std_blank<a class="anchor" aria-label="anchor" href="#compute-per-plate-average-of-std_blank"></a>
 </h3>

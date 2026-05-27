@@ -52,16 +52,16 @@ metadata
 extract_curve(metadata)
 #> # A tibble: 40 × 4
 #>    dataset plate_id row   std_conc
-#>    <chr>   <chr>    <chr> <chr>   
-#>  1 Nmin    NO3_1F1  A     0       
-#>  2 Nmin    NO3_1F1  B     0.5     
-#>  3 Nmin    NO3_1F1  C     1       
-#>  4 Nmin    NO3_1F1  D     2       
-#>  5 Nmin    NO3_1F1  E     4       
-#>  6 Nmin    NO3_1F1  F     8       
-#>  7 Nmin    NO3_1F1  G     16      
-#>  8 Nmin    NO3_1F1  H     24      
-#>  9 Nmin    NO3_1F2  A     0       
-#> 10 Nmin    NO3_1F2  B     0.5     
+#>    <chr>   <chr>    <chr>    <dbl>
+#>  1 Nmin    NO3_1F1  A          0  
+#>  2 Nmin    NO3_1F1  B          0.5
+#>  3 Nmin    NO3_1F1  C          1  
+#>  4 Nmin    NO3_1F1  D          2  
+#>  5 Nmin    NO3_1F1  E          4  
+#>  6 Nmin    NO3_1F1  F          8  
+#>  7 Nmin    NO3_1F1  G         16  
+#>  8 Nmin    NO3_1F1  H         24  
+#>  9 Nmin    NO3_1F2  A          0  
+#> 10 Nmin    NO3_1F2  B          0.5
 #> # ℹ 30 more rows
 ```

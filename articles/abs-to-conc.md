@@ -114,22 +114,21 @@ also requires the column `unique_curve_id`.
 ``` r
 
 (lm_table_raw <- lm_std_curve(std_corrected |> dplyr::group_by(plate_id, column)))
-#> # A tibble: 10 × 11
+#> # A tibble: 10 × 10
 #>    plate_id unique_curve_id  slope r_squared adj_r_squared     lm_p
 #>    <chr>    <chr>            <dbl>     <dbl>         <dbl>    <dbl>
-#>  1 NO3_1F1  NO3_1F1_col1    0.0189         1         0.999 6.49e-11
-#>  2 NO3_1F1  NO3_1F1_col12   0.0179         1         0.999 2.79e-10
-#>  3 NO3_1F2  NO3_1F2_col1    0.0178         1         0.999 6.03e-11
-#>  4 NO3_1F2  NO3_1F2_col12   0.0190         1         0.999 1.64e-10
-#>  5 NO3_1F3  NO3_1F3_col1    0.0186         1         0.999 2.07e-10
-#>  6 NO3_1F3  NO3_1F3_col12   0.0184         1         0.999 4.07e-10
-#>  7 NO3_1F4  NO3_1F4_col1    0.0178         1         0.999 2.16e-10
-#>  8 NO3_1F4  NO3_1F4_col12   0.0188         1         0.999 2.43e-10
-#>  9 NO3_1F5  NO3_1F5_col1    0.0194         1         0.999 1.31e-10
-#> 10 NO3_1F5  NO3_1F5_col12   0.0185         1         0.999 3.49e-10
-#> # ℹ 5 more variables: normality_lm_residuals <chr>, shapiro_p <dbl>,
-#> #   homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>,
-#> #   outlier_rstudent <dbl>
+#>  1 NO3_1F1  NO3_1F1_col1    0.0189     0.999         0.999 6.49e-11
+#>  2 NO3_1F1  NO3_1F1_col12   0.0179     0.999         0.999 2.79e-10
+#>  3 NO3_1F2  NO3_1F2_col1    0.0178     0.999         0.999 6.03e-11
+#>  4 NO3_1F2  NO3_1F2_col12   0.0190     0.999         0.999 1.64e-10
+#>  5 NO3_1F3  NO3_1F3_col1    0.0186     0.999         0.999 2.07e-10
+#>  6 NO3_1F3  NO3_1F3_col12   0.0184     0.999         0.999 4.07e-10
+#>  7 NO3_1F4  NO3_1F4_col1    0.0178     0.999         0.999 2.16e-10
+#>  8 NO3_1F4  NO3_1F4_col12   0.0188     0.999         0.999 2.43e-10
+#>  9 NO3_1F5  NO3_1F5_col1    0.0194     0.999         0.999 1.31e-10
+#> 10 NO3_1F5  NO3_1F5_col12   0.0185     0.999         0.999 3.49e-10
+#> # ℹ 4 more variables: normality_lm_residuals <chr>, shapiro_p <dbl>,
+#> #   homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>
 ```
 
 ### 2.2 - QC Standard curves - check conditions of linear model
@@ -146,13 +145,21 @@ identification of outliers
 
 # extract all plates where "something" is not perfect 
 (lm_table_suspicious <- lm_table_raw |> suspicious_lm())
-#> # A tibble: 1 × 11
-#>   plate_id unique_curve_id  slope r_squared adj_r_squared     lm_p
-#>   <chr>    <chr>            <dbl>     <dbl>         <dbl>    <dbl>
-#> 1 NO3_1F1  NO3_1F1_col12   0.0179         1         0.999 2.79e-10
-#> # ℹ 5 more variables: normality_lm_residuals <chr>, shapiro_p <dbl>,
-#> #   homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>,
-#> #   outlier_rstudent <dbl>
+#> # A tibble: 10 × 10
+#>    plate_id unique_curve_id  slope r_squared adj_r_squared     lm_p
+#>    <chr>    <chr>            <dbl>     <dbl>         <dbl>    <dbl>
+#>  1 NO3_1F1  NO3_1F1_col1    0.0189     0.999         0.999 6.49e-11
+#>  2 NO3_1F1  NO3_1F1_col12   0.0179     0.999         0.999 2.79e-10
+#>  3 NO3_1F2  NO3_1F2_col1    0.0178     0.999         0.999 6.03e-11
+#>  4 NO3_1F2  NO3_1F2_col12   0.0190     0.999         0.999 1.64e-10
+#>  5 NO3_1F3  NO3_1F3_col1    0.0186     0.999         0.999 2.07e-10
+#>  6 NO3_1F3  NO3_1F3_col12   0.0184     0.999         0.999 4.07e-10
+#>  7 NO3_1F4  NO3_1F4_col1    0.0178     0.999         0.999 2.16e-10
+#>  8 NO3_1F4  NO3_1F4_col12   0.0188     0.999         0.999 2.43e-10
+#>  9 NO3_1F5  NO3_1F5_col1    0.0194     0.999         0.999 1.31e-10
+#> 10 NO3_1F5  NO3_1F5_col12   0.0185     0.999         0.999 3.49e-10
+#> # ℹ 4 more variables: normality_lm_residuals <chr>, shapiro_p <dbl>,
+#> #   homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>
 ```
 
 For visual aid (useful for larger data sets,
@@ -249,24 +256,27 @@ of linear model, identification of suspicious curves and plotting
 ``` r
 
 (lm_std_mean <- lm_std_curve(std_dilution_avg |> dplyr::rename(abs_corrected = abs_mean)))
-#> # A tibble: 5 × 11
+#> # A tibble: 5 × 10
 #>   plate_id unique_curve_id  slope r_squared adj_r_squared     lm_p
 #>   <chr>    <chr>            <dbl>     <dbl>         <dbl>    <dbl>
-#> 1 NO3_1F1  NO3_1F1_col13   0.0184         1         0.999 7.36e-11
-#> 2 NO3_1F2  NO3_1F2_col13   0.0184         1         0.999 6.32e-11
-#> 3 NO3_1F3  NO3_1F3_col13   0.0185         1         0.999 2.47e-10
-#> 4 NO3_1F4  NO3_1F4_col13   0.0183         1         0.999 2.23e-10
-#> 5 NO3_1F5  NO3_1F5_col13   0.0190         1         0.999 2.09e-10
-#> # ℹ 5 more variables: normality_lm_residuals <chr>, shapiro_p <dbl>,
-#> #   homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>,
-#> #   outlier_rstudent <dbl>
+#> 1 NO3_1F1  NO3_1F1_col13   0.0184     0.999         0.999 7.36e-11
+#> 2 NO3_1F2  NO3_1F2_col13   0.0184     0.999         0.999 6.32e-11
+#> 3 NO3_1F3  NO3_1F3_col13   0.0185     0.999         0.999 2.47e-10
+#> 4 NO3_1F4  NO3_1F4_col13   0.0183     0.999         0.999 2.23e-10
+#> 5 NO3_1F5  NO3_1F5_col13   0.0190     0.999         0.999 2.09e-10
+#> # ℹ 4 more variables: normality_lm_residuals <chr>, shapiro_p <dbl>,
+#> #   homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>
 (lm_suspicious_mean <- lm_std_mean |> suspicious_lm())
-#> # A tibble: 0 × 11
-#> # ℹ 11 variables: plate_id <chr>, unique_curve_id <chr>, slope <dbl>,
-#> #   r_squared <dbl>, adj_r_squared <dbl>, lm_p <dbl>,
-#> #   normality_lm_residuals <chr>, shapiro_p <dbl>,
-#> #   homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>,
-#> #   outlier_rstudent <dbl>
+#> # A tibble: 5 × 10
+#>   plate_id unique_curve_id  slope r_squared adj_r_squared     lm_p
+#>   <chr>    <chr>            <dbl>     <dbl>         <dbl>    <dbl>
+#> 1 NO3_1F1  NO3_1F1_col13   0.0184     0.999         0.999 7.36e-11
+#> 2 NO3_1F2  NO3_1F2_col13   0.0184     0.999         0.999 6.32e-11
+#> 3 NO3_1F3  NO3_1F3_col13   0.0185     0.999         0.999 2.47e-10
+#> 4 NO3_1F4  NO3_1F4_col13   0.0183     0.999         0.999 2.23e-10
+#> 5 NO3_1F5  NO3_1F5_col13   0.0190     0.999         0.999 2.09e-10
+#> # ℹ 4 more variables: normality_lm_residuals <chr>, shapiro_p <dbl>,
+#> #   homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>
 ```
 
 Good news, there are no more suspicious linear models anymore. Should
@@ -435,6 +445,24 @@ data_mg_N_L <-
   # compute concentration from absorbance
   dplyr::mutate(conc_mgNsp_L = abs_corrected / slope) |> 
   convert_molec(masses = molar_masses)
+
+data_mg_N_L
+#> # A tibble: 264 × 12
+#>    dataset plate_id map      abs_corrected std_sp target_sp std_unit     slope
+#>    <chr>   <chr>    <chr>            <dbl> <chr>  <chr>     <chr>        <dbl>
+#>  1 Nmin    NO3_1F1  81_t1_z2        0.0312 NO3    N         mg NO3- L-1 0.0184
+#>  2 Nmin    NO3_1F2  97_t1_z1        0.0249 NO3    N         mg NO3- L-1 0.0184
+#>  3 Nmin    NO3_1F3  89_t1_z3        0.0104 NO3    N         mg NO3- L-1 0.0185
+#>  4 Nmin    NO3_1F4  81_t1_z1        0.0342 NO3    N         mg NO3- L-1 0.0183
+#>  5 Nmin    NO3_1F5  Std_3_t1        0.0832 NO3    N         mg NO3- L-1 0.0190
+#>  6 Nmin    NO3_1F1  82_t1_z2        0.0452 NO3    N         mg NO3- L-1 0.0184
+#>  7 Nmin    NO3_1F2  98_t1_z1        0.0219 NO3    N         mg NO3- L-1 0.0184
+#>  8 Nmin    NO3_1F3  90_t1_z3        0.0124 NO3    N         mg NO3- L-1 0.0185
+#>  9 Nmin    NO3_1F4  82_t1_z3        0.0543 NO3    N         mg NO3- L-1 0.0183
+#> 10 Nmin    NO3_1F5  98_t1_z3        0.0232 NO3    N         mg NO3- L-1 0.0190
+#> # ℹ 254 more rows
+#> # ℹ 4 more variables: adj_r_squared <dbl>, lm_p <dbl>, conc_mgNsp_L <dbl>,
+#> #   conc_mgN_L <dbl>
 ```
 
 ## 4 - Epilogue

@@ -49,7 +49,7 @@ Uses the <code>ggplot2</code> package.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">plot_std</span><span class="op">(</span><span class="va">std_data</span>, through_origin <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">plot_std</span><span class="op">(</span><span class="va">std_data</span>, through_origin <span class="op">=</span> <span class="cn">TRUE</span>, model <span class="op">=</span> <span class="st">"linear"</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -68,6 +68,12 @@ to facet (see <code>?facet_wrap()</code> or <code>?facet_grid()</code>).</p></dd
 through the origin. Default to TRUE, which only makes sense for absorbance
 data that has already been blank-corrected</p></dd>
 
+
+<dt id="arg-model">model<a class="anchor" aria-label="anchor" href="#arg-model"></a></dt>
+<dd><p>Which model to use for the smooth curve. Accepts either <code>linear</code>
+(default) or <code>poly</code> for polynomial model (y = ax + bx^2 + c, with c = 0
+if <code>through_origin = TRUE</code>)</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -83,7 +89,7 @@ data that has already been blank-corrected</p></dd>
 <span class="r-in"><span>  <span class="fu"><a href="extract_std_data.html">extract_std_data</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">!</span><span class="va">std_conc</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">curve_concentration</span>, by <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/join_by.html" class="external-link">join_by</a></span><span class="op">(</span><span class="va">row</span>, <span class="va">dataset</span>, <span class="va">plate_id</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">plot_std</span><span class="op">(</span><span class="va">std_data</span>, through_origin <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">plate_id</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">plot_std</span><span class="op">(</span><span class="va">std_data</span>, through_origin <span class="op">=</span> <span class="cn">FALSE</span>, model <span class="op">=</span> <span class="st">"linear"</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">plate_id</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="plot_std-1.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
