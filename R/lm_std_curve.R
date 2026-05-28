@@ -192,7 +192,7 @@ lm_std_curve <- function(
 
 
 
-utils::globalVariables(c("lm_p", "normality_lm_residuals", "homoscedasticity_lm_residuals"))
+utils::globalVariables(c("lm_p", "normality_lm_residuals", "homoscedasticity_lm_residuals", "poly_a_p", "poly_b_p"))
 
 #' Extract Suspicious Rows from Linear Model Data (non-significance, Non-normality, heteroscedasticity)
 #'
@@ -202,6 +202,8 @@ utils::globalVariables(c("lm_p", "normality_lm_residuals", "homoscedasticity_lm_
 #'
 #' @param lm_data A tible containing data from the linear model. Structured as
 #'     the output of `lm_std_curve()`
+#' @param model Which model to use. Accepts either `linear` (default) or `poly`
+#'     for polynomial model.
 #'
 #' @import dplyr
 #' @returns A tible same structure as lm_data, but contains only "suspicious" standard curves
@@ -215,12 +217,32 @@ utils::globalVariables(c("lm_p", "normality_lm_residuals", "homoscedasticity_lm_
 #' data <- std_corrected |> dplyr::group_by(plate_id, column)
 #' lm_data <- lm_std_curve(data)
 #' suspicious_lm(lm_data)
-suspicious_lm <- function(lm_data) {
-  suspicious_lm <- lm_data |>
-    dplyr::filter_out(
-    normality_lm_residuals == "Normal" &
-      homoscedasticity_lm_residuals == "Homooscedasticity" &
-      lm_p < 0.05)
+suspicious_lm <- function(lm_data, model = "linear") {
+
+  # CASE 1 : LINEAR MODEL
+  if (model == "linear") {
+    suspicious_lm <- lm_data |>
+      dplyr::filter_out(
+        normality_lm_residuals == "Normal" &
+          homoscedasticity_lm_residuals == "Homoscedasticity" &
+          lm_p < 0.05)
+
+    # CASE 2 : POLYNOMIAL MODEL
+  } else if (model == "poly") {
+    suspicious_lm <- lm_data |>
+      dplyr::filter_out(
+        normality_lm_residuals == "Normal" &
+          homoscedasticity_lm_residuals == "Homoscedasticity" &
+          lm_p < 0.05 &
+          poly_a_p < 0.05 &
+          poly_b_p < 0.05
+      )
+
+    # CASE 3 : WRONG MODEL SPECIFICATION
+  } else stop('
+  Argument "model" is not valid.
+  Only `model = "linear"` and `model = "poly"` are accepted.
+              See also `?suspicious_lm()`')
 
   return(suspicious_lm)
 }

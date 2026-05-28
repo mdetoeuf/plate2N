@@ -4,11 +4,14 @@
 \alias{suspicious_lm}
 \title{Extract Suspicious Rows from Linear Model Data (non-significance, Non-normality, heteroscedasticity)}
 \usage{
-suspicious_lm(lm_data)
+suspicious_lm(lm_data, model = "linear")
 }
 \arguments{
 \item{lm_data}{A tible containing data from the linear model. Structured as
 the output of \code{lm_std_curve()}}
+
+\item{model}{Which model to use. Accepts either \code{linear} (default) or \code{poly}
+for polynomial model.}
 }
 \value{
 A tible same structure as lm_data, but contains only "suspicious" standard curves
