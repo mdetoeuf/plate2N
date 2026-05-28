@@ -51,6 +51,7 @@ lm_std_curve <- function(
     lm_data <- tibble::tibble(
       plate_id = character(),
       unique_curve_id = character(),
+      std_sp = character(),
       slope = numeric(),
       r_squared = numeric(),
       adj_r_squared = numeric(),
@@ -67,6 +68,7 @@ lm_std_curve <- function(
     lm_data <- tibble::tibble(
       plate_id = character(),
       unique_curve_id = character(),
+      std_sp = character(),
       poly_a = numeric(),
       poly_a_p = numeric(),
       poly_b = numeric(),
@@ -93,6 +95,8 @@ lm_std_curve <- function(
       dplyr::select(plate_id) |> magrittr::extract2(1) |> unique()
     unique_curve_id <- curve |>
       dplyr::select(unique_curve_id) |> magrittr::extract2(1) |> unique()
+    std_sp = curve |>
+      dplyr::select(std_sp) |> magrittr::extract2(1) |> unique()
 
     # CASE 1 : linear model
     if (model == "linear") {
@@ -118,6 +122,7 @@ lm_std_curve <- function(
       new_row <- tibble::tibble(
         plate_id,
         unique_curve_id,
+        std_sp,
         slope,
         r_squared,
         adj_r_squared,
@@ -166,6 +171,7 @@ lm_std_curve <- function(
       new_row <- tibble::tibble(
         plate_id,
         unique_curve_id,
+        std_sp,
         poly_a,
         poly_a_p,
         poly_b,
