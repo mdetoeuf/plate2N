@@ -259,6 +259,8 @@ utils::globalVariables(c("std_conc", "abs_corrected"))
 #'     possibly as a subset to observe only suspicious curves
 #' @param std_data tibble containing only standard data, as in `std_corrected`.
 #'     Absorbance values should already by blank-corrected
+#' @param model Which model to use. Accepts either `linear` (default) or `poly`
+#'     for polynomial model.
 #'
 #' @import dplyr ggplot2
 #'
@@ -266,6 +268,8 @@ utils::globalVariables(c("std_conc", "abs_corrected"))
 #'     - non-significance of the linear modal (p-value > 0.05)
 #'     - non-normality of residuals (shapiro test with threshold of p = 0.05)
 #'     - heteroscedasticity of residuals (Breusch-Pagan test, threshold of p = 0.05)
+#'     - if `model = "poly"`: non-significance of the `a` and `b` coefficients of the
+#'       regression equation `y = ax^2 + bx` (p-value > 0.05)
 #' @export
 #'
 #' @examples
@@ -275,12 +279,13 @@ utils::globalVariables(c("std_conc", "abs_corrected"))
 #'     std_data = std_corrected)
 #' plot_list[[1]] ; plot_list[[2]]
 plot_list_lm <- function(
-    lm_data,
-    std_data) {
+    lm_data, # lm_data <- lm_suspicious_NO3
+    std_data, # std_data <- std_corrected
+    model = "linear") { # model = "poly"
 
   #i = 1
   plots <- list()
-
+  #i = 1
   #for (i in 1:10) {
   for (i in 1:nrow(lm_data)) {
     # curve data
@@ -296,22 +301,36 @@ plot_list_lm <- function(
 
     # gathering info to display
     if (lm_curve$lm_p < 0.05) { lm_p_msg <- ""} else {
-      lm_p_msg <- paste0("lm: p_val = ", lm_curve$lm_p)
+      lm_p_msg <- paste0("lm: p_val = ", lm_curve$lm_p, ", ")
     }
     if (lm_curve$normality_lm_residuals == "Normal") {norm_msg <- ""} else {
-      norm_msg <- "Non-Normal"
+      norm_msg <- "Non-Normal, "
     }
     if (lm_curve$homoscedasticity_lm_residuals != "Heteroscedasticity") {
       homosced_msg <- ""} else {
-        homosced_msg <- "Heteroscedasticity"
+        homosced_msg <- "Heteroscedasticity, "
       }
 
-    annotation <- paste(lm_p_msg, ", ", norm_msg, ", ", homosced_msg)
+    annotation <- paste(lm_p_msg, norm_msg, homosced_msg)
+
+    if (model == "poly") {
+      if (lm_curve$poly_a_p < 0.05) {coeff_a <- ""} else {
+        coeff_a <- paste0("a: p_val = ", signif(lm_curve$poly_a_p, digits = 2), ", ")
+      }
+      if (lm_curve$poly_b_p < 0.05) {coeff_b <- ""} else {
+        coeff_b <- paste0("b: p_val = ", signif(lm_curve$poly_b_p, digits = 2), ", ")
+      }
+
+      annotation <- paste(annotation, coeff_a, coeff_b)
+    }
+
+
+
     x_pos <- min(curve_data$std_conc)
     y_pos <- max(curve_data$abs_corrected)*0.9
 
     # plot
-    plot <- plot_std(curve_data |> dplyr::rename(abs = abs_corrected)) +
+    plot <- plot_std(curve_data |> dplyr::rename(abs = abs_corrected), model = model) +
       ggplot2::labs(title = curve_id) +
       ggplot2::xlab(paste0("Concentration of Standard Curve [", std_unit, "]")) +
       ggplot2::ylab("Blank-corrected Absorbance") +
