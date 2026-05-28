@@ -5,7 +5,7 @@ Compute a list of plots, one per standard curve
 ## Usage
 
 ``` r
-plot_list_lm(lm_data, std_data)
+plot_list_lm(lm_data, std_data, model = "linear")
 ```
 
 ## Arguments
@@ -21,12 +21,19 @@ plot_list_lm(lm_data, std_data)
   tibble containing only standard data, as in `std_corrected`.
   Absorbance values should already by blank-corrected
 
+- model:
+
+  Which model to use. Accepts either `linear` (default) or `poly` for
+  polynomial model.
+
 ## Value
 
 A list of plots, one per curve, annotated with the issue: -
 non-significance of the linear modal (p-value \> 0.05) - non-normality
 of residuals (shapiro test with threshold of p = 0.05) -
 heteroscedasticity of residuals (Breusch-Pagan test, threshold of p =
+0.05) - if `model = "poly"`: non-significance of the `a` and `b`
+coefficients of the regression equation `y = ax^2 + bx` (p-value \>
 0.05)
 
 ## Examples

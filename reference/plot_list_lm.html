@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,7 +46,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">plot_list_lm</span><span class="op">(</span><span class="va">lm_data</span>, <span class="va">std_data</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">plot_list_lm</span><span class="op">(</span><span class="va">lm_data</span>, <span class="va">std_data</span>, model <span class="op">=</span> <span class="st">"linear"</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -62,13 +62,20 @@ possibly as a subset to observe only suspicious curves</p></dd>
 <dd><p>tibble containing only standard data, as in <code>std_corrected</code>.
 Absorbance values should already by blank-corrected</p></dd>
 
+
+<dt id="arg-model">model<a class="anchor" aria-label="anchor" href="#arg-model"></a></dt>
+<dd><p>Which model to use. Accepts either <code>linear</code> (default) or <code>poly</code>
+for polynomial model.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list of plots, one per curve, annotated with the issue:
 - non-significance of the linear modal (p-value &gt; 0.05)
 - non-normality of residuals (shapiro test with threshold of p = 0.05)
-- heteroscedasticity of residuals (Breusch-Pagan test, threshold of p = 0.05)</p>
+- heteroscedasticity of residuals (Breusch-Pagan test, threshold of p = 0.05)
+- if <code>model = "poly"</code>: non-significance of the <code>a</code> and <code>b</code> coefficients of the
+regression equation <code>y = ax^2 + bx</code> (p-value &gt; 0.05)</p>
     </div>
 
     <div class="section level2">
