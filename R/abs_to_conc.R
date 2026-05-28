@@ -1,7 +1,7 @@
 # get this into plate2N
 #
 
-utils::globalVariables(c("plate_id", "slope", "adj_r_squared", "lm_p", "dataset", "map", "abs_corrected", "std_sp", "std_unit"))
+utils::globalVariables(c("plate_id", "slope", "adj_r_squared", "lm_p", "dataset", "map", "abs_corrected", "std_sp", "std_unit", "poly_a"))
 
 #' Merge Data from Regression Equation on Standard Curve with Absorbance Data (samples)
 #'
@@ -23,8 +23,13 @@ reg_join_abs <- function(
     abs_data,
     target_sp = "N"
 ) {
-  reg_data <- lm_table |>
-    dplyr::select(plate_id, slope, adj_r_squared, lm_p)
+  if ("slope" %in% names(lm_table)) {
+    reg_data <- lm_table |>
+      dplyr::select(plate_id, slope, adj_r_squared, lm_p)
+  } else if ("poly_a" %in% names(lm_table)) {
+    reg_data <- lm_table |>
+      dplyr::select(plate_id, poly_a:lm_p)
+  } else stop("Required column names are missing. See `?reg_join_abs()`")
 
   joined_data <- abs_data |>
     dplyr::select(dataset, plate_id, map, abs_corrected, std_sp, std_unit) |>
