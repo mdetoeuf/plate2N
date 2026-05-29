@@ -25,7 +25,9 @@ remove_wells <- function(
     show_msg = TRUE
 ) {
   cleaned_table <- table_to_clean |>
-    dplyr::anti_join(well_table, by = join_by(well_id, plate_id, dataset))
+    dplyr::anti_join(
+      well_table |> dplyr::filter_out(is.na(well_id)),
+      by = join_by(well_id, plate_id, dataset))
   if(show_msg) {
     # QC check that nb of rows removed = nb of rows of failed_wells
     if (
