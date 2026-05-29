@@ -8,6 +8,6 @@ so. Although it is designed to support data analysis for dosage of
 Nitrogen compounds using absorbance readings, we believe that plate2N
 could be used for any dosage based on absorbance readings, including
 experiments using fluorescence, as long as the relation between
-absorbance and concentration is linear. Feel free to reach out to the
-authors to propose or discuss adaptations to match your analytical
-needs.
+absorbance and concentration is linear or polynomial (2nd degree). Feel
+free to reach out to the authors to propose or discuss adaptations to
+match your analytical needs.
