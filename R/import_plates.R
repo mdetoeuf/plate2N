@@ -152,8 +152,11 @@ utils::globalVariables(c(
   "row", "X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9", "X10", "X11", "X12"))
 #' Import 96-well plate data from Skanit format
 #'
-#' @param skanit_csv The csv exported from Skanit (or generated from the first sheet of a Skanit Excel) in its raw shape
+#' @param skanit_csv The csv exported from Skanit (or generated from the first
+#'     sheet of a Skanit Excel) in its raw shape
 #' @param delim The value delimiter within the csv file. Default is ",", accepts also ";".
+#' @param suppress_msg Wether to suppress the message received when `delim` is
+#'     different than = ",". Defaults to `FALSE`.
 #'
 #' @import dplyr readr stringr tidyr
 #'
@@ -163,12 +166,13 @@ utils::globalVariables(c(
 #' @examples
 #' skanit_csv <- system.file("extdata", "skanit.csv", package = "plate2N")
 #' plate_data <- skanit_to_tibble(skanit_csv, delim = ",")
-#' plate_data$abs_data
-#' plate_data$map_data
+#' plate_data$abs_tibble
+#' plate_data$map_tibble
 #'
 skanit_to_tibble <- function(
     skanit_csv,
-    delim = ","
+    delim = ",",
+    suppress_msg = FALSE
 ) {
 
   if (delim == ",") {
@@ -192,10 +196,13 @@ skanit_to_tibble <- function(
     ) |>
       tidyr::drop_na(X1)
 
-    warning(
-      "Warning: your csv has values separated by a semi-colon (';') instead of a comma (',').
+    if (!suppress_msg) {
+      message(
+        "Warning: your csv has values separated by a semi-colon (';') instead of a comma (',').
       This probably means that your numerical data uses the comma instead of the dot as a digit separator.
-      This could generate issues in downstream steps, but should not generate errors in this function call.")
+      Make sure that the conversion to a dot has not changed your data.")
+    }
+
   }
 
   # correct column names to fit to convention from other *_to_tibble functions
@@ -242,6 +249,14 @@ skanit_to_tibble <- function(
   clean_file <- dplyr::anti_join(
     file_plate_ids, anti_file,
     by = dplyr::join_by(row, X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12))
+
+  # If numbers formatted with commas, replace them with dots
+  if (clean_file$X1[2] |> str_extract(pattern = "\\W") == ",") {
+    for (i in 1:ncol(clean_file)) {
+      replacement <- gsub("\\,", ".", clean_file[[i]])
+      clean_file[i] <- replacement
+    }
+  }
 
   # create a map file to export as well
   map_file <- anti_file |>

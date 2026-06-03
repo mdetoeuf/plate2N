@@ -4,12 +4,16 @@
 \alias{skanit_to_tibble}
 \title{Import 96-well plate data from Skanit format}
 \usage{
-skanit_to_tibble(skanit_csv, delim = ",")
+skanit_to_tibble(skanit_csv, delim = ",", suppress_msg = FALSE)
 }
 \arguments{
-\item{skanit_csv}{The csv exported from Skanit (or generated from the first sheet of a Skanit Excel) in its raw shape}
+\item{skanit_csv}{The csv exported from Skanit (or generated from the first
+sheet of a Skanit Excel) in its raw shape}
 
 \item{delim}{The value delimiter within the csv file. Default is ",", accepts also ";".}
+
+\item{suppress_msg}{Wether to suppress the message received when \code{delim} is
+different than = ",". Defaults to \code{FALSE}.}
 }
 \value{
 A list containing 2 elements. The first, called $abs_data contains a tibble with the absorbance data. The second $map_data contains a tibble with the mapping data (only relevant if the mapping has been encoded into skanit. Otherwise: use other functions to import mapping data).
@@ -20,7 +24,7 @@ Import 96-well plate data from Skanit format
 \examples{
 skanit_csv <- system.file("extdata", "skanit.csv", package = "plate2N")
 plate_data <- skanit_to_tibble(skanit_csv, delim = ",")
-plate_data$abs_data
-plate_data$map_data
+plate_data$abs_tibble
+plate_data$map_tibble
 
 }
