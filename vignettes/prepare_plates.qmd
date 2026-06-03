@@ -1,0 +1,63 @@
+---
+title: "prepare_plates"
+vignette: >
+  %\VignetteIndexEntry{prepare_plates}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{quarto::html}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#| label: setup
+library(plate2N)
+```
+
+::: callout-caution
+## Work in progress
+
+This vignette is still under development, bugs are to be expected
+:::
+
+# 1 - Introduction
+
+Functions introduced in this vignette are mostly helpful in a preparation step, before going to the lab and running the absorbance readings in the 96-well plate reader.
+
+# 2 - Mapping samples to plate(s)
+
+`map_1_plate()` takes a single plate_id and a vector containing sample names and returns a mapped plate format where the plate id is in the upper left corner.
+
+```{r}
+(samples <- sample(LETTERS, size = 15))
+map_1_plate(plate_id = "test_plate", samples = samples)
+```
+
+Usually, more than one plate needs to be prepared. Let's say we need to prepare 5 plates, and we have a list of 5 x 14 samples (we want exactly 14 samples in each plate). `map_plates()` builds on `map_1_plate()` to map several plates.
+
+```{r}
+# take random fruit names as sample names
+samples <- stringr::fruit[1:70]
+
+# Have a look at the first 5
+samples[1:5]
+
+tibble <- map_plates(
+  samples, 
+  n_samples_per_plate = 14, 
+  column_blank = 6) 
+tibble |> print(n = 15)
+```
+
+The interest of this tibble is that it can easily
+
+- be exported as a csv, then made "pretty" for printing and usage in the lab, for example with `readr::write_csv("path/to/my/mapping_data.csv)`
+
+<!-- -->
+
+- be inputted back into the import pipeline, either with `csv_to_tibble()` or as this tibble in post-import steps.
+
+Either way, but especially if the tibble is not exported as a csv, we recommend saving this tibble on the disk, for example using `readr::wrtite_rds("path/to/my/output/data.rds)`
