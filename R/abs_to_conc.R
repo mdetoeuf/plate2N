@@ -32,7 +32,7 @@ reg_join_abs <- function(
   } else stop("Required column names are missing. See `?reg_join_abs()`")
 
   joined_data <- abs_data |>
-    dplyr::select(dataset, plate_id, map, abs_corrected, std_sp, std_unit) |>
+    dplyr::select(dataset, plate_id, map, well_id, abs_corrected, std_sp, std_unit) |>
     dplyr::left_join(reg_data, by = dplyr::join_by(plate_id)) |>
     dplyr::mutate(target_sp = rep(target_sp), .after = std_sp)
 
