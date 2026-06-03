@@ -611,9 +611,6 @@ Additional info can be found under `?join_abs_map()`.
 
 ## 3 - Tidy table
 
-**TO DO: change this section to reflect new function
-vertical_to_tidy()**
-
 The vertical format is practical for manual/human handling, with an
 easy-to-handle number of rows (96), and individual plates are easy to
 select based on plate_id or dataset. For example, here is an easy moment

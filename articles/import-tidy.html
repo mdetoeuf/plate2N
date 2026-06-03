@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,6 +39,7 @@
     <li><a class="dropdown-item" href="../articles/blank-correction.html">blank-correction</a></li>
     <li><a class="dropdown-item" href="../articles/handling-outliers.html">handling-outliers</a></li>
     <li><a class="dropdown-item" href="../articles/import-tidy.html">import-tidy</a></li>
+    <li><a class="dropdown-item" href="../articles/prepare_plates.html">prepare_plates</a></li>
     <li><a class="dropdown-item" href="../articles/translate-abs.html">translate-abs</a></li>
   </ul>
 </li>
@@ -502,7 +503,6 @@
 <p>Additional info can be found under <code>?join_abs_map()</code>.</p>
 </section></section><section class="section level2"><h2 id="tidy-table">3 - Tidy table<a class="anchor" aria-label="anchor" href="#tidy-table"></a>
 </h2>
-<p><strong>TO DO: change this section to reflect new function vertical_to_tidy()</strong></p>
 <p>The vertical format is practical for manual/human handling, with an easy-to-handle number of rows (96), and individual plates are easy to select based on plate_id or dataset. For example, here is an easy moment to subset some plates based on dataset, abs/map or even some features that are embedded in plate name (such as N species in our case where plate names contained either “NO3”, “NO2” or “NH4”). This can be done using the <code>dplyr</code> package and its function <code><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">dplyr::select()</a></code>, aided by some helper functions from the <code>tidyselect</code> package, such as <code><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">tidyselect::starts_with()</a></code>, <code><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">tidyselect::contains()</a></code>, etc.</p>
 <p>But this verticalized format is not ideal for bulk computing and transformations, where the might of the <code>tidyverse</code> sits in computations done on columns. So, a typical last step of tidying would be to bring this dataset in a format with a single column for the absorbance data, and another for the mapping data, where each unique well would be represented by a row. Such transformations can be done with the <code>tidyr</code> and “<code>dplyr</code> packages, for example with the successive use of <code><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html" class="external-link">tidyr::pivot_longer()</a></code>and <code><a href="https://tidyr.tidyverse.org/reference/pivot_wider.html" class="external-link">tidyr::pivot_wider()</a></code>.</p>
 <p>To simplify this process, this is exactly what our function <code><a href="../reference/vertical_to_tidy.html">vertical_to_tidy()</a></code> does. Here is an example of the complete pipeline from import to tidy table</p>

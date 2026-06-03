@@ -7,6 +7,7 @@
 <url><loc>https://mdetoeuf.github.io/plate2N/articles/handling-outliers.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/articles/import-tidy.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/articles/index.html</loc></url>
+<url><loc>https://mdetoeuf.github.io/plate2N/articles/prepare_plates.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/articles/translate-abs.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/authors.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/index.html</loc></url>
@@ -27,6 +28,8 @@
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/join_abs_map.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/lm_output.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/lm_std_curve.html</loc></url>
+<url><loc>https://mdetoeuf.github.io/plate2N/reference/map_1_plate.html</loc></url>
+<url><loc>https://mdetoeuf.github.io/plate2N/reference/map_plates.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/metadata.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/molar_masses.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/multiplot_outlier_extr.html</loc></url>

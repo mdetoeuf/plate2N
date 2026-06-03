@@ -39,6 +39,12 @@
   : Example of Outputs from the Linear Model of the Standard Curves
 - [`lm_std_curve()`](https://mdetoeuf.github.io/plate2N/reference/lm_std_curve.md)
   : Perform Linear Model for Standard Curve
+- [`map_1_plate()`](https://mdetoeuf.github.io/plate2N/reference/map_1_plate.md)
+  : Mapping a Vector with Sample ids into a 96-well Plate Format -
+  Single Plate
+- [`map_plates()`](https://mdetoeuf.github.io/plate2N/reference/map_plates.md)
+  : Mapping a Vector with Sample ids into 96-well Plate Format - Several
+  Plates
 - [`metadata`](https://mdetoeuf.github.io/plate2N/reference/metadata.md)
   : Example of plate metadata
 - [`molar_masses`](https://mdetoeuf.github.io/plate2N/reference/molar_masses.md)
