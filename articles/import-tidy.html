@@ -10,7 +10,9 @@
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="import-tidy">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="import-tidy_files/libs/quarto-html/popper.min.js"></script><script src="import-tidy_files/libs/quarto-html/tippy.umd.min.js"></script><link href="import-tidy_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="import-tidy_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="import-tidy">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -20,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,318 +53,252 @@
 
 
   </div>
-</nav><div class="container template-article">
-
-
-
-
+</nav><div class="container template-quarto">
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>import-tidy</h1>
-            
-      
-      <small class="dont-index">Source: <a href="https://github.com/mdetoeuf/plate2N/blob/main/vignettes/import-tidy.Rmd" class="external-link"><code>vignettes/import-tidy.Rmd</code></a></small>
-      <div class="d-none name"><code>import-tidy.Rmd</code></div>
+
+
+
+
+      <small class="dont-index">Source: <a href="https://github.com/mdetoeuf/plate2N/blob/main/vignettes/import-tidy.qmd" class="external-link"><code>vignettes/import-tidy.qmd</code></a></small>
+      <div class="d-none name"><code></code></div>
     </div>
 
-    
-    
-<p><strong>TO DO</strong></p>
+
+
+
+
+
+    <p><strong>TO DO</strong></p>
 <ul>
-<li>Create a function to prepare a csv template to be filled (by
-hand)</li>
+<li>Create a function to prepare a csv template to be filled (by hand)</li>
 <li>Create a function to generate a csv from a sample list</li>
 </ul>
-<div class="section level2">
-<h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
+<section class="section level2"><h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
-<p>The goal of <code>plate2N</code> is to facilitate data wrangling and
-data analysis for raw data that originates from absorbance readings with
-a 96-well plate reader (spectrophotometry).</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<p>The goal of <code>plate2N</code> is to facilitate data wrangling and data analysis for raw data that originates from absorbance readings with a 96-well plate reader (spectrophotometry).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mdetoeuf.github.io/plate2N/">plate2N</a></span><span class="op">)</span></span></code></pre></div>
-<p>This particular vignette adresses the first steps of the pipeline:
-getting from files of raw data in various forms to a tidy data table
-that can be easily manipulated in downstream steps. The final
-<code>tidy_table</code> will look something like this:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tidy_table</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 960 × 8</span></span></span>
-<span><span class="co">#&gt;    row   column well_id plate_id unique_well_id dataset map     abs   </span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> A     1      A1      M12      A1_M12         expe1   Std0001 1.4402</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> A     1      A1      M16      A1_M16         expe1   Std0097 1.5789</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> A     1      A1      M17      A1_M17         expe1   Std0193 1.5611</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> A     1      A1      M18      A1_M18         expe1   Std0289 1.7013</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> A     1      A1      M19      A1_M19         expe1   Std0385 1.6865</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> A     1      A1      M20      A1_M20         expe1   Std0481 1.7936</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> A     1      A1      M21      A1_M21         expe1   Std0577 1.7925</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> A     1      A1      M22      A1_M22         expe1   Std0673 1.8274</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> A     1      A1      M23      A1_M23         expe1   Std0769 1.9330</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> A     1      A1      M1       A1_M1          expe1   Std0865 0.9254</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 950 more rows</span></span></span></code></pre></div>
-<p>In this vignette, we cover three steps:</p>
-<p><strong>1) Data import</strong> from various raw file formats with
-<code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code>, <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code> and
-<code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code>, where data is brought into a shape that
-is common to all import files, i.e., cleaned from the file
-format-specific noise, but still unpractical to work with in R. We refer
-to the output of this first step in an object called “tibble” where data
-is still in a “plate” format (see hereunder). In this tibble, the first
-columns, called <code>row</code>, contains the <code>plate_id</code> in
-the first row, followed by the letters characterising the 8 rows of the
-plate (from A to H). Throughout the other 12 columns, the rest of the
-first row contains the plate-column numbers (from 1 to 12). The rest of
-the table contains the original plate data, which can be numerical
-(e.g., absorbance data) or characters (e.g., plate mapping)</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tibble_example</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 36 × 13</span></span></span>
-<span><span class="co">#&gt;    row          X1    X2    X3    X4    X5    X6    X7    X8    X9    X10    X11</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> NO3_TDN_… 1     2     3     4     5     6     7     8     9     10     11    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> A         0.095 0.537 0.528 0.562 0.51  0.507 0.546 0.078 0.519  0.543  0.521</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> B         0.191 0.541 0.521 0.544 0.507 0.515 0.527 0.078 0.521  0.54   0.521</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> C         0.255 0.551 0.513 0.559 0.505 0.511 0.541 0.078 0.519  0.54   0.514</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> D         0.396 0.54  0.528 0.551 0.507 0.509 0.541 0.078 0.517  0.54   0.515</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> E         0.65  0.979 0.946 1.01  0.926 0.927 0.996 0.078 0.955  0.997  0.936</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> F         1.05  0.981 0.959 1     0.921 0.931 0.99  0.08  0.944  0.975  0.943</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> G         1.83  0.988 0.954 0.994 0.936 0.935 0.995 0.077 0.945  0.995  0.939</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> H         2.45  0.984 0.969 0.991 0.923 0.94  0.99  0.077 0.932  0.986  0.949</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> NO3_TDN_… 1     2     3     4     5     6     7     8     9     10     11    </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 26 more rows</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: X12 &lt;dbl&gt;</span></span></span></code></pre></div>
-<p><strong>2) Verticalization</strong> of the “tibble” into a
-verticalized table with <code><a href="../reference/verticalize_plates.html">verticalize_plates()</a></code>. The
-<code>vertical_plates</code> present the same raw data in a verticalized
-format, i.e., data from each plate is displayed in a single column where
-the name of the column is the plate id. The first 2 columns contain the
-well identifier, stored in the columns <code>row</code> (of the 96-well
-plate, from A to H), and <code>column</code> (from 1 to 12). This
-vertical format is a good format to select a subset of plates (e.g.,
-based on experiment, treatment, or anything else that the user stored
-into column names). See example hereunder:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">vertical_plates</span> ; </span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 96 × 6</span></span></span>
-<span><span class="co">#&gt;    row   column NO3_TDN_01 NO3_TDN_02 NO3_TDN_03 NO3_TDN_04</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> A     1           0.095      0.097      0.113      0.114</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> A     2           0.537      0.552      0.53       0.535</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> A     3           0.528      0.559      0.528      0.534</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> A     4           0.562      0.555      0.521      0.531</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> A     5           0.51       0.538      0.521      0.506</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> A     6           0.507      0.552      0.54       0.551</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> A     7           0.546      0.534      0.551      0.528</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> A     8           0.078      0.079      0.097      0.102</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> A     9           0.519      0.589      0.559      0.541</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> A     10          0.543      0.535      0.528      0.544</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 86 more rows</span></span></span>
-<span><span class="va">vertical_plates</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">row</span><span class="op">:</span><span class="va">column</span>, <span class="fu">tidyselect</span><span class="fu">::</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">ends_with</a></span><span class="op">(</span><span class="st">"04"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 96 × 3</span></span></span>
-<span><span class="co">#&gt;    row   column NO3_TDN_04</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> A     1           0.114</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> A     2           0.535</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> A     3           0.534</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> A     4           0.531</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> A     5           0.506</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> A     6           0.551</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> A     7           0.528</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> A     8           0.102</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> A     9           0.541</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> A     10          0.544</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 86 more rows</span></span></span></code></pre></div>
-<p><strong>3) Tidying</strong> of the verticalized plate into the
-<code>tidy_table</code> displayed at the beginning of this vignette, a
-format that is easily usable for downstream data transformations and
-analyses. This step is done using the <code>tidyr</code> package</p>
-<p>Note: If the need arises to fit this package to other plate formats
-than 96-well plates, please reach out to the authors.</p>
-<hr>
 </div>
-<div class="section level2">
-<h2 id="import">1 - Import<a class="anchor" aria-label="anchor" href="#import"></a>
+<p>This particular vignette adresses the first steps of the pipeline: getting from files of raw data in various forms to a tidy data table that can be easily manipulated in downstream steps. The final <code>tidy_table</code> will look something like this:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">tidy_table</span></span>
+<span><span class="co">#&gt; # A tibble: 960 × 8</span></span>
+<span><span class="co">#&gt;    row   column well_id plate_id unique_well_id dataset map     abs   </span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt; </span></span>
+<span><span class="co">#&gt;  1 A     1      A1      M12      A1_M12         expe1   Std0001 1.4402</span></span>
+<span><span class="co">#&gt;  2 A     1      A1      M16      A1_M16         expe1   Std0097 1.5789</span></span>
+<span><span class="co">#&gt;  3 A     1      A1      M17      A1_M17         expe1   Std0193 1.5611</span></span>
+<span><span class="co">#&gt;  4 A     1      A1      M18      A1_M18         expe1   Std0289 1.7013</span></span>
+<span><span class="co">#&gt;  5 A     1      A1      M19      A1_M19         expe1   Std0385 1.6865</span></span>
+<span><span class="co">#&gt;  6 A     1      A1      M20      A1_M20         expe1   Std0481 1.7936</span></span>
+<span><span class="co">#&gt;  7 A     1      A1      M21      A1_M21         expe1   Std0577 1.7925</span></span>
+<span><span class="co">#&gt;  8 A     1      A1      M22      A1_M22         expe1   Std0673 1.8274</span></span>
+<span><span class="co">#&gt;  9 A     1      A1      M23      A1_M23         expe1   Std0769 1.9330</span></span>
+<span><span class="co">#&gt; 10 A     1      A1      M1       A1_M1          expe1   Std0865 0.9254</span></span>
+<span><span class="co">#&gt; # ℹ 950 more rows</span></span></code></pre></div>
+</div>
+<p>In this vignette, we cover three steps:</p>
+<p><strong>1) Data import</strong> from various raw file formats with <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code>, <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code> and <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code>, where data is brought into a shape that is common to all import files, i.e., cleaned from the file format-specific noise, but still unpractical to work with in R. We refer to the output of this first step in an object called “tibble” where data is still in a “plate” format (see hereunder). In this tibble, the first columns, called <code>row</code>, contains the <code>plate_id</code> in the first row, followed by the letters characterising the 8 rows of the plate (from A to H). Throughout the other 12 columns, the rest of the first row contains the plate-column numbers (from 1 to 12). The rest of the table contains the original plate data, which can be numerical (e.g., absorbance data) or characters (e.g., plate mapping)</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">tibble_example</span></span>
+<span><span class="co">#&gt; # A tibble: 36 × 13</span></span>
+<span><span class="co">#&gt;    row          X1    X2    X3    X4    X5    X6    X7    X8    X9    X10    X11</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt;     &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt;  1 NO3_TDN_… 1     2     3     4     5     6     7     8     9     10     11    </span></span>
+<span><span class="co">#&gt;  2 A         0.095 0.537 0.528 0.562 0.51  0.507 0.546 0.078 0.519  0.543  0.521</span></span>
+<span><span class="co">#&gt;  3 B         0.191 0.541 0.521 0.544 0.507 0.515 0.527 0.078 0.521  0.54   0.521</span></span>
+<span><span class="co">#&gt;  4 C         0.255 0.551 0.513 0.559 0.505 0.511 0.541 0.078 0.519  0.54   0.514</span></span>
+<span><span class="co">#&gt;  5 D         0.396 0.54  0.528 0.551 0.507 0.509 0.541 0.078 0.517  0.54   0.515</span></span>
+<span><span class="co">#&gt;  6 E         0.65  0.979 0.946 1.01  0.926 0.927 0.996 0.078 0.955  0.997  0.936</span></span>
+<span><span class="co">#&gt;  7 F         1.05  0.981 0.959 1     0.921 0.931 0.99  0.08  0.944  0.975  0.943</span></span>
+<span><span class="co">#&gt;  8 G         1.83  0.988 0.954 0.994 0.936 0.935 0.995 0.077 0.945  0.995  0.939</span></span>
+<span><span class="co">#&gt;  9 H         2.45  0.984 0.969 0.991 0.923 0.94  0.99  0.077 0.932  0.986  0.949</span></span>
+<span><span class="co">#&gt; 10 NO3_TDN_… 1     2     3     4     5     6     7     8     9     10     11    </span></span>
+<span><span class="co">#&gt; # ℹ 26 more rows</span></span>
+<span><span class="co">#&gt; # ℹ 1 more variable: X12 &lt;dbl&gt;</span></span></code></pre></div>
+</div>
+<p><strong>2) Verticalization</strong> of the “tibble” into a verticalized table with <code><a href="../reference/verticalize_plates.html">verticalize_plates()</a></code>. The <code>vertical_plates</code> present the same raw data in a verticalized format, i.e., data from each plate is displayed in a single column where the name of the column is the plate id. The first 2 columns contain the well identifier, stored in the columns <code>row</code> (of the 96-well plate, from A to H), and <code>column</code> (from 1 to 12). This vertical format is a good format to select a subset of plates (e.g., based on experiment, treatment, or anything else that the user stored into column names). See example hereunder:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">vertical_plates</span> ; </span>
+<span><span class="co">#&gt; # A tibble: 96 × 6</span></span>
+<span><span class="co">#&gt;    row   column NO3_TDN_01 NO3_TDN_02 NO3_TDN_03 NO3_TDN_04</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;       &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt;  1 A     1           0.095      0.097      0.113      0.114</span></span>
+<span><span class="co">#&gt;  2 A     2           0.537      0.552      0.53       0.535</span></span>
+<span><span class="co">#&gt;  3 A     3           0.528      0.559      0.528      0.534</span></span>
+<span><span class="co">#&gt;  4 A     4           0.562      0.555      0.521      0.531</span></span>
+<span><span class="co">#&gt;  5 A     5           0.51       0.538      0.521      0.506</span></span>
+<span><span class="co">#&gt;  6 A     6           0.507      0.552      0.54       0.551</span></span>
+<span><span class="co">#&gt;  7 A     7           0.546      0.534      0.551      0.528</span></span>
+<span><span class="co">#&gt;  8 A     8           0.078      0.079      0.097      0.102</span></span>
+<span><span class="co">#&gt;  9 A     9           0.519      0.589      0.559      0.541</span></span>
+<span><span class="co">#&gt; 10 A     10          0.543      0.535      0.528      0.544</span></span>
+<span><span class="co">#&gt; # ℹ 86 more rows</span></span>
+<span><span class="va">vertical_plates</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">row</span><span class="op">:</span><span class="va">column</span>, <span class="fu">tidyselect</span><span class="fu">::</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">ends_with</a></span><span class="op">(</span><span class="st">"04"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; # A tibble: 96 × 3</span></span>
+<span><span class="co">#&gt;    row   column NO3_TDN_04</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;       &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt;  1 A     1           0.114</span></span>
+<span><span class="co">#&gt;  2 A     2           0.535</span></span>
+<span><span class="co">#&gt;  3 A     3           0.534</span></span>
+<span><span class="co">#&gt;  4 A     4           0.531</span></span>
+<span><span class="co">#&gt;  5 A     5           0.506</span></span>
+<span><span class="co">#&gt;  6 A     6           0.551</span></span>
+<span><span class="co">#&gt;  7 A     7           0.528</span></span>
+<span><span class="co">#&gt;  8 A     8           0.102</span></span>
+<span><span class="co">#&gt;  9 A     9           0.541</span></span>
+<span><span class="co">#&gt; 10 A     10          0.544</span></span>
+<span><span class="co">#&gt; # ℹ 86 more rows</span></span></code></pre></div>
+</div>
+<p><strong>3) Tidying</strong> of the verticalized plate into the <code>tidy_table</code> displayed at the beginning of this vignette, a format that is easily usable for downstream data transformations and analyses. This step is done using the <code>tidyr</code> package</p>
+<p>Note: If the need arises to fit this package to other plate formats than 96-well plates, please reach out to the authors.</p>
+<hr></section><section class="section level2"><h2 id="import">1 - Import<a class="anchor" aria-label="anchor" href="#import"></a>
 </h2>
-<p>All 3 import functions hereunder (<code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code>,
-<code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code> and <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code>) can be
-used to import files containing both absorbance <strong>and</strong>
-mapping data. However, in that case, it is recommended to attribute
-different plate ids to the 2 “plates” that represent the same 96-well
-plate (e.g., “NO3_plate1_abs” and “NO3_plate1_map”, see also description
-of <code><a href="../reference/verticalize_plates.html">verticalize_plates()</a></code> in section 2 to see the final
-output).</p>
-<div class="section level3">
-<h3 id="from-a--csv-file">1.1 - From a .csv file<a class="anchor" aria-label="anchor" href="#from-a--csv-file"></a>
+<p>All 3 import functions hereunder (<code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code>, <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code> and <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code>) can be used to import files containing both absorbance <strong>and</strong> mapping data. However, in that case, it is recommended to attribute different plate ids to the 2 “plates” that represent the same 96-well plate (e.g., “NO3_plate1_abs” and “NO3_plate1_map”, see also description of <code><a href="../reference/verticalize_plates.html">verticalize_plates()</a></code> in section 2 to see the final output).</p>
+<section class="level2"><h3 id="from-a--csv-file">1.1 - From a .csv file<a class="anchor" aria-label="anchor" href="#from-a--csv-file"></a>
 </h3>
-<p>The function <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code> imports plate data from a
-csv file where data is structured in a specific way (see hereunder). For
-other csv formats, see sections below about “skanit csv” and “other
-formats”. The required data structure is strictly the same as in the
-outputted tibble (see <code>tibble_example</code> hereabove).</p>
-<p>In that sense, the function <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code>constitutes
-the simplest import option and takes advantage of the <code>readr</code>
-package (part of the <code>tidyverse</code>), by using either the
-function <code>read_csv()</code> or <code>read_csv2()</code>, for
-comma-separated or semi-colon separated values, respectively. Value
-separators can be modulated by the parameter <code>delim</code>, which
-defaults with the value <code>","</code> (<code>read_csv()</code>), but
-accepts <code>";"</code> (<code>read_csv2()</code>).</p>
-<p>Here is an example of how to call the <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code>
-function.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<p>The function <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code> imports plate data from a csv file where data is structured in a specific way (see hereunder). For other csv formats, see sections below about “skanit csv” and “other formats”. The required data structure is strictly the same as in the outputted tibble (see <code>tibble_example</code> hereabove).</p>
+<p>In that sense, the function <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code>constitutes the simplest import option and takes advantage of the <code>readr</code> package (part of the <code>tidyverse</code>), by using either the function <code>read_csv()</code> or <code>read_csv2()</code>, for comma-separated or semi-colon separated values, respectively. Value separators can be modulated by the parameter <code>delim</code>, which defaults with the value <code>","</code> (<code>read_csv()</code>), but accepts <code>";"</code> (<code>read_csv2()</code>).</p>
+<p>Here is an example of how to call the <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code> function.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># see the function in action</span></span>
 <span><span class="va">example_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"csv_example.csv"</span>, package <span class="op">=</span> <span class="st">"plate2N"</span><span class="op">)</span></span>
 <span><span class="va">preview_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/csv_to_tibble.html">csv_to_tibble</a></span><span class="op">(</span><span class="va">example_csv</span>, delim <span class="op">=</span> <span class="st">","</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">preview_csv</span>, n <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 36 × 13</span></span></span>
+<span><span class="co">#&gt; # A tibble: 36 × 13</span></span>
 <span><span class="co">#&gt;    row          X1    X2    X3    X4    X5    X6    X7    X8    X9    X10    X11</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> NO3_TDN_… 1     2     3     4     5     6     7     8     9     10     11    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> A         0.095 0.537 0.528 0.562 0.51  0.507 0.546 0.078 0.519  0.543  0.521</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> B         0.191 0.541 0.521 0.544 0.507 0.515 0.527 0.078 0.521  0.54   0.521</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> C         0.255 0.551 0.513 0.559 0.505 0.511 0.541 0.078 0.519  0.54   0.514</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> D         0.396 0.54  0.528 0.551 0.507 0.509 0.541 0.078 0.517  0.54   0.515</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> E         0.65  0.979 0.946 1.01  0.926 0.927 0.996 0.078 0.955  0.997  0.936</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> F         1.05  0.981 0.959 1     0.921 0.931 0.99  0.08  0.944  0.975  0.943</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> G         1.83  0.988 0.954 0.994 0.936 0.935 0.995 0.077 0.945  0.995  0.939</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> H         2.45  0.984 0.969 0.991 0.923 0.94  0.99  0.077 0.932  0.986  0.949</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> NO3_TDN_… 1     2     3     4     5     6     7     8     9     10     11    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> A         0.097 0.552 0.559 0.555 0.538 0.552 0.534 0.079 0.589  0.535  0.536</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> B         0.19  0.548 0.553 0.544 0.538 0.558 0.539 0.08  0.583  0.537  0.534</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> C         0.253 0.541 0.556 0.553 0.529 0.552 0.539 0.081 0.575  0.523  0.541</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> D         0.391 0.543 0.548 0.554 0.545 0.556 0.539 0.08  0.577  0.535  0.534</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> E         0.625 0.972 1.00  1.01  0.982 1.02  0.977 0.08  1.08   0.96   0.974</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> F         1.08  0.978 1.00  1.01  0.987 1.01  0.979 0.081 1.07   0.971  0.96 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> G         1.74  0.962 1.01  1.00  0.994 1.02  0.97  0.081 1.08   0.966  0.963</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">18</span> H         2.34  0.954 1     1.01  0.982 1.02  0.98  0.084 1.06   0.972  0.962</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">19</span> NO3_TDN_… 1     2     3     4     5     6     7     8     9     10     11    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">20</span> A         0.113 0.53  0.528 0.521 0.521 0.54  0.551 0.097 0.559  0.528  0.526</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 16 more rows</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: X12 &lt;dbl&gt;</span></span></span></code></pre></div>
+<span><span class="co">#&gt;    &lt;chr&gt;     &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt;  1 NO3_TDN_… 1     2     3     4     5     6     7     8     9     10     11    </span></span>
+<span><span class="co">#&gt;  2 A         0.095 0.537 0.528 0.562 0.51  0.507 0.546 0.078 0.519  0.543  0.521</span></span>
+<span><span class="co">#&gt;  3 B         0.191 0.541 0.521 0.544 0.507 0.515 0.527 0.078 0.521  0.54   0.521</span></span>
+<span><span class="co">#&gt;  4 C         0.255 0.551 0.513 0.559 0.505 0.511 0.541 0.078 0.519  0.54   0.514</span></span>
+<span><span class="co">#&gt;  5 D         0.396 0.54  0.528 0.551 0.507 0.509 0.541 0.078 0.517  0.54   0.515</span></span>
+<span><span class="co">#&gt;  6 E         0.65  0.979 0.946 1.01  0.926 0.927 0.996 0.078 0.955  0.997  0.936</span></span>
+<span><span class="co">#&gt;  7 F         1.05  0.981 0.959 1     0.921 0.931 0.99  0.08  0.944  0.975  0.943</span></span>
+<span><span class="co">#&gt;  8 G         1.83  0.988 0.954 0.994 0.936 0.935 0.995 0.077 0.945  0.995  0.939</span></span>
+<span><span class="co">#&gt;  9 H         2.45  0.984 0.969 0.991 0.923 0.94  0.99  0.077 0.932  0.986  0.949</span></span>
+<span><span class="co">#&gt; 10 NO3_TDN_… 1     2     3     4     5     6     7     8     9     10     11    </span></span>
+<span><span class="co">#&gt; 11 A         0.097 0.552 0.559 0.555 0.538 0.552 0.534 0.079 0.589  0.535  0.536</span></span>
+<span><span class="co">#&gt; 12 B         0.19  0.548 0.553 0.544 0.538 0.558 0.539 0.08  0.583  0.537  0.534</span></span>
+<span><span class="co">#&gt; 13 C         0.253 0.541 0.556 0.553 0.529 0.552 0.539 0.081 0.575  0.523  0.541</span></span>
+<span><span class="co">#&gt; 14 D         0.391 0.543 0.548 0.554 0.545 0.556 0.539 0.08  0.577  0.535  0.534</span></span>
+<span><span class="co">#&gt; 15 E         0.625 0.972 1.00  1.01  0.982 1.02  0.977 0.08  1.08   0.96   0.974</span></span>
+<span><span class="co">#&gt; 16 F         1.08  0.978 1.00  1.01  0.987 1.01  0.979 0.081 1.07   0.971  0.96 </span></span>
+<span><span class="co">#&gt; 17 G         1.74  0.962 1.01  1.00  0.994 1.02  0.97  0.081 1.08   0.966  0.963</span></span>
+<span><span class="co">#&gt; 18 H         2.34  0.954 1     1.01  0.982 1.02  0.98  0.084 1.06   0.972  0.962</span></span>
+<span><span class="co">#&gt; 19 NO3_TDN_… 1     2     3     4     5     6     7     8     9     10     11    </span></span>
+<span><span class="co">#&gt; 20 A         0.113 0.53  0.528 0.521 0.521 0.54  0.551 0.097 0.559  0.528  0.526</span></span>
+<span><span class="co">#&gt; # ℹ 16 more rows</span></span>
+<span><span class="co">#&gt; # ℹ 1 more variable: X12 &lt;dbl&gt;</span></span></code></pre></div>
 </div>
-<div class="section level3">
-<h3 id="from-a-skanit--csv">1.2 - From a skanit .csv<a class="anchor" aria-label="anchor" href="#from-a-skanit--csv"></a>
+</section><section class="level2"><h3 id="from-a-skanit--csv">1.2 - From a skanit .csv<a class="anchor" aria-label="anchor" href="#from-a-skanit--csv"></a>
 </h3>
-<p>A “skanit csv” is a csv where data is also structured in a plate
-format, but where plates are organized differently within the file, as
-generated by a software called <em>Skanit</em> that is linked to the
-plate reader. The raw csv format can be observed in the raw data
-attached to this package and is displayed hereunder.</p>
-<p><strong>It would make no sense to manually create a csv file in the
-“skanit csv” format</strong>, and using the function
-<code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code> is only useful for users of the Skanit
-software. See also <code>?skanit_to_tibble()</code> for more
-details.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<p>A “skanit csv” is a csv where data is also structured in a plate format, but where plates are organized differently within the file, as generated by a software called <em>Skanit</em> that is linked to the plate reader. The raw csv format can be observed in the raw data attached to this package and is displayed hereunder.</p>
+<p><strong>It would make no sense to manually create a csv file in the “skanit csv” format</strong>, and using the function <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code> is only useful for users of the Skanit software. See also <code>?skanit_to_tibble()</code> for more details.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">skanit_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"skanit.csv"</span>, package <span class="op">=</span> <span class="st">"plate2N"</span><span class="op">)</span></span>
 <span><span class="va">preview_skanit_raw</span> <span class="op">&lt;-</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">read_csv</a></span><span class="op">(</span><span class="va">skanit_csv</span>, col_names <span class="op">=</span> <span class="cn">FALSE</span>, show_col_types <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">preview_skanit_raw</span>, n <span class="op">=</span> <span class="fl">40</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 255 × 13</span></span></span>
+<span><span class="co">#&gt; # A tibble: 255 × 13</span></span>
 <span><span class="co">#&gt;    X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12   X13  </span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> Meas… <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> MR_1… <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> 01/0… <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> Abso… <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> Wave… <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> M12   <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> Abs   1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> A     1.44… 1.48… 1.43… 1.47… 1.51… 1.49… 1.50… 1.52… 1.53… 1.52… 1.51… 1.53…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> B     1.45… 1.52… 1.50… 1.49… 1.53… 1.56… 1.53… 1.53… 1.53… 1.54… 1.54… 1.54…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> C     1.51… 1.54… 1.52… 1.53… 1.56… 1.54… 1.56… 1.57… 1.55… 1.55… 1.56… 1.55…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> D     1.53… 1.55… 1.57… 1.52… 1.54… 1.56… 1.55… 1.56… 1.55… 1.56… 1.55… 1.57…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> E     1.53… 1.55… 1.55… 1.53… 1.55… 1.55… 1.55… 1.55… 1.58… 1.56… 1.56… 1.55…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> F     1.52… 1.57… 1.55… 1.53… 1.52… 1.56… 1.57… 1.58… 1.56… 1.55… 1.57… 1.55…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> G     1.53… 1.55… 1.53… 1.53… 1.56… 1.55… 1.57… 1.55… 1.55… 1.56… 1.56… 1.57…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">18</span> H     1.49… 1.54… 1.52… 1.51… 1.55… 1.55… 1.56… 1.57… 1.53… 1.56… 1.57… 1.58…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">19</span> <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">20</span> Samp… 1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">21</span> A     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">22</span> B     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">23</span> C     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">24</span> D     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">25</span> E     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">26</span> F     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">27</span> G     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">28</span> H     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">29</span> <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">30</span> <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">31</span> Wave… <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">32</span> <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">33</span> M16   <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">34</span> <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>    <span style="color: #BB0000;">NA</span>   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">35</span> Abs   1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">36</span> A     1.57… 1.55… 1.54… 1.54… 1.61… 1.55… 1.56… 1.58… 1.60… 1.57… 1.51… 1.58…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">37</span> B     1.60… 1.62… 1.62… 1.57… 1.63… 1.62… 1.62… 1.59… 1.64… 1.63… 1.62… 1.64…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">38</span> C     1.63… 1.65… 1.63… 1.64… 1.66… 1.65… 1.65… 1.67… 1.66… 1.66… 1.65… 1.68…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">39</span> D     1.64… 1.64… 1.65… 1.67… 1.66… 1.67… 1.65… 1.66… 1.66… 1.65… 1.64… 1.65…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">40</span> E     1.64… 1.66… 1.65… 1.65… 1.66… 1.68… 1.67… 1.67… 1.67… 1.63… 1.65… 1.66…</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 215 more rows</span></span></span></code></pre></div>
-<p>Here is an example of how to call the <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code>
-function and see its output. Notice the identical structure between
-<code>skanit$abs_tibble</code> and <code>skanit$map_tibble</code>.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;</span></span>
+<span><span class="co">#&gt;  1 Meas… &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt; </span></span>
+<span><span class="co">#&gt;  2 MR_1… &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt; </span></span>
+<span><span class="co">#&gt;  3 01/0… &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt; </span></span>
+<span><span class="co">#&gt;  4 &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt; </span></span>
+<span><span class="co">#&gt;  5 Abso… &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt; </span></span>
+<span><span class="co">#&gt;  6 Wave… &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt; </span></span>
+<span><span class="co">#&gt;  7 &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt; </span></span>
+<span><span class="co">#&gt;  8 M12   &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt; </span></span>
+<span><span class="co">#&gt;  9 &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt; </span></span>
+<span><span class="co">#&gt; 10 Abs   1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
+<span><span class="co">#&gt; 11 A     1.44… 1.48… 1.43… 1.47… 1.51… 1.49… 1.50… 1.52… 1.53… 1.52… 1.51… 1.53…</span></span>
+<span><span class="co">#&gt; 12 B     1.45… 1.52… 1.50… 1.49… 1.53… 1.56… 1.53… 1.53… 1.53… 1.54… 1.54… 1.54…</span></span>
+<span><span class="co">#&gt; 13 C     1.51… 1.54… 1.52… 1.53… 1.56… 1.54… 1.56… 1.57… 1.55… 1.55… 1.56… 1.55…</span></span>
+<span><span class="co">#&gt; 14 D     1.53… 1.55… 1.57… 1.52… 1.54… 1.56… 1.55… 1.56… 1.55… 1.56… 1.55… 1.57…</span></span>
+<span><span class="co">#&gt; 15 E     1.53… 1.55… 1.55… 1.53… 1.55… 1.55… 1.55… 1.55… 1.58… 1.56… 1.56… 1.55…</span></span>
+<span><span class="co">#&gt; 16 F     1.52… 1.57… 1.55… 1.53… 1.52… 1.56… 1.57… 1.58… 1.56… 1.55… 1.57… 1.55…</span></span>
+<span><span class="co">#&gt; 17 G     1.53… 1.55… 1.53… 1.53… 1.56… 1.55… 1.57… 1.55… 1.55… 1.56… 1.56… 1.57…</span></span>
+<span><span class="co">#&gt; 18 H     1.49… 1.54… 1.52… 1.51… 1.55… 1.55… 1.56… 1.57… 1.53… 1.56… 1.57… 1.58…</span></span>
+<span><span class="co">#&gt; 19 &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt; </span></span>
+<span><span class="co">#&gt; 20 Samp… 1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
+<span><span class="co">#&gt; 21 A     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt; 22 B     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt; 23 C     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt; 24 D     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt; 25 E     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt; 26 F     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt; 27 G     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt; 28 H     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt; 29 &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt; </span></span>
+<span><span class="co">#&gt; 30 &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt; </span></span>
+<span><span class="co">#&gt; 31 Wave… &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt; </span></span>
+<span><span class="co">#&gt; 32 &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt; </span></span>
+<span><span class="co">#&gt; 33 M16   &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt; </span></span>
+<span><span class="co">#&gt; 34 &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt;  &lt;NA&gt; </span></span>
+<span><span class="co">#&gt; 35 Abs   1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
+<span><span class="co">#&gt; 36 A     1.57… 1.55… 1.54… 1.54… 1.61… 1.55… 1.56… 1.58… 1.60… 1.57… 1.51… 1.58…</span></span>
+<span><span class="co">#&gt; 37 B     1.60… 1.62… 1.62… 1.57… 1.63… 1.62… 1.62… 1.59… 1.64… 1.63… 1.62… 1.64…</span></span>
+<span><span class="co">#&gt; 38 C     1.63… 1.65… 1.63… 1.64… 1.66… 1.65… 1.65… 1.67… 1.66… 1.66… 1.65… 1.68…</span></span>
+<span><span class="co">#&gt; 39 D     1.64… 1.64… 1.65… 1.67… 1.66… 1.67… 1.65… 1.66… 1.66… 1.65… 1.64… 1.65…</span></span>
+<span><span class="co">#&gt; 40 E     1.64… 1.66… 1.65… 1.65… 1.66… 1.68… 1.67… 1.67… 1.67… 1.63… 1.65… 1.66…</span></span>
+<span><span class="co">#&gt; # ℹ 215 more rows</span></span></code></pre></div>
+</div>
+<p>Here is an example of how to call the <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code> function and see its output. Notice the identical structure between <code>skanit$abs_tibble</code> and <code>skanit$map_tibble</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">skanit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/skanit_to_tibble.html">skanit_to_tibble</a></span><span class="op">(</span><span class="va">skanit_csv</span><span class="op">)</span></span>
 <span><span class="va">skanit_tibble_abs</span> <span class="op">&lt;-</span> <span class="va">skanit</span><span class="op">$</span><span class="va">abs_tibble</span></span>
 <span><span class="va">skanit_tibble_map</span> <span class="op">&lt;-</span> <span class="va">skanit</span><span class="op">$</span><span class="va">map_tibble</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">skanit_tibble_abs</span>, n <span class="op">=</span> <span class="fl">12</span><span class="op">)</span> ; <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">skanit_tibble_map</span>, n <span class="op">=</span> <span class="fl">12</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 90 × 13</span></span></span>
+<span><span class="co">#&gt; # A tibble: 90 × 13</span></span>
 <span><span class="co">#&gt;    row   X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12  </span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> M12   1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> A     1.44… 1.48… 1.43… 1.47… 1.51… 1.49… 1.50… 1.52… 1.53… 1.52… 1.51… 1.53…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> B     1.45… 1.52… 1.50… 1.49… 1.53… 1.56… 1.53… 1.53… 1.53… 1.54… 1.54… 1.54…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> C     1.51… 1.54… 1.52… 1.53… 1.56… 1.54… 1.56… 1.57… 1.55… 1.55… 1.56… 1.55…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> D     1.53… 1.55… 1.57… 1.52… 1.54… 1.56… 1.55… 1.56… 1.55… 1.56… 1.55… 1.57…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> E     1.53… 1.55… 1.55… 1.53… 1.55… 1.55… 1.55… 1.55… 1.58… 1.56… 1.56… 1.55…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> F     1.52… 1.57… 1.55… 1.53… 1.52… 1.56… 1.57… 1.58… 1.56… 1.55… 1.57… 1.55…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> G     1.53… 1.55… 1.53… 1.53… 1.56… 1.55… 1.57… 1.55… 1.55… 1.56… 1.56… 1.57…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> H     1.49… 1.54… 1.52… 1.51… 1.55… 1.55… 1.56… 1.57… 1.53… 1.56… 1.57… 1.58…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> M16   1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> A     1.57… 1.55… 1.54… 1.54… 1.61… 1.55… 1.56… 1.58… 1.60… 1.57… 1.51… 1.58…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> B     1.60… 1.62… 1.62… 1.57… 1.63… 1.62… 1.62… 1.59… 1.64… 1.63… 1.62… 1.64…</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 78 more rows</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 90 × 13</span></span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;</span></span>
+<span><span class="co">#&gt;  1 M12   1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
+<span><span class="co">#&gt;  2 A     1.44… 1.48… 1.43… 1.47… 1.51… 1.49… 1.50… 1.52… 1.53… 1.52… 1.51… 1.53…</span></span>
+<span><span class="co">#&gt;  3 B     1.45… 1.52… 1.50… 1.49… 1.53… 1.56… 1.53… 1.53… 1.53… 1.54… 1.54… 1.54…</span></span>
+<span><span class="co">#&gt;  4 C     1.51… 1.54… 1.52… 1.53… 1.56… 1.54… 1.56… 1.57… 1.55… 1.55… 1.56… 1.55…</span></span>
+<span><span class="co">#&gt;  5 D     1.53… 1.55… 1.57… 1.52… 1.54… 1.56… 1.55… 1.56… 1.55… 1.56… 1.55… 1.57…</span></span>
+<span><span class="co">#&gt;  6 E     1.53… 1.55… 1.55… 1.53… 1.55… 1.55… 1.55… 1.55… 1.58… 1.56… 1.56… 1.55…</span></span>
+<span><span class="co">#&gt;  7 F     1.52… 1.57… 1.55… 1.53… 1.52… 1.56… 1.57… 1.58… 1.56… 1.55… 1.57… 1.55…</span></span>
+<span><span class="co">#&gt;  8 G     1.53… 1.55… 1.53… 1.53… 1.56… 1.55… 1.57… 1.55… 1.55… 1.56… 1.56… 1.57…</span></span>
+<span><span class="co">#&gt;  9 H     1.49… 1.54… 1.52… 1.51… 1.55… 1.55… 1.56… 1.57… 1.53… 1.56… 1.57… 1.58…</span></span>
+<span><span class="co">#&gt; 10 M16   1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
+<span><span class="co">#&gt; 11 A     1.57… 1.55… 1.54… 1.54… 1.61… 1.55… 1.56… 1.58… 1.60… 1.57… 1.51… 1.58…</span></span>
+<span><span class="co">#&gt; 12 B     1.60… 1.62… 1.62… 1.57… 1.63… 1.62… 1.62… 1.59… 1.64… 1.63… 1.62… 1.64…</span></span>
+<span><span class="co">#&gt; # ℹ 78 more rows</span></span>
+<span><span class="co">#&gt; # A tibble: 90 × 13</span></span>
 <span><span class="co">#&gt;    row   X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12  </span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> M12   1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> A     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> B     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> C     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> D     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> E     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> F     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> G     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> H     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> M16   1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> A     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> B     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 78 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;</span></span>
+<span><span class="co">#&gt;  1 M12   1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
+<span><span class="co">#&gt;  2 A     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt;  3 B     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt;  4 C     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt;  5 D     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt;  6 E     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt;  7 F     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt;  8 G     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt;  9 H     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt; 10 M16   1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
+<span><span class="co">#&gt; 11 A     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt; 12 B     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt; # ℹ 78 more rows</span></span></code></pre></div>
 </div>
-<div class="section level3">
-<h3 id="from--txt-files">1.3 - From .TXT files<a class="anchor" aria-label="anchor" href="#from--txt-files"></a>
+</section><section class="level2"><h3 id="from--txt-files">1.3 - From .TXT files<a class="anchor" aria-label="anchor" href="#from--txt-files"></a>
 </h3>
-<p>As for the function <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code>,
-<code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code> was designed fo import .TXT files
-structured in a specific way, as generated by the plate reader
-<em>Multiskan FC</em>. <strong>It would make no sense to manually create
-a txt file in this format</strong>.</p>
-<p>The function <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code> has its own specific logic.
-Indeed, whereas both <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code> and
-<code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code> take a single <strong>file</strong> as
-input, <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code> takes a <strong>folder</strong> as
-input, in which an indefinite amount of single .TXT files can be found.
-It is however important that the folder contains no other .TXT files
-than the desired data, though it may contain other file types. More
-details on file requirements can be found under
-<code>?txt_to_tibble()</code>. Here is an example of folder containing 5
-.TXT files.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<p>As for the function <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code>, <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code> was designed fo import .TXT files structured in a specific way, as generated by the plate reader <em>Multiskan FC</em>. <strong>It would make no sense to manually create a txt file in this format</strong>.</p>
+<p>The function <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code> has its own specific logic. Indeed, whereas both <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code> and <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code> take a single <strong>file</strong> as input, <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code> takes a <strong>folder</strong> as input, in which an indefinite amount of single .TXT files can be found. It is however important that the folder contains no other .TXT files than the desired data, though it may contain other file types. More details on file requirements can be found under <code>?txt_to_tibble()</code>. Here is an example of folder containing 5 .TXT files.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># path to the folder containing .TXT plate files</span></span>
 <span><span class="op">(</span><span class="va">txt_folder</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"txt_examples"</span>, package <span class="op">=</span> <span class="st">"plate2N"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "/home/runner/work/_temp/Library/plate2N/extdata/txt_examples"</span></span>
@@ -372,273 +308,206 @@ details on file requirements can be found under
 <span><span class="co">#&gt; [1] "NO3_1F1.TXT" "NO3_1F2.TXT" "NO3_1F3.TXT" "NO3_1F4.TXT" "NO3_1F5.TXT"</span></span>
 <span><span class="op">(</span><span class="va">file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">txt_folder</span>, <span class="st">"/"</span>, <span class="va">files</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="co"># follow the file path on your file Finder or Directory, to see an example of file to look up in your computer</span></span>
 <span><span class="co">#&gt; [1] "/home/runner/work/_temp/Library/plate2N/extdata/txt_examples/NO3_1F1.TXT"</span></span></code></pre></div>
-<p>Each .TXT file contains the absorbance data of a single plate. This
-means that, to create a tibble similar to <code>tibble_example</code>,
-<code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code> iterates through all .TXT files in a given
-folder (<code>txt_folder</code> in the example above), extracts their
-plate data, adds the plate_id (file name without .TXT extension) in the
-upper left corner of each plate data, then combines all plates into a
-single <code>tibble</code>.</p>
-<p>To examine the aspect of the raw file, go and manually visit the file
-path displayed hereunder for <code>txt_folder</code> in your computer’s
-file directory. Alternatively, you can see an example of raw .TXT file
-on our github repository: <em><a href="https://github.com/mdetoeuf/plate2N/tree/main/inst/extdata/txt_examples" class="external-link uri">https://github.com/mdetoeuf/plate2N/tree/main/inst/extdata/txt_examples</a></em>.</p>
-<p>Here is how to run <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code> from a folder
-path:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+</div>
+<p>Each .TXT file contains the absorbance data of a single plate. This means that, to create a tibble similar to <code>tibble_example</code>, <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code> iterates through all .TXT files in a given folder (<code>txt_folder</code> in the example above), extracts their plate data, adds the plate_id (file name without .TXT extension) in the upper left corner of each plate data, then combines all plates into a single <code>tibble</code>.</p>
+<p>To examine the aspect of the raw file, go and manually visit the file path displayed hereunder for <code>txt_folder</code> in your computer’s file directory. Alternatively, you can see an example of raw .TXT file on our github repository: <em>https://github.com/mdetoeuf/plate2N/tree/main/inst/extdata/txt_examples</em>.</p>
+<p>Here is how to run <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code> from a folder path:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tibble_txt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/txt_to_tibble.html">txt_to_tibble</a></span><span class="op">(</span>filepath <span class="op">=</span> <span class="va">txt_folder</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">tibble_txt</span>, n <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 45 × 13</span></span></span>
+<span><span class="co">#&gt; # A tibble: 45 × 13</span></span>
 <span><span class="co">#&gt;    row   X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12  </span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> NO3_… 1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> A     0.092 0.114 0.128 0.110 0.108 0.106 0.101 0.083 0.119 0.113 0.082 0.091</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> B     0.100 0.110 0.124 0.109 0.106 0.103 0.103 0.083 0.117 0.111 0.081 0.097</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> C     0.107 0.111 0.124 0.110 0.105 0.103 0.102 0.083 0.117 0.110 0.098 0.105</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> D     0.122 0.111 0.122 0.109 0.107 0.103 0.102 0.083 0.118 0.114 0.081 0.120</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> E     0.157 0.098 0.103 0.092 0.091 0.100 0.092 0.082 0.097 0.098 0.081 0.155</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> F     0.238 0.097 0.098 0.093 0.091 0.100 0.093 0.083 0.095 0.099 0.081 0.229</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> G     0.396 0.101 0.098 0.093 0.089 0.100 0.092 0.082 0.097 0.097 0.081 0.373</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> H     0.546 0.097 0.099 0.092 0.090 0.103 0.094 0.083 0.110 0.099 0.082 0.530</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> NO3_… 1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> A     0.091 0.107 0.104 0.093 0.104 0.103 0.101 0.083 0.105 0.091 0.084 0.090</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> B     0.099 0.103 0.100 0.092 0.101 0.104 0.101 0.082 0.107 0.089 0.084 0.098</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> C     0.106 0.101 0.100 0.091 0.102 0.108 0.100 0.081 0.104 0.089 0.084 0.104</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> D     0.119 0.101 0.100 0.093 0.101 0.109 0.100 0.082 0.105 0.092 0.084 0.131</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> E     0.153 0.103 0.114 0.102 0.108 0.103 0.112 0.083 0.118 0.121 0.085 0.155</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> F     0.230 0.106 0.113 0.102 0.109 0.105 0.107 0.082 0.116 0.122 0.084 0.234</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> G     0.374 0.114 0.116 0.103 0.109 0.104 0.108 0.082 0.117 0.120 0.085 0.393</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">18</span> H     0.523 0.116 0.119 0.102 0.111 0.106 0.108 0.082 0.121 0.125 0.085 0.551</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">19</span> NO3_… 1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">20</span> A     0.093 0.095 0.097 0.102 0.094 0.093 0.099 0.084 0.098 0.102 0.081 0.090</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 25 more rows</span></span></span></code></pre></div>
-<p><strong>Note:</strong> Should the need arises to import .TXT files
-structured in a different way, please reach out, and we can propose an
-adapted importing step into our function definition.</p>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;</span></span>
+<span><span class="co">#&gt;  1 NO3_… 1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
+<span><span class="co">#&gt;  2 A     0.092 0.114 0.128 0.110 0.108 0.106 0.101 0.083 0.119 0.113 0.082 0.091</span></span>
+<span><span class="co">#&gt;  3 B     0.100 0.110 0.124 0.109 0.106 0.103 0.103 0.083 0.117 0.111 0.081 0.097</span></span>
+<span><span class="co">#&gt;  4 C     0.107 0.111 0.124 0.110 0.105 0.103 0.102 0.083 0.117 0.110 0.098 0.105</span></span>
+<span><span class="co">#&gt;  5 D     0.122 0.111 0.122 0.109 0.107 0.103 0.102 0.083 0.118 0.114 0.081 0.120</span></span>
+<span><span class="co">#&gt;  6 E     0.157 0.098 0.103 0.092 0.091 0.100 0.092 0.082 0.097 0.098 0.081 0.155</span></span>
+<span><span class="co">#&gt;  7 F     0.238 0.097 0.098 0.093 0.091 0.100 0.093 0.083 0.095 0.099 0.081 0.229</span></span>
+<span><span class="co">#&gt;  8 G     0.396 0.101 0.098 0.093 0.089 0.100 0.092 0.082 0.097 0.097 0.081 0.373</span></span>
+<span><span class="co">#&gt;  9 H     0.546 0.097 0.099 0.092 0.090 0.103 0.094 0.083 0.110 0.099 0.082 0.530</span></span>
+<span><span class="co">#&gt; 10 NO3_… 1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
+<span><span class="co">#&gt; 11 A     0.091 0.107 0.104 0.093 0.104 0.103 0.101 0.083 0.105 0.091 0.084 0.090</span></span>
+<span><span class="co">#&gt; 12 B     0.099 0.103 0.100 0.092 0.101 0.104 0.101 0.082 0.107 0.089 0.084 0.098</span></span>
+<span><span class="co">#&gt; 13 C     0.106 0.101 0.100 0.091 0.102 0.108 0.100 0.081 0.104 0.089 0.084 0.104</span></span>
+<span><span class="co">#&gt; 14 D     0.119 0.101 0.100 0.093 0.101 0.109 0.100 0.082 0.105 0.092 0.084 0.131</span></span>
+<span><span class="co">#&gt; 15 E     0.153 0.103 0.114 0.102 0.108 0.103 0.112 0.083 0.118 0.121 0.085 0.155</span></span>
+<span><span class="co">#&gt; 16 F     0.230 0.106 0.113 0.102 0.109 0.105 0.107 0.082 0.116 0.122 0.084 0.234</span></span>
+<span><span class="co">#&gt; 17 G     0.374 0.114 0.116 0.103 0.109 0.104 0.108 0.082 0.117 0.120 0.085 0.393</span></span>
+<span><span class="co">#&gt; 18 H     0.523 0.116 0.119 0.102 0.111 0.106 0.108 0.082 0.121 0.125 0.085 0.551</span></span>
+<span><span class="co">#&gt; 19 NO3_… 1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
+<span><span class="co">#&gt; 20 A     0.093 0.095 0.097 0.102 0.094 0.093 0.099 0.084 0.098 0.102 0.081 0.090</span></span>
+<span><span class="co">#&gt; # ℹ 25 more rows</span></span></code></pre></div>
 </div>
-<div class="section level3">
-<h3 id="from-other-formats">1.4 - From other formats<a class="anchor" aria-label="anchor" href="#from-other-formats"></a>
+<p><strong>Note:</strong> Should the need arises to import .TXT files structured in a different way, please reach out, and we can propose an adapted importing step into our function definition.</p>
+</section><section class="level2"><h3 id="from-other-formats">1.4 - From other formats<a class="anchor" aria-label="anchor" href="#from-other-formats"></a>
 </h3>
-<p>For data structured in different raw formats, there are 2
-options.</p>
-<p><strong>1) With small data sets</strong>, a quick option would be to
-simply copy-paste raw plate data into a clean csv sheet (outside of R,
-for example in Excel), adopting the raw structure of
-<code>tibble_example</code>. You can generate an empty csv template
-using the function <em>Add here the name of other funtion</em>. Or you
-can lookup the csv structure of the following file:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<p>For data structured in different raw formats, there are 2 options.</p>
+<p><strong>1) With small data sets</strong>, a quick option would be to simply copy-paste raw plate data into a clean csv sheet (outside of R, for example in Excel), adopting the raw structure of <code>tibble_example</code>. You can generate an empty csv template using the function <em>Add here the name of other funtion</em>. Or you can lookup the csv structure of the following file:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">example_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"csv_example.csv"</span>, package <span class="op">=</span> <span class="st">"plate2N"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "/home/runner/work/_temp/Library/plate2N/extdata/csv_example.csv"</span></span></code></pre></div>
-<p><strong>2) With bigger data sets</strong>, it may be more efficient
-to use an import function from the <code>readr</code> package (e.g.,
-<code><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">readr::read_csv()</a></code>, <code><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">readr::read_tsv()</a></code> or
-<code><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">readr::read_delim()</a></code>), possibly with a selection of columns
-or rows, then using tools of the <code>dplyr</code> or
-<code>tidyr</code> packages to bring the resulting tibble into the
-required format.</p>
 </div>
-</div>
-<div class="section level2">
-<h2 id="verticalized-table">2 - Verticalized table<a class="anchor" aria-label="anchor" href="#verticalized-table"></a>
+<p><strong>2) With bigger data sets</strong>, it may be more efficient to use an import function from the <code>readr</code> package (e.g., <code><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">readr::read_csv()</a></code>, <code><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">readr::read_tsv()</a></code> or <code><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">readr::read_delim()</a></code>), possibly with a selection of columns or rows, then using tools of the <code>dplyr</code> or <code>tidyr</code> packages to bring the resulting tibble into the required format.</p>
+</section></section><section class="section level2"><h2 id="verticalized-table">2 - Verticalized table<a class="anchor" aria-label="anchor" href="#verticalized-table"></a>
 </h2>
-<p>Finally, once the <code>tibble</code> has been generated with any of
-the import options hereabove, we can proceed to the data
-verticalization.</p>
-<div class="section level3">
-<h3 id="simple-verticalization-of-a-single-tibble">2.1 - Simple verticalization of a single tibble<a class="anchor" aria-label="anchor" href="#simple-verticalization-of-a-single-tibble"></a>
+<p>Finally, once the <code>tibble</code> has been generated with any of the import options hereabove, we can proceed to the data verticalization.</p>
+<section class="level2"><h3 id="simple-verticalization-of-a-single-tibble">2.1 - Simple verticalization of a single tibble<a class="anchor" aria-label="anchor" href="#simple-verticalization-of-a-single-tibble"></a>
 </h3>
-<p>See also <code>?verticalize_plates()</code> for a detailed overview
-of function options.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<p>See also <code>?verticalize_plates()</code> for a detailed overview of function options.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># compute vertical plate</span></span>
 <span><span class="co">## from txt</span></span>
 <span><span class="op">(</span><span class="va">vertical_txt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/verticalize_plates.html">verticalize_plates</a></span><span class="op">(</span><span class="va">tibble_txt</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 96 × 7</span></span></span>
+<span><span class="co">#&gt; # A tibble: 96 × 7</span></span>
 <span><span class="co">#&gt;    row   column NO3_1F1 NO3_1F2 NO3_1F3 NO3_1F4 NO3_1F5</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> A     1      0.092   0.091   0.093   0.092   0.092  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> A     2      0.114   0.107   0.095   0.118   0.167  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> A     3      0.128   0.104   0.097   0.138   0.107  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> A     4      0.110   0.093   0.102   0.108   0.101  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> A     5      0.108   0.104   0.094   0.098   0.093  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> A     6      0.106   0.103   0.093   0.104   0.103  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> A     7      0.101   0.101   0.099   0.107   0.120  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> A     8      0.083   0.083   0.084   0.084   0.084  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> A     9      0.119   0.105   0.098   0.121   0.113  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> A     10     0.113   0.091   0.102   0.119   0.099  </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 86 more rows</span></span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;  </span></span>
+<span><span class="co">#&gt;  1 A     1      0.092   0.091   0.093   0.092   0.092  </span></span>
+<span><span class="co">#&gt;  2 A     2      0.114   0.107   0.095   0.118   0.167  </span></span>
+<span><span class="co">#&gt;  3 A     3      0.128   0.104   0.097   0.138   0.107  </span></span>
+<span><span class="co">#&gt;  4 A     4      0.110   0.093   0.102   0.108   0.101  </span></span>
+<span><span class="co">#&gt;  5 A     5      0.108   0.104   0.094   0.098   0.093  </span></span>
+<span><span class="co">#&gt;  6 A     6      0.106   0.103   0.093   0.104   0.103  </span></span>
+<span><span class="co">#&gt;  7 A     7      0.101   0.101   0.099   0.107   0.120  </span></span>
+<span><span class="co">#&gt;  8 A     8      0.083   0.083   0.084   0.084   0.084  </span></span>
+<span><span class="co">#&gt;  9 A     9      0.119   0.105   0.098   0.121   0.113  </span></span>
+<span><span class="co">#&gt; 10 A     10     0.113   0.091   0.102   0.119   0.099  </span></span>
+<span><span class="co">#&gt; # ℹ 86 more rows</span></span>
 <span></span>
 <span><span class="co">## from csv</span></span>
 <span><span class="op">(</span><span class="va">vertical_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/verticalize_plates.html">verticalize_plates</a></span><span class="op">(</span><span class="va">preview_csv</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 96 × 6</span></span></span>
+<span><span class="co">#&gt; # A tibble: 96 × 6</span></span>
 <span><span class="co">#&gt;    row   column NO3_TDN_01 NO3_TDN_02 NO3_TDN_03 NO3_TDN_04</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> A     1      0.095      0.097      0.113      0.114     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> A     2      0.537      0.552      0.53       0.535     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> A     3      0.528      0.559      0.528      0.534     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> A     4      0.562      0.555      0.521      0.531     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> A     5      0.51       0.538      0.521      0.506     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> A     6      0.507      0.552      0.54       0.551     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> A     7      0.546      0.534      0.551      0.528     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> A     8      0.078      0.079      0.097      0.102     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> A     9      0.519      0.589      0.559      0.541     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> A     10     0.543      0.535      0.528      0.544     </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 86 more rows</span></span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;      &lt;chr&gt;      &lt;chr&gt;      &lt;chr&gt;     </span></span>
+<span><span class="co">#&gt;  1 A     1      0.095      0.097      0.113      0.114     </span></span>
+<span><span class="co">#&gt;  2 A     2      0.537      0.552      0.53       0.535     </span></span>
+<span><span class="co">#&gt;  3 A     3      0.528      0.559      0.528      0.534     </span></span>
+<span><span class="co">#&gt;  4 A     4      0.562      0.555      0.521      0.531     </span></span>
+<span><span class="co">#&gt;  5 A     5      0.51       0.538      0.521      0.506     </span></span>
+<span><span class="co">#&gt;  6 A     6      0.507      0.552      0.54       0.551     </span></span>
+<span><span class="co">#&gt;  7 A     7      0.546      0.534      0.551      0.528     </span></span>
+<span><span class="co">#&gt;  8 A     8      0.078      0.079      0.097      0.102     </span></span>
+<span><span class="co">#&gt;  9 A     9      0.519      0.589      0.559      0.541     </span></span>
+<span><span class="co">#&gt; 10 A     10     0.543      0.535      0.528      0.544     </span></span>
+<span><span class="co">#&gt; # ℹ 86 more rows</span></span>
 <span></span>
 <span><span class="co">## from skanit --&gt; choose abs_data or map_data</span></span>
 <span><span class="op">(</span><span class="va">vertical_skanit_abs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/verticalize_plates.html">verticalize_plates</a></span><span class="op">(</span><span class="va">skanit_tibble_abs</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 96 × 12</span></span></span>
+<span><span class="co">#&gt; # A tibble: 96 × 12</span></span>
 <span><span class="co">#&gt;    row   column M12    M16    M17    M18    M19    M20   M21   M22   M23   M1   </span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> A     1      1.4402 1.5789 1.5611 1.7013 1.6865 1.79… 1.79… 1.82… 1.93… 0.92…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> A     2      1.4802 1.5590 1.5946 1.6475 1.6805 1.77… 1.79… 1.81… 1.89… 1.14…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> A     3      1.4380 1.5446 1.5868 1.6804 1.6934 1.73… 1.80… 1.84… 1.87… 1.13…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> A     4      1.4752 1.5414 1.6137 1.6902 1.6825 1.80… 1.80… 1.83… 1.93… 1.13…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> A     5      1.5143 1.6169 1.5939 1.6849 1.5994 1.77… 1.80… 1.88… 1.98… 1.14…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> A     6      1.4927 1.5561 1.5973 1.6939 1.7107 1.78… 1.81… 1.84… 1.98… 1.14…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> A     7      1.5052 1.5608 1.5888 1.6686 1.7196 1.77… 1.81… 1.89… 1.99… 1.15…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> A     8      1.5293 1.5882 1.5836 1.6908 1.6722 1.72… 1.83… 1.88… 2.01… 1.16…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> A     9      1.5301 1.6060 1.6011 1.7069 1.6220 1.81… 1.84… 1.93… 2.04… 1.16…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> A     10     1.5228 1.5773 1.6066 1.6949 1.6794 1.79… 1.81… 1.91… 2.01… 1.11…</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 86 more rows</span></span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;  &lt;chr&gt;  &lt;chr&gt;  &lt;chr&gt;  &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;</span></span>
+<span><span class="co">#&gt;  1 A     1      1.4402 1.5789 1.5611 1.7013 1.6865 1.79… 1.79… 1.82… 1.93… 0.92…</span></span>
+<span><span class="co">#&gt;  2 A     2      1.4802 1.5590 1.5946 1.6475 1.6805 1.77… 1.79… 1.81… 1.89… 1.14…</span></span>
+<span><span class="co">#&gt;  3 A     3      1.4380 1.5446 1.5868 1.6804 1.6934 1.73… 1.80… 1.84… 1.87… 1.13…</span></span>
+<span><span class="co">#&gt;  4 A     4      1.4752 1.5414 1.6137 1.6902 1.6825 1.80… 1.80… 1.83… 1.93… 1.13…</span></span>
+<span><span class="co">#&gt;  5 A     5      1.5143 1.6169 1.5939 1.6849 1.5994 1.77… 1.80… 1.88… 1.98… 1.14…</span></span>
+<span><span class="co">#&gt;  6 A     6      1.4927 1.5561 1.5973 1.6939 1.7107 1.78… 1.81… 1.84… 1.98… 1.14…</span></span>
+<span><span class="co">#&gt;  7 A     7      1.5052 1.5608 1.5888 1.6686 1.7196 1.77… 1.81… 1.89… 1.99… 1.15…</span></span>
+<span><span class="co">#&gt;  8 A     8      1.5293 1.5882 1.5836 1.6908 1.6722 1.72… 1.83… 1.88… 2.01… 1.16…</span></span>
+<span><span class="co">#&gt;  9 A     9      1.5301 1.6060 1.6011 1.7069 1.6220 1.81… 1.84… 1.93… 2.04… 1.16…</span></span>
+<span><span class="co">#&gt; 10 A     10     1.5228 1.5773 1.6066 1.6949 1.6794 1.79… 1.81… 1.91… 2.01… 1.11…</span></span>
+<span><span class="co">#&gt; # ℹ 86 more rows</span></span>
 <span><span class="op">(</span><span class="va">vertical_skanit_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/verticalize_plates.html">verticalize_plates</a></span><span class="op">(</span><span class="va">skanit_tibble_map</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 96 × 12</span></span></span>
+<span><span class="co">#&gt; # A tibble: 96 × 12</span></span>
 <span><span class="co">#&gt;    row   column M12     M16     M17    M18   M19   M20   M21   M22   M23   M1   </span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> A     1      Std0001 Std0097 Std01… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> A     2      Std0002 Std0098 Std01… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> A     3      Std0003 Std0099 Std01… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> A     4      Std0004 Std0100 Std01… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> A     5      Std0005 Std0101 Std01… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> A     6      Std0006 Std0102 Std01… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> A     7      Std0007 Std0103 Std01… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> A     8      Std0008 Std0104 Std02… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> A     9      Std0009 Std0105 Std02… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> A     10     Std0010 Std0106 Std02… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 86 more rows</span></span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;</span></span>
+<span><span class="co">#&gt;  1 A     1      Std0001 Std0097 Std01… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt;  2 A     2      Std0002 Std0098 Std01… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt;  3 A     3      Std0003 Std0099 Std01… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt;  4 A     4      Std0004 Std0100 Std01… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt;  5 A     5      Std0005 Std0101 Std01… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt;  6 A     6      Std0006 Std0102 Std01… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt;  7 A     7      Std0007 Std0103 Std01… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt;  8 A     8      Std0008 Std0104 Std02… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt;  9 A     9      Std0009 Std0105 Std02… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt; 10 A     10     Std0010 Std0106 Std02… Std0… Std0… Std0… Std0… Std0… Std0… Std0…</span></span>
+<span><span class="co">#&gt; # ℹ 86 more rows</span></span>
 <span></span>
 <span><span class="co"># compare tibble to its verticalized format</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">tibble_txt</span>, n <span class="op">=</span> <span class="fl">12</span><span class="op">)</span> ; <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">vertical_txt</span>, n <span class="op">=</span> <span class="fl">12</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 45 × 13</span></span></span>
+<span><span class="co">#&gt; # A tibble: 45 × 13</span></span>
 <span><span class="co">#&gt;    row   X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12  </span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> NO3_… 1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> A     0.092 0.114 0.128 0.110 0.108 0.106 0.101 0.083 0.119 0.113 0.082 0.091</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> B     0.100 0.110 0.124 0.109 0.106 0.103 0.103 0.083 0.117 0.111 0.081 0.097</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> C     0.107 0.111 0.124 0.110 0.105 0.103 0.102 0.083 0.117 0.110 0.098 0.105</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> D     0.122 0.111 0.122 0.109 0.107 0.103 0.102 0.083 0.118 0.114 0.081 0.120</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> E     0.157 0.098 0.103 0.092 0.091 0.100 0.092 0.082 0.097 0.098 0.081 0.155</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> F     0.238 0.097 0.098 0.093 0.091 0.100 0.093 0.083 0.095 0.099 0.081 0.229</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> G     0.396 0.101 0.098 0.093 0.089 0.100 0.092 0.082 0.097 0.097 0.081 0.373</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> H     0.546 0.097 0.099 0.092 0.090 0.103 0.094 0.083 0.110 0.099 0.082 0.530</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> NO3_… 1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> A     0.091 0.107 0.104 0.093 0.104 0.103 0.101 0.083 0.105 0.091 0.084 0.090</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> B     0.099 0.103 0.100 0.092 0.101 0.104 0.101 0.082 0.107 0.089 0.084 0.098</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 33 more rows</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 96 × 7</span></span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;</span></span>
+<span><span class="co">#&gt;  1 NO3_… 1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
+<span><span class="co">#&gt;  2 A     0.092 0.114 0.128 0.110 0.108 0.106 0.101 0.083 0.119 0.113 0.082 0.091</span></span>
+<span><span class="co">#&gt;  3 B     0.100 0.110 0.124 0.109 0.106 0.103 0.103 0.083 0.117 0.111 0.081 0.097</span></span>
+<span><span class="co">#&gt;  4 C     0.107 0.111 0.124 0.110 0.105 0.103 0.102 0.083 0.117 0.110 0.098 0.105</span></span>
+<span><span class="co">#&gt;  5 D     0.122 0.111 0.122 0.109 0.107 0.103 0.102 0.083 0.118 0.114 0.081 0.120</span></span>
+<span><span class="co">#&gt;  6 E     0.157 0.098 0.103 0.092 0.091 0.100 0.092 0.082 0.097 0.098 0.081 0.155</span></span>
+<span><span class="co">#&gt;  7 F     0.238 0.097 0.098 0.093 0.091 0.100 0.093 0.083 0.095 0.099 0.081 0.229</span></span>
+<span><span class="co">#&gt;  8 G     0.396 0.101 0.098 0.093 0.089 0.100 0.092 0.082 0.097 0.097 0.081 0.373</span></span>
+<span><span class="co">#&gt;  9 H     0.546 0.097 0.099 0.092 0.090 0.103 0.094 0.083 0.110 0.099 0.082 0.530</span></span>
+<span><span class="co">#&gt; 10 NO3_… 1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
+<span><span class="co">#&gt; 11 A     0.091 0.107 0.104 0.093 0.104 0.103 0.101 0.083 0.105 0.091 0.084 0.090</span></span>
+<span><span class="co">#&gt; 12 B     0.099 0.103 0.100 0.092 0.101 0.104 0.101 0.082 0.107 0.089 0.084 0.098</span></span>
+<span><span class="co">#&gt; # ℹ 33 more rows</span></span>
+<span><span class="co">#&gt; # A tibble: 96 × 7</span></span>
 <span><span class="co">#&gt;    row   column NO3_1F1 NO3_1F2 NO3_1F3 NO3_1F4 NO3_1F5</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> A     1      0.092   0.091   0.093   0.092   0.092  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> A     2      0.114   0.107   0.095   0.118   0.167  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> A     3      0.128   0.104   0.097   0.138   0.107  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> A     4      0.110   0.093   0.102   0.108   0.101  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> A     5      0.108   0.104   0.094   0.098   0.093  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> A     6      0.106   0.103   0.093   0.104   0.103  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> A     7      0.101   0.101   0.099   0.107   0.120  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> A     8      0.083   0.083   0.084   0.084   0.084  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> A     9      0.119   0.105   0.098   0.121   0.113  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> A     10     0.113   0.091   0.102   0.119   0.099  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> A     11     0.082   0.084   0.081   0.081   0.168  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> A     12     0.091   0.090   0.090   0.091   0.090  </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 84 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;  </span></span>
+<span><span class="co">#&gt;  1 A     1      0.092   0.091   0.093   0.092   0.092  </span></span>
+<span><span class="co">#&gt;  2 A     2      0.114   0.107   0.095   0.118   0.167  </span></span>
+<span><span class="co">#&gt;  3 A     3      0.128   0.104   0.097   0.138   0.107  </span></span>
+<span><span class="co">#&gt;  4 A     4      0.110   0.093   0.102   0.108   0.101  </span></span>
+<span><span class="co">#&gt;  5 A     5      0.108   0.104   0.094   0.098   0.093  </span></span>
+<span><span class="co">#&gt;  6 A     6      0.106   0.103   0.093   0.104   0.103  </span></span>
+<span><span class="co">#&gt;  7 A     7      0.101   0.101   0.099   0.107   0.120  </span></span>
+<span><span class="co">#&gt;  8 A     8      0.083   0.083   0.084   0.084   0.084  </span></span>
+<span><span class="co">#&gt;  9 A     9      0.119   0.105   0.098   0.121   0.113  </span></span>
+<span><span class="co">#&gt; 10 A     10     0.113   0.091   0.102   0.119   0.099  </span></span>
+<span><span class="co">#&gt; 11 A     11     0.082   0.084   0.081   0.081   0.168  </span></span>
+<span><span class="co">#&gt; 12 A     12     0.091   0.090   0.090   0.091   0.090  </span></span>
+<span><span class="co">#&gt; # ℹ 84 more rows</span></span></code></pre></div>
 </div>
-<div class="section level3">
-<h3 id="joined-verticalization-of-2-related-tibbles">2.2 - Joined verticalization of 2 related tibbles<a class="anchor" aria-label="anchor" href="#joined-verticalization-of-2-related-tibbles"></a>
+</section><section class="level2"><h3 id="joined-verticalization-of-2-related-tibbles">2.2 - Joined verticalization of 2 related tibbles<a class="anchor" aria-label="anchor" href="#joined-verticalization-of-2-related-tibbles"></a>
 </h3>
-<p>In practice, we often import absorbance data with one function
-(typically <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code> or
-<code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code>) and mapping data from another (typically
-<code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code> or even simply
-<code><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">readr::read_csv()</a></code>). This means that, in the end, we not
-only need to verticalize both those datasets, but we also need to merge
-them in a single data set.</p>
-<p><code><a href="../reference/join_abs_map.html">join_abs_map()</a></code> does just that. It works directly from 2
-imported <code>tibble</code>s, uses <code><a href="../reference/verticalize_plates.html">verticalize_plates()</a></code>
-followed by <code><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">dplyr::left_join()</a></code> with a series of default
-presets, adding a prefix to column names to incorporate information on
-dataset and data type (absorbance vs mapping).</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<p>In practice, we often import absorbance data with one function (typically <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code> or <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code>) and mapping data from another (typically <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code> or even simply <code><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">readr::read_csv()</a></code>). This means that, in the end, we not only need to verticalize both those datasets, but we also need to merge them in a single data set.</p>
+<p><code><a href="../reference/join_abs_map.html">join_abs_map()</a></code> does just that. It works directly from 2 imported <code>tibble</code>s, uses <code><a href="../reference/verticalize_plates.html">verticalize_plates()</a></code> followed by <code><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">dplyr::left_join()</a></code> with a series of default presets, adding a prefix to column names to incorporate information on dataset and data type (absorbance vs mapping).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">joined_vertical</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/join_abs_map.html">join_abs_map</a></span><span class="op">(</span></span>
 <span>  <span class="va">skanit_tibble_abs</span>,</span>
 <span>  <span class="va">skanit_tibble_map</span>,</span>
 <span>  dataset <span class="op">=</span> <span class="st">"expe1-"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 96 × 22</span></span></span>
+<span><span class="co">#&gt; # A tibble: 96 × 22</span></span>
 <span><span class="co">#&gt;    row   column `expe1-abs-M12` `expe1-abs-M16` `expe1-abs-M17` `expe1-abs-M18`</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> A     1      1.4402          1.5789          1.5611          1.7013         </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> A     2      1.4802          1.5590          1.5946          1.6475         </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> A     3      1.4380          1.5446          1.5868          1.6804         </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> A     4      1.4752          1.5414          1.6137          1.6902         </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> A     5      1.5143          1.6169          1.5939          1.6849         </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> A     6      1.4927          1.5561          1.5973          1.6939         </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> A     7      1.5052          1.5608          1.5888          1.6686         </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> A     8      1.5293          1.5882          1.5836          1.6908         </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> A     9      1.5301          1.6060          1.6011          1.7069         </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> A     10     1.5228          1.5773          1.6066          1.6949         </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 86 more rows</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 16 more variables: `expe1-abs-M19` &lt;chr&gt;, `expe1-abs-M20` &lt;chr&gt;,</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;">#   `expe1-abs-M21` &lt;chr&gt;, `expe1-abs-M22` &lt;chr&gt;, `expe1-abs-M23` &lt;chr&gt;,</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;">#   `expe1-abs-M1` &lt;chr&gt;, `expe1-map-M12` &lt;chr&gt;, `expe1-map-M16` &lt;chr&gt;,</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;">#   `expe1-map-M17` &lt;chr&gt;, `expe1-map-M18` &lt;chr&gt;, `expe1-map-M19` &lt;chr&gt;,</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;">#   `expe1-map-M20` &lt;chr&gt;, `expe1-map-M21` &lt;chr&gt;, `expe1-map-M22` &lt;chr&gt;,</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;">#   `expe1-map-M23` &lt;chr&gt;, `expe1-map-M1` &lt;chr&gt;</span></span></span></code></pre></div>
-<p>We recognize the same verticalized structures, but now column names
-have been added a double prefix, containing “expe1” which was attributed
-to the argument <code>dataset</code> and either “abs” or “map”, added to
-the plates corresponding to the first and second argument,
-respectively.</p>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;           &lt;chr&gt;           &lt;chr&gt;           &lt;chr&gt;          </span></span>
+<span><span class="co">#&gt;  1 A     1      1.4402          1.5789          1.5611          1.7013         </span></span>
+<span><span class="co">#&gt;  2 A     2      1.4802          1.5590          1.5946          1.6475         </span></span>
+<span><span class="co">#&gt;  3 A     3      1.4380          1.5446          1.5868          1.6804         </span></span>
+<span><span class="co">#&gt;  4 A     4      1.4752          1.5414          1.6137          1.6902         </span></span>
+<span><span class="co">#&gt;  5 A     5      1.5143          1.6169          1.5939          1.6849         </span></span>
+<span><span class="co">#&gt;  6 A     6      1.4927          1.5561          1.5973          1.6939         </span></span>
+<span><span class="co">#&gt;  7 A     7      1.5052          1.5608          1.5888          1.6686         </span></span>
+<span><span class="co">#&gt;  8 A     8      1.5293          1.5882          1.5836          1.6908         </span></span>
+<span><span class="co">#&gt;  9 A     9      1.5301          1.6060          1.6011          1.7069         </span></span>
+<span><span class="co">#&gt; 10 A     10     1.5228          1.5773          1.6066          1.6949         </span></span>
+<span><span class="co">#&gt; # ℹ 86 more rows</span></span>
+<span><span class="co">#&gt; # ℹ 16 more variables: `expe1-abs-M19` &lt;chr&gt;, `expe1-abs-M20` &lt;chr&gt;,</span></span>
+<span><span class="co">#&gt; #   `expe1-abs-M21` &lt;chr&gt;, `expe1-abs-M22` &lt;chr&gt;, `expe1-abs-M23` &lt;chr&gt;,</span></span>
+<span><span class="co">#&gt; #   `expe1-abs-M1` &lt;chr&gt;, `expe1-map-M12` &lt;chr&gt;, `expe1-map-M16` &lt;chr&gt;,</span></span>
+<span><span class="co">#&gt; #   `expe1-map-M17` &lt;chr&gt;, `expe1-map-M18` &lt;chr&gt;, `expe1-map-M19` &lt;chr&gt;,</span></span>
+<span><span class="co">#&gt; #   `expe1-map-M20` &lt;chr&gt;, `expe1-map-M21` &lt;chr&gt;, `expe1-map-M22` &lt;chr&gt;,</span></span>
+<span><span class="co">#&gt; #   `expe1-map-M23` &lt;chr&gt;, `expe1-map-M1` &lt;chr&gt;</span></span></code></pre></div>
+</div>
+<p>We recognize the same verticalized structures, but now column names have been added a double prefix, containing “expe1” which was attributed to the argument <code>dataset</code> and either “abs” or “map”, added to the plates corresponding to the first and second argument, respectively.</p>
 <ul>
-<li>Defining a dataset in the column names makes sense especially if
-several datasets will be joined down the line. The column dataset is
-needed for several downstream steps, so we recommend to give it some
-name, even if you only work with data from a single experiment.</li>
-<li>The “abs/map” prefixes can be modulated by adapting the default
-value of the argument <code>abs_map = c("abs-", "map")</code>
+<li>Defining a dataset in the column names makes sense especially if several datasets will be joined down the line. The column dataset is needed for several downstream steps, so we recommend to give it some name, even if you only work with data from a single experiment.</li>
+<li>The “abs/map” prefixes can be modulated by adapting the default value of the argument <code>abs_map = c("abs-", "map")</code>
 </li>
 </ul>
 <p>Additional info can be found under <code>?join_abs_map()</code>.</p>
-</div>
-</div>
-<div class="section level2">
-<h2 id="tidy-table">3 - Tidy table<a class="anchor" aria-label="anchor" href="#tidy-table"></a>
+</section></section><section class="section level2"><h2 id="tidy-table">3 - Tidy table<a class="anchor" aria-label="anchor" href="#tidy-table"></a>
 </h2>
-<p><strong>TO DO: change this section to reflect new function
-vertical_to_tidy()</strong></p>
-<p>The vertical format is practical for manual/human handling, with an
-easy-to-handle number of rows (96), and individual plates are easy to
-select based on plate_id or dataset. For example, here is an easy moment
-to subset some plates based on dataset, abs/map or even some features
-that are embedded in plate name (such as N species in our case where
-plate names contained either “NO3”, “NO2” or “NH4”). This can be done
-using the <code>dplyr</code> package and its function
-<code><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">dplyr::select()</a></code>, aided by some helper functions from the
-<code>tidyselect</code> package, such as
-<code><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">tidyselect::starts_with()</a></code>,
-<code><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">tidyselect::contains()</a></code>, etc.</p>
-<p>But this verticalized format is not ideal for bulk computing and
-transformations, where the might of the <code>tidyverse</code> sits in
-computations done on columns. So, a typical last step of tidying would
-be to bring this dataset in a format with a single column for the
-absorbance data, and another for the mapping data, where each unique
-well would be represented by a row. Such transformations can be done
-with the <code>tidyr</code> and “<code>dplyr</code> packages, for
-example with the successive use of <code><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html" class="external-link">tidyr::pivot_longer()</a></code>and
-<code><a href="https://tidyr.tidyverse.org/reference/pivot_wider.html" class="external-link">tidyr::pivot_wider()</a></code>.</p>
-<p>To simplify this process, this is exactly what our function
-<code><a href="../reference/vertical_to_tidy.html">vertical_to_tidy()</a></code> does. Here is an example of the complete
-pipeline from import to tidy table</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<p><strong>TO DO: change this section to reflect new function vertical_to_tidy()</strong></p>
+<p>The vertical format is practical for manual/human handling, with an easy-to-handle number of rows (96), and individual plates are easy to select based on plate_id or dataset. For example, here is an easy moment to subset some plates based on dataset, abs/map or even some features that are embedded in plate name (such as N species in our case where plate names contained either “NO3”, “NO2” or “NH4”). This can be done using the <code>dplyr</code> package and its function <code><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">dplyr::select()</a></code>, aided by some helper functions from the <code>tidyselect</code> package, such as <code><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">tidyselect::starts_with()</a></code>, <code><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">tidyselect::contains()</a></code>, etc.</p>
+<p>But this verticalized format is not ideal for bulk computing and transformations, where the might of the <code>tidyverse</code> sits in computations done on columns. So, a typical last step of tidying would be to bring this dataset in a format with a single column for the absorbance data, and another for the mapping data, where each unique well would be represented by a row. Such transformations can be done with the <code>tidyr</code> and “<code>dplyr</code> packages, for example with the successive use of <code><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html" class="external-link">tidyr::pivot_longer()</a></code>and <code><a href="https://tidyr.tidyverse.org/reference/pivot_wider.html" class="external-link">tidyr::pivot_wider()</a></code>.</p>
+<p>To simplify this process, this is exactly what our function <code><a href="../reference/vertical_to_tidy.html">vertical_to_tidy()</a></code> does. Here is an example of the complete pipeline from import to tidy table</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># identifying raw files</span></span>
 <span><span class="va">map_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"csv_map.csv"</span>, package <span class="op">=</span> <span class="st">"plate2N"</span><span class="op">)</span></span>
 <span><span class="va">abs_folder</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"txt_examples/"</span>, package <span class="op">=</span> <span class="st">"plate2N"</span><span class="op">)</span></span>
@@ -654,73 +523,118 @@ pipeline from import to tidy table</p>
 <span></span>
 <span><span class="co"># tidying </span></span>
 <span><span class="op">(</span><span class="va">tidy_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/vertical_to_tidy.html">vertical_to_tidy</a></span><span class="op">(</span><span class="va">joined_vertical</span>, abs_def <span class="op">=</span> <span class="st">"abs"</span>, map_def <span class="op">=</span> <span class="st">"map"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 480 × 8</span></span></span>
+<span><span class="co">#&gt; # A tibble: 480 × 8</span></span>
 <span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id map      abs  </span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> A     1      A1      A1_NO3_1F1     Nmin    NO3_1F1  Std      0.092</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> A     1      A1      A1_NO3_1F2     Nmin    NO3_1F2  Std      0.091</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> A     1      A1      A1_NO3_1F3     Nmin    NO3_1F3  Std      0.093</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> A     1      A1      A1_NO3_1F4     Nmin    NO3_1F4  Std      0.092</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> A     1      A1      A1_NO3_1F5     Nmin    NO3_1F5  Std      0.092</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  81_t1_z2 0.114</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  97_t1_z1 0.107</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  89_t1_z3 0.095</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  81_t1_z1 0.118</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  Std_3_t1 0.167</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 470 more rows</span></span></span></code></pre></div>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;</span></span>
+<span><span class="co">#&gt;  1 A     1      A1      A1_NO3_1F1     Nmin    NO3_1F1  Std      0.092</span></span>
+<span><span class="co">#&gt;  2 A     1      A1      A1_NO3_1F2     Nmin    NO3_1F2  Std      0.091</span></span>
+<span><span class="co">#&gt;  3 A     1      A1      A1_NO3_1F3     Nmin    NO3_1F3  Std      0.093</span></span>
+<span><span class="co">#&gt;  4 A     1      A1      A1_NO3_1F4     Nmin    NO3_1F4  Std      0.092</span></span>
+<span><span class="co">#&gt;  5 A     1      A1      A1_NO3_1F5     Nmin    NO3_1F5  Std      0.092</span></span>
+<span><span class="co">#&gt;  6 A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  81_t1_z2 0.114</span></span>
+<span><span class="co">#&gt;  7 A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  97_t1_z1 0.107</span></span>
+<span><span class="co">#&gt;  8 A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  89_t1_z3 0.095</span></span>
+<span><span class="co">#&gt;  9 A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  81_t1_z1 0.118</span></span>
+<span><span class="co">#&gt; 10 A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  Std_3_t1 0.167</span></span>
+<span><span class="co">#&gt; # ℹ 470 more rows</span></span></code></pre></div>
 </div>
-<div class="section level2">
-<h2 id="next-steps">4 - Next steps<a class="anchor" aria-label="anchor" href="#next-steps"></a>
+</section><section class="section level2"><h2 id="next-steps">4 - Next steps<a class="anchor" aria-label="anchor" href="#next-steps"></a>
 </h2>
-<p>Once the data is in this practical and tidy format, we can start data
-transformation of all sorts, see also vignettes <strong>xxx and xxx
-(under development)</strong> of this package. This is a good place to
-save the tidy table into an intermediary file, for example, using
-<code>tidy_data |&gt; readr::write_rds("path/to/my/output/file.rds")</code>.</p>
-</div>
-<div class="section level2">
-<h2 id="final-note-when-absorbance-and-mapping-data-with-identical-plate-ids-are-imported-from-a-single-source-file-">5 - Final note: when absorbance and mapping data with identical
-plate ids are imported from a single source file.<a class="anchor" aria-label="anchor" href="#final-note-when-absorbance-and-mapping-data-with-identical-plate-ids-are-imported-from-a-single-source-file-"></a>
+<p>Once the data is in this practical and tidy format, we can start data transformation of all sorts, see also vignettes <a href="https://mdetoeuf.github.io/plate2N/articles/handling-outliers.html"><strong>handling-outliers</strong></a><strong>, <a href="https://mdetoeuf.github.io/plate2N/articles/blank-correction.html">blank-correction</a> and <a href="https://mdetoeuf.github.io/plate2N/articles/abs-to-conc.html">abs-to-conc</a> (in that order)</strong> of this <a href="https://mdetoeuf.github.io/plate2N/index.html">package</a>. This is a good place to save the tidy table into an intermediary file, for example, using <code>tidy_data |&gt; readr::write_rds("path/to/my/output/file.rds")</code>.</p>
+</section><section class="section level2"><h2 id="final-note-when-absorbance-and-mapping-data-with-identical-plate-ids-are-imported-from-a-single-source-file-">5 - Final note: when absorbance and mapping data with identical plate ids are imported from a single source file.<a class="anchor" aria-label="anchor" href="#final-note-when-absorbance-and-mapping-data-with-identical-plate-ids-are-imported-from-a-single-source-file-"></a>
 </h2>
-<p>Usually, a physical plate that is used in the lab will come with 2 or
-more data tables in plate format. Indeed, the measure of absorbance of a
-well needs to be accompanied by some mapping information (e.g., to each
-well corresponds also a sample id or information on treatment).
-Consequently, a single plate (let’s call it “NO3_plate1”) will result in
-the import of at least 2 “plate data tables”. Those 2 plate data sets
-characterizing the same “physical” plate will need to be handled
-differently in downstream analysis. We see here 2 typical use cases</p>
-<p><strong>1) The 2 (or more) plate data sets are separated</strong>
-into separate raw files to be imported (e.g., absorbance data as a raw
-.TXT and mapping data recorded as a .csv). In that case, 2 distinct
-<code>tibble</code>s will be created, and it is quite easy to manipulate
-them separately in subsequent steps or to use
-<code><a href="../reference/join_abs_map.html">join_abs_map()</a></code> to merge them and take profit of the
-automatic prefix that the function adds during the
-verticalization/merging process.</p>
-<p><strong>2) The 2 (or more) plate data sets are imported from a the
-same raw file</strong>. This can be done in several ways.</p>
+<p>Usually, a physical plate that is used in the lab will come with 2 or more data tables in plate format. Indeed, the measure of absorbance of a well needs to be accompanied by some mapping information (e.g., to each well corresponds also a sample id or information on treatment). Consequently, a single plate (let’s call it “NO3_plate1”) will result in the import of at least 2 “plate data tables”. Those 2 plate data sets characterizing the same “physical” plate will need to be handled differently in downstream analysis. We see here 2 typical use cases</p>
+<p><strong>1) The 2 (or more) plate data sets are separated</strong> into separate raw files to be imported (e.g., absorbance data as a raw .TXT and mapping data recorded as a .csv). In that case, 2 distinct <code>tibble</code>s will be created, and it is quite easy to manipulate them separately in subsequent steps or to use <code><a href="../reference/join_abs_map.html">join_abs_map()</a></code> to merge them and take profit of the automatic prefix that the function adds during the verticalization/merging process.</p>
+<p><strong>2) The 2 (or more) plate data sets are imported from a the same raw file</strong>. This can be done in several ways.</p>
 <ul>
-<li>data is imported from a “skanit csv” where the mapping of the plates
-had been encoded. By default, absorbance and mapping data will be
-returned into 2 separate items in the list generated by
-<code>skanit_to_csv()</code> and can be easily manipulated separately,
-e.g., using <code><a href="../reference/join_abs_map.html">join_abs_map()</a></code> as mentioned above.</li>
-<li>data is imported from a single csv file. In this particular case, it
-is recommended to name the 2 “plate data” with distinct plate ids (e.g.,
-“abs-NO3_plate1” and “map-NO3_plate1”), so that they will simply be
-considered as distinct plates by the function
-<code>csv_to_skanit()</code>, and can easily be selected separately in
-subsequent steps, for example, taking advantage of the helper function
-<code><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">tidyselect::starts_with()</a></code> (try this on the verticalized
-plate:
-<code>dplyr::select(my_vertical_plate, tidyselect::starts_with("abs"))</code>).</li>
-</ul>
-</div>
-  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+<li>data is imported from a “skanit csv” where the mapping of the plates had been encoded. By default, absorbance and mapping data will be returned into 2 separate items in the list generated by <code>skanit_to_csv()</code> and can be easily manipulated separately, e.g., using <code><a href="../reference/join_abs_map.html">join_abs_map()</a></code> as mentioned above.</li>
+<li>data is imported from a single csv file. In this particular case, it is recommended to name the 2 “plate data” with distinct plate ids (e.g., “abs-NO3_plate1” and “map-NO3_plate1”), so that they will simply be considered as distinct plates by the function <code>csv_to_skanit()</code>, and can easily be selected separately in subsequent steps, for example, taking advantage of the helper function <code><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">tidyselect::starts_with()</a></code> (try this on the verticalized plate: <code>dplyr::select(my_vertical_plate, tidyselect::starts_with("abs"))</code>).</li>
+</ul></section><script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'light-border',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config);
+    }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script></main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
 </div>
-
 
 
     <footer><div class="pkgdown-footer-left">

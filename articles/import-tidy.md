@@ -225,15 +225,15 @@ print(preview_skanit_raw, n = 40)
 #> # A tibble: 255 × 13
 #>    X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12   X13  
 #>    <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr>
-#>  1 Meas… NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA   
-#>  2 MR_1… NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA   
-#>  3 01/0… NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA   
-#>  4 NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA   
-#>  5 Abso… NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA   
-#>  6 Wave… NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA   
-#>  7 NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA   
-#>  8 M12   NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA   
-#>  9 NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA   
+#>  1 Meas… <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA> 
+#>  2 MR_1… <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA> 
+#>  3 01/0… <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA> 
+#>  4 <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA> 
+#>  5 Abso… <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA> 
+#>  6 Wave… <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA> 
+#>  7 <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA> 
+#>  8 M12   <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA> 
+#>  9 <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA> 
 #> 10 Abs   1     2     3     4     5     6     7     8     9     10    11    12   
 #> 11 A     1.44… 1.48… 1.43… 1.47… 1.51… 1.49… 1.50… 1.52… 1.53… 1.52… 1.51… 1.53…
 #> 12 B     1.45… 1.52… 1.50… 1.49… 1.53… 1.56… 1.53… 1.53… 1.53… 1.54… 1.54… 1.54…
@@ -243,7 +243,7 @@ print(preview_skanit_raw, n = 40)
 #> 16 F     1.52… 1.57… 1.55… 1.53… 1.52… 1.56… 1.57… 1.58… 1.56… 1.55… 1.57… 1.55…
 #> 17 G     1.53… 1.55… 1.53… 1.53… 1.56… 1.55… 1.57… 1.55… 1.55… 1.56… 1.56… 1.57…
 #> 18 H     1.49… 1.54… 1.52… 1.51… 1.55… 1.55… 1.56… 1.57… 1.53… 1.56… 1.57… 1.58…
-#> 19 NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA   
+#> 19 <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA> 
 #> 20 Samp… 1     2     3     4     5     6     7     8     9     10    11    12   
 #> 21 A     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…
 #> 22 B     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…
@@ -253,12 +253,12 @@ print(preview_skanit_raw, n = 40)
 #> 26 F     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…
 #> 27 G     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…
 #> 28 H     Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0… Std0…
-#> 29 NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA   
-#> 30 NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA   
-#> 31 Wave… NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA   
-#> 32 NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA   
-#> 33 M16   NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA   
-#> 34 NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA    NA   
+#> 29 <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA> 
+#> 30 <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA> 
+#> 31 Wave… <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA> 
+#> 32 <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA> 
+#> 33 M16   <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA> 
+#> 34 <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA>  <NA> 
 #> 35 Abs   1     2     3     4     5     6     7     8     9     10    11    12   
 #> 36 A     1.57… 1.55… 1.54… 1.54… 1.61… 1.55… 1.56… 1.58… 1.60… 1.57… 1.51… 1.58…
 #> 37 B     1.60… 1.62… 1.62… 1.57… 1.63… 1.62… 1.62… 1.59… 1.64… 1.63… 1.62… 1.64…
@@ -362,7 +362,7 @@ To examine the aspect of the raw file, go and manually visit the file
 path displayed hereunder for `txt_folder` in your computer’s file
 directory. Alternatively, you can see an example of raw .TXT file on our
 github repository:
-*<https://github.com/mdetoeuf/plate2N/tree/main/inst/extdata/txt_examples>*.
+*https://github.com/mdetoeuf/plate2N/tree/main/inst/extdata/txt_examples*.
 
 Here is how to run
 [`txt_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/txt_to_tibble.md)
@@ -678,10 +678,15 @@ joined_vertical <- join_abs_map(
 ## 4 - Next steps
 
 Once the data is in this practical and tidy format, we can start data
-transformation of all sorts, see also vignettes **xxx and xxx (under
-development)** of this package. This is a good place to save the tidy
-table into an intermediary file, for example, using
-`tidy_data |> readr::write_rds("path/to/my/output/file.rds")`.
+transformation of all sorts, see also vignettes
+[**handling-outliers**](https://mdetoeuf.github.io/plate2N/articles/handling-outliers.html)**,
+[blank-correction](https://mdetoeuf.github.io/plate2N/articles/blank-correction.html)
+and
+[abs-to-conc](https://mdetoeuf.github.io/plate2N/articles/abs-to-conc.html)
+(in that order)** of this
+[package](https://mdetoeuf.github.io/plate2N/index.html). This is a good
+place to save the tidy table into an intermediary file, for example,
+using `tidy_data |> readr::write_rds("path/to/my/output/file.rds")`.
 
 ## 5 - Final note: when absorbance and mapping data with identical plate ids are imported from a single source file.
 

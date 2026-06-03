@@ -433,19 +433,19 @@ data_mg_N_L <-
   convert_molec(masses = molar_masses)
 
 data_mg_N_L
-#> # A tibble: 264 × 12
-#>    dataset plate_id map      abs_corrected std_sp target_sp std_unit     slope
-#>    <chr>   <chr>    <chr>            <dbl> <chr>  <chr>     <chr>        <dbl>
-#>  1 Nmin    NO3_1F1  81_t1_z2        0.0312 NO3    N         mg NO3- L-1 0.0184
-#>  2 Nmin    NO3_1F2  97_t1_z1        0.0249 NO3    N         mg NO3- L-1 0.0184
-#>  3 Nmin    NO3_1F3  89_t1_z3        0.0104 NO3    N         mg NO3- L-1 0.0185
-#>  4 Nmin    NO3_1F4  81_t1_z1        0.0342 NO3    N         mg NO3- L-1 0.0183
-#>  5 Nmin    NO3_1F5  Std_3_t1        0.0832 NO3    N         mg NO3- L-1 0.0190
-#>  6 Nmin    NO3_1F1  82_t1_z2        0.0452 NO3    N         mg NO3- L-1 0.0184
-#>  7 Nmin    NO3_1F2  98_t1_z1        0.0219 NO3    N         mg NO3- L-1 0.0184
-#>  8 Nmin    NO3_1F3  90_t1_z3        0.0124 NO3    N         mg NO3- L-1 0.0185
-#>  9 Nmin    NO3_1F4  82_t1_z3        0.0543 NO3    N         mg NO3- L-1 0.0183
-#> 10 Nmin    NO3_1F5  98_t1_z3        0.0232 NO3    N         mg NO3- L-1 0.0190
+#> # A tibble: 264 × 13
+#>    dataset plate_id map   well_id abs_corrected std_sp target_sp std_unit  slope
+#>    <chr>   <chr>    <chr> <chr>           <dbl> <chr>  <chr>     <chr>     <dbl>
+#>  1 Nmin    NO3_1F1  81_t… A2             0.0312 NO3    N         mg NO3-… 0.0184
+#>  2 Nmin    NO3_1F2  97_t… A2             0.0249 NO3    N         mg NO3-… 0.0184
+#>  3 Nmin    NO3_1F3  89_t… A2             0.0104 NO3    N         mg NO3-… 0.0185
+#>  4 Nmin    NO3_1F4  81_t… A2             0.0342 NO3    N         mg NO3-… 0.0183
+#>  5 Nmin    NO3_1F5  Std_… A2             0.0832 NO3    N         mg NO3-… 0.0190
+#>  6 Nmin    NO3_1F1  82_t… A3             0.0452 NO3    N         mg NO3-… 0.0184
+#>  7 Nmin    NO3_1F2  98_t… A3             0.0219 NO3    N         mg NO3-… 0.0184
+#>  8 Nmin    NO3_1F3  90_t… A3             0.0124 NO3    N         mg NO3-… 0.0185
+#>  9 Nmin    NO3_1F4  82_t… A3             0.0543 NO3    N         mg NO3-… 0.0183
+#> 10 Nmin    NO3_1F5  98_t… A3             0.0232 NO3    N         mg NO3-… 0.0190
 #> # ℹ 254 more rows
 #> # ℹ 4 more variables: adj_r_squared <dbl>, lm_p <dbl>, conc_mgNsp_L <dbl>,
 #> #   conc_mgN_L <dbl>
