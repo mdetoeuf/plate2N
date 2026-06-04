@@ -13,6 +13,7 @@ map_plates(
   std_def = "Std",
   column_curves = c(1, 12),
   blank_def = "extr",
+  rename_na = "empty",
   empty_def = "empty",
   column_empty = c(),
   column_blank = 8,
@@ -39,7 +40,7 @@ map_plates(
   the fitting length. By default, plate ids will be `plate_1`,
   `plate_2`, etc.
 
-- std_def, column_curves, blank_def, empty_def, column_empty,
+- std_def, column_curves, blank_def, rename_na, empty_def, column_empty,
   column_blank, n_wells_samples:
 
   These parameters are given to a call to

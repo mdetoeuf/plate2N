@@ -12,6 +12,7 @@ map_1_plate(
   std_def = "Std",
   column_curves = c(1, 12),
   blank_def = "extr",
+  rename_na = "empty",
   empty_def = "empty",
   column_empty = c(),
   column_blank = 8,
@@ -44,6 +45,12 @@ map_1_plate(
 
   A single string to define wells containing the blank. Defaults to
   `extr` (for "extractant")
+
+- rename_na:
+
+  How to replace NAs found in the sample list. Defaults to "empty",
+  e.i., the plate map will show "empty" at the corresponding place to
+  where the function found NAs
 
 - empty_def:
 

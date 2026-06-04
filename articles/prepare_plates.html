@@ -91,20 +91,20 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">LETTERS</span>, size <span class="op">=</span> <span class="fl">15</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;  [1] "V" "S" "J" "R" "H" "L" "P" "E" "D" "Y" "O" "Z" "K" "T" "M"</span></span>
+<span><span class="co">#&gt;  [1] "G" "P" "X" "L" "T" "E" "W" "B" "N" "Z" "S" "H" "M" "O" "V"</span></span>
 <span><span class="fu"><a href="../reference/map_1_plate.html">map_1_plate</a></span><span class="op">(</span>plate_id <span class="op">=</span> <span class="st">"test_plate"</span>, samples <span class="op">=</span> <span class="va">samples</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 9 × 13</span></span>
 <span><span class="co">#&gt;   row    X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12  </span></span>
 <span><span class="co">#&gt;   &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;</span></span>
 <span><span class="co">#&gt; 1 test_… 1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
-<span><span class="co">#&gt; 2 A      Std   V     J     H     P     D     O     extr  K     M     empty Std  </span></span>
-<span><span class="co">#&gt; 3 B      Std   V     J     H     P     D     O     extr  K     M     empty Std  </span></span>
-<span><span class="co">#&gt; 4 C      Std   V     J     H     P     D     O     extr  K     M     empty Std  </span></span>
-<span><span class="co">#&gt; 5 D      Std   V     J     H     P     D     O     extr  K     M     empty Std  </span></span>
-<span><span class="co">#&gt; 6 E      Std   S     R     L     E     Y     Z     extr  T     empty empty Std  </span></span>
-<span><span class="co">#&gt; 7 F      Std   S     R     L     E     Y     Z     extr  T     empty empty Std  </span></span>
-<span><span class="co">#&gt; 8 G      Std   S     R     L     E     Y     Z     extr  T     empty empty Std  </span></span>
-<span><span class="co">#&gt; 9 H      Std   S     R     L     E     Y     Z     extr  T     empty empty Std</span></span></code></pre></div>
+<span><span class="co">#&gt; 2 A      Std   G     X     T     W     N     S     extr  M     V     empty Std  </span></span>
+<span><span class="co">#&gt; 3 B      Std   G     X     T     W     N     S     extr  M     V     empty Std  </span></span>
+<span><span class="co">#&gt; 4 C      Std   G     X     T     W     N     S     extr  M     V     empty Std  </span></span>
+<span><span class="co">#&gt; 5 D      Std   G     X     T     W     N     S     extr  M     V     empty Std  </span></span>
+<span><span class="co">#&gt; 6 E      Std   P     L     E     B     Z     H     extr  O     empty empty Std  </span></span>
+<span><span class="co">#&gt; 7 F      Std   P     L     E     B     Z     H     extr  O     empty empty Std  </span></span>
+<span><span class="co">#&gt; 8 G      Std   P     L     E     B     Z     H     extr  O     empty empty Std  </span></span>
+<span><span class="co">#&gt; 9 H      Std   P     L     E     B     Z     H     extr  O     empty empty Std</span></span></code></pre></div>
 </div>
 <p>Usually, more than one plate needs to be prepared. Let’s say we need to prepare 5 plates, and we have a list of 5 x 14 samples (we want exactly 14 samples in each plate). <code><a href="../reference/map_plates.html">map_plates()</a></code> builds on <code><a href="../reference/map_1_plate.html">map_1_plate()</a></code> to map several plates.</p>
 <div class="cell">
