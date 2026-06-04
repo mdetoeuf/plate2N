@@ -11,6 +11,7 @@ map_plates(
   std_def = "Std",
   column_curves = c(1, 12),
   blank_def = "extr",
+  rename_na = "empty",
   empty_def = "empty",
   column_empty = c(),
   column_blank = 8,
@@ -27,7 +28,7 @@ Defaults to 18, which fits the default settings of \code{map_1_plate()}.}
 \item{plate_ids}{Optional, a vector of plate_ids to attribute to the plates.
 Must be the fitting length. By default, plate ids will be \code{plate_1}, \code{plate_2}, etc.}
 
-\item{std_def, column_curves, blank_def, empty_def, column_empty, column_blank, n_wells_samples}{These
+\item{std_def, column_curves, blank_def, rename_na, empty_def, column_empty, column_blank, n_wells_samples}{These
 parameters are given to a call to \code{map_1_plate()} and follow its logic.
 See also \code{?map_1_plate()}.}
 }

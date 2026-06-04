@@ -19,6 +19,9 @@ utils::globalVariables(c("row"))
 #'     unique string or a vector. Defaults to `c(1,12)`.
 #' @param blank_def A single string to define wells containing the blank. Defaults
 #'     to `extr` (for "extractant")
+#' @param rename_na How to replace NAs found in the sample list. Defaults to "empty",
+#'     e.i., the plate map will show "empty" at the corresponding place to where
+#'     the function found NAs
 #' @param empty_def A single string to define empty wells
 #' @param column_empty Optional, which columns to map as empty
 #' @param column_blank Which column(s) to map to the blank. Defaults to `8`.
@@ -38,6 +41,7 @@ map_1_plate <- function( #defaults: a whole column (or more) per std or blank
   std_def = "Std",
   column_curves = c(1,12),
   blank_def = "extr",
+  rename_na = "empty",
   empty_def = "empty",
   column_empty = c(),
   column_blank = 8,
@@ -100,6 +104,13 @@ map_1_plate <- function( #defaults: a whole column (or more) per std or blank
   # extract the remaining wells to be occupied by samples
   anti_plate <- empty_plate |> dplyr::select(!names(plate))
 
+  # replace NAs in samples
+  na_indices <- which(is.na(samples))
+  if (length(na_indices) != 0) {
+    samples[na_indices] <- rename_na
+  }
+
+
   # get the samples replicated as appropriate
   replicated_samples <- lapply(samples, FUN = rep, n_wells_samples) |> unlist()
   n_empty_wells <- available_wells - length(replicated_samples)
@@ -133,7 +144,7 @@ utils::globalVariables(c("stringr::fruit"))
 #'     Defaults to 18, which fits the default settings of `map_1_plate()`.
 #' @param plate_ids Optional, a vector of plate_ids to attribute to the plates.
 #'     Must be the fitting length. By default, plate ids will be `plate_1`, `plate_2`, etc.
-#' @param std_def,column_curves,blank_def,empty_def,column_empty,column_blank,n_wells_samples These
+#' @param std_def,column_curves,blank_def,rename_na,empty_def,column_empty,column_blank,n_wells_samples These
 #'     parameters are given to a call to `map_1_plate()` and follow its logic.
 #'     See also `?map_1_plate()`.
 #'
@@ -154,6 +165,7 @@ map_plates <- function(
     std_def = "Std",
     column_curves = c(1,12),
     blank_def = "extr",
+    rename_na = "empty",
     empty_def = "empty",
     column_empty = c(),
     column_blank = 8,
@@ -171,7 +183,7 @@ map_plates <- function(
   }
 
   # divide into smaller vectors
-  group_attribution <- seq(1:n_plates) |> rep(14) |> sort()
+  group_attribution <- seq(1:n_plates) |> rep(n_samples_per_plate) |> sort()
   sample_distribution <- samples |> split(f = group_attribution)
 
 
@@ -189,6 +201,7 @@ map_plates <- function(
       std_def = std_def,
       column_curves = column_curves,
       blank_def = blank_def,
+      rename_na = rename_na,
       empty_def = empty_def,
       column_empty = column_empty,
       column_blank = column_blank,
