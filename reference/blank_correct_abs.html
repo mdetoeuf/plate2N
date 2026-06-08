@@ -93,7 +93,7 @@ than the input tibble (due to <code>map_to_exclude</code>)</p>
 <span class="r-in"><span>    raw_wells_data <span class="op">=</span> <span class="va">data</span>,</span></span>
 <span class="r-in"><span>    per_plate_avg_blank <span class="op">=</span> <span class="va">extractant_average</span>,</span></span>
 <span class="r-in"><span>    map_to_exclude <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"empty"</span>,<span class="st">"Std"</span>,<span class="st">"extr"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Joining with `by = join_by(plate_id)`</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Joining with `by = join_by(dataset, plate_id)`</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Joining with `by = join_by(row, column, well_id, unique_well_id, dataset,</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> plate_id, map)`</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 264 × 10</span></span>

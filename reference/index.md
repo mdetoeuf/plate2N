@@ -49,6 +49,8 @@
   : Example of plate metadata
 - [`molar_masses`](https://mdetoeuf.github.io/plate2N/reference/molar_masses.md)
   : Record of molar masses for studied compounds
+- [`multiple_extractant_id`](https://mdetoeuf.github.io/plate2N/reference/multiple_extractant_id.md)
+  : Correspondance Table between Plate Mapping and Extractant ID
 - [`multiplot_outlier_extr()`](https://mdetoeuf.github.io/plate2N/reference/multiplot_outlier_extr.md)
   : Multiple distribution plot to review suspicious extractant values
   and spot outliers

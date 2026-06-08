@@ -537,15 +537,23 @@ computes the average, standard deviation and coefficient of variation
 ``` r
 
 (extr_avg <- extractant_average(raw_meta, extr_def = "extr")) 
-#> # A tibble: 5 × 5
-#>   plate_id map   blank_avg blank_sdev blank_coeff_var_percent
-#>   <chr>    <chr>     <dbl>      <dbl>                   <dbl>
-#> 1 NO3_1F1  extr     0.0828   0.000463                   0.559
-#> 2 NO3_1F2  extr     0.117    0.0657                    56.3  
-#> 3 NO3_1F3  extr     0.0846   0.00151                    1.78 
-#> 4 NO3_1F4  extr     0.0743   0.0268                    36.1  
-#> 5 NO3_1F5  extr     0.0838   0.000463                   0.553
+#> # A tibble: 5 × 6
+#>   dataset plate_id map   blank_avg blank_sdev blank_coeff_var_percent
+#>   <chr>   <chr>    <chr>     <dbl>      <dbl>                   <dbl>
+#> 1 Nmin    NO3_1F1  extr     0.0828   0.000463                   0.559
+#> 2 Nmin    NO3_1F2  extr     0.117    0.0657                    56.3  
+#> 3 Nmin    NO3_1F3  extr     0.0846   0.00151                    1.78 
+#> 4 Nmin    NO3_1F4  extr     0.0743   0.0268                    36.1  
+#> 5 Nmin    NO3_1F5  extr     0.0838   0.000463                   0.553
 ```
+
+> **More than 1 extractant per plate?**
+>
+> [`extractant_average()`](https://mdetoeuf.github.io/plate2N/reference/extractant_average.md)
+> should also work when there are several extractants per plate, but the
+> argument `extr_def` must be given a vector with extractant (e.g.,
+> `extr_def = c("extr_1", "extr_2")`. See also `?extractant_average()`
+> for examples.
 
 ### 3.3 - Quality check of extractant and outlier removal
 
@@ -573,14 +581,14 @@ values for the coefficients of variation).
 
 extr_avg |> 
   dplyr::arrange(desc(blank_coeff_var_percent))
-#> # A tibble: 5 × 5
-#>   plate_id map   blank_avg blank_sdev blank_coeff_var_percent
-#>   <chr>    <chr>     <dbl>      <dbl>                   <dbl>
-#> 1 NO3_1F2  extr     0.117    0.0657                    56.3  
-#> 2 NO3_1F4  extr     0.0743   0.0268                    36.1  
-#> 3 NO3_1F3  extr     0.0846   0.00151                    1.78 
-#> 4 NO3_1F1  extr     0.0828   0.000463                   0.559
-#> 5 NO3_1F5  extr     0.0838   0.000463                   0.553
+#> # A tibble: 5 × 6
+#>   dataset plate_id map   blank_avg blank_sdev blank_coeff_var_percent
+#>   <chr>   <chr>    <chr>     <dbl>      <dbl>                   <dbl>
+#> 1 Nmin    NO3_1F2  extr     0.117    0.0657                    56.3  
+#> 2 Nmin    NO3_1F4  extr     0.0743   0.0268                    36.1  
+#> 3 Nmin    NO3_1F3  extr     0.0846   0.00151                    1.78 
+#> 4 Nmin    NO3_1F1  extr     0.0828   0.000463                   0.559
+#> 5 Nmin    NO3_1F5  extr     0.0838   0.000463                   0.553
 ```
 
 Here, we see that the suspicious plates are `NO3_1F2` and `NO3_1F4`.
@@ -812,14 +820,14 @@ satisfactory (below our threshold of `threshold`%).
 ``` r
 
 extr_avg_clean |> dplyr::arrange(dplyr::desc(blank_coeff_var_percent)) |> head()
-#> # A tibble: 5 × 5
-#>   plate_id map   blank_avg blank_sdev blank_coeff_var_percent
-#>   <chr>    <chr>     <dbl>      <dbl>                   <dbl>
-#> 1 NO3_1F3  extr     0.0846   0.00151                    1.78 
-#> 2 NO3_1F2  extr     0.0823   0.000516                   0.627
-#> 3 NO3_1F4  extr     0.0837   0.000488                   0.583
-#> 4 NO3_1F1  extr     0.0828   0.000463                   0.559
-#> 5 NO3_1F5  extr     0.0838   0.000463                   0.553
+#> # A tibble: 5 × 6
+#>   dataset plate_id map   blank_avg blank_sdev blank_coeff_var_percent
+#>   <chr>   <chr>    <chr>     <dbl>      <dbl>                   <dbl>
+#> 1 Nmin    NO3_1F3  extr     0.0846   0.00151                    1.78 
+#> 2 Nmin    NO3_1F2  extr     0.0823   0.000516                   0.627
+#> 3 Nmin    NO3_1F4  extr     0.0837   0.000488                   0.583
+#> 4 Nmin    NO3_1F1  extr     0.0828   0.000463                   0.559
+#> 5 Nmin    NO3_1F5  extr     0.0838   0.000463                   0.553
 ```
 
 ### 3.4 - Blank-correction of sample absorbance
@@ -851,7 +859,7 @@ sample_corrected <-
     raw_wells_data = raw_meta, 
     per_plate_avg_blank = extr_avg_clean,
     map_to_exclude = c("empty","Std","extr")) 
-#> Joining with `by = join_by(plate_id)`
+#> Joining with `by = join_by(dataset, plate_id)`
 #> Joining with `by = join_by(row, column, well_id, unique_well_id, dataset,
 #> plate_id, map, std_sp, std_unit, std_conc)`
 ```

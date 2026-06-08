@@ -478,14 +478,20 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">extr_avg</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extractant_average.html">extractant_average</a></span><span class="op">(</span><span class="va">raw_meta</span>, extr_def <span class="op">=</span> <span class="st">"extr"</span><span class="op">)</span><span class="op">)</span> </span>
-<span><span class="co">#&gt; # A tibble: 5 × 5</span></span>
-<span><span class="co">#&gt;   plate_id map   blank_avg blank_sdev blank_coeff_var_percent</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;     &lt;dbl&gt;      &lt;dbl&gt;                   &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1 NO3_1F1  extr     0.0828   0.000463                   0.559</span></span>
-<span><span class="co">#&gt; 2 NO3_1F2  extr     0.117    0.0657                    56.3  </span></span>
-<span><span class="co">#&gt; 3 NO3_1F3  extr     0.0846   0.00151                    1.78 </span></span>
-<span><span class="co">#&gt; 4 NO3_1F4  extr     0.0743   0.0268                    36.1  </span></span>
-<span><span class="co">#&gt; 5 NO3_1F5  extr     0.0838   0.000463                   0.553</span></span></code></pre></div>
+<span><span class="co">#&gt; # A tibble: 5 × 6</span></span>
+<span><span class="co">#&gt;   dataset plate_id map   blank_avg blank_sdev blank_coeff_var_percent</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;     &lt;dbl&gt;      &lt;dbl&gt;                   &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 Nmin    NO3_1F1  extr     0.0828   0.000463                   0.559</span></span>
+<span><span class="co">#&gt; 2 Nmin    NO3_1F2  extr     0.117    0.0657                    56.3  </span></span>
+<span><span class="co">#&gt; 3 Nmin    NO3_1F3  extr     0.0846   0.00151                    1.78 </span></span>
+<span><span class="co">#&gt; 4 Nmin    NO3_1F4  extr     0.0743   0.0268                    36.1  </span></span>
+<span><span class="co">#&gt; 5 Nmin    NO3_1F5  extr     0.0838   0.000463                   0.553</span></span></code></pre></div>
+</div>
+<div>
+<blockquote>
+<p><strong>More than 1 extractant per plate?</strong></p>
+<p><code><a href="../reference/extractant_average.html">extractant_average()</a></code> should also work when there are several extractants per plate, but the argument <code>extr_def</code> must be given a vector with extractant (e.g., <code>extr_def = c("extr_1", "extr_2")</code>. See also <code>?extractant_average()</code> for examples.</p>
+</blockquote>
 </div>
 </section><section class="level2"><h3 id="quality-check-of-extractant-and-outlier-removal">3.3 - Quality check of extractant and outlier removal<a class="anchor" aria-label="anchor" href="#quality-check-of-extractant-and-outlier-removal"></a>
 </h3>
@@ -505,14 +511,14 @@
 <div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">extr_avg</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">arrange</a></span><span class="op">(</span><span class="fu">desc</span><span class="op">(</span><span class="va">blank_coeff_var_percent</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 5 × 5</span></span>
-<span><span class="co">#&gt;   plate_id map   blank_avg blank_sdev blank_coeff_var_percent</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;     &lt;dbl&gt;      &lt;dbl&gt;                   &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1 NO3_1F2  extr     0.117    0.0657                    56.3  </span></span>
-<span><span class="co">#&gt; 2 NO3_1F4  extr     0.0743   0.0268                    36.1  </span></span>
-<span><span class="co">#&gt; 3 NO3_1F3  extr     0.0846   0.00151                    1.78 </span></span>
-<span><span class="co">#&gt; 4 NO3_1F1  extr     0.0828   0.000463                   0.559</span></span>
-<span><span class="co">#&gt; 5 NO3_1F5  extr     0.0838   0.000463                   0.553</span></span></code></pre></div>
+<span><span class="co">#&gt; # A tibble: 5 × 6</span></span>
+<span><span class="co">#&gt;   dataset plate_id map   blank_avg blank_sdev blank_coeff_var_percent</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;     &lt;dbl&gt;      &lt;dbl&gt;                   &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 Nmin    NO3_1F2  extr     0.117    0.0657                    56.3  </span></span>
+<span><span class="co">#&gt; 2 Nmin    NO3_1F4  extr     0.0743   0.0268                    36.1  </span></span>
+<span><span class="co">#&gt; 3 Nmin    NO3_1F3  extr     0.0846   0.00151                    1.78 </span></span>
+<span><span class="co">#&gt; 4 Nmin    NO3_1F1  extr     0.0828   0.000463                   0.559</span></span>
+<span><span class="co">#&gt; 5 Nmin    NO3_1F5  extr     0.0838   0.000463                   0.553</span></span></code></pre></div>
 </div>
 <p>Here, we see that the suspicious plates are <code>NO3_1F2</code> and <code>NO3_1F4</code>. This is easy with a small dataset. For larger data sets, <code><a href="../reference/qc_raw_extr.html">qc_raw_extr()</a></code> performs a quality check of raw absorbance data for extractant wells. It returns a vector containing the “suspicious” <code>plate_id</code>s of plates exceeding a user-defined threshold. Note that we work from <code>raw_meta</code> because in this pipeline, there has not been any prior outlier removal, but of course, we should work with the “cleanest” data that we have.</p>
 <p>A <code>max_coeff</code> threshold of 5% is reasonable to segregate “acceptable” coefficients if, like here, you have 8 wells per plate for the extractant.</p>
@@ -685,14 +691,14 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">extr_avg_clean</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">arrange</a></span><span class="op">(</span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/desc.html" class="external-link">desc</a></span><span class="op">(</span><span class="va">blank_coeff_var_percent</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 5 × 5</span></span>
-<span><span class="co">#&gt;   plate_id map   blank_avg blank_sdev blank_coeff_var_percent</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;     &lt;dbl&gt;      &lt;dbl&gt;                   &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1 NO3_1F3  extr     0.0846   0.00151                    1.78 </span></span>
-<span><span class="co">#&gt; 2 NO3_1F2  extr     0.0823   0.000516                   0.627</span></span>
-<span><span class="co">#&gt; 3 NO3_1F4  extr     0.0837   0.000488                   0.583</span></span>
-<span><span class="co">#&gt; 4 NO3_1F1  extr     0.0828   0.000463                   0.559</span></span>
-<span><span class="co">#&gt; 5 NO3_1F5  extr     0.0838   0.000463                   0.553</span></span></code></pre></div>
+<span><span class="co">#&gt; # A tibble: 5 × 6</span></span>
+<span><span class="co">#&gt;   dataset plate_id map   blank_avg blank_sdev blank_coeff_var_percent</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;     &lt;dbl&gt;      &lt;dbl&gt;                   &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 Nmin    NO3_1F3  extr     0.0846   0.00151                    1.78 </span></span>
+<span><span class="co">#&gt; 2 Nmin    NO3_1F2  extr     0.0823   0.000516                   0.627</span></span>
+<span><span class="co">#&gt; 3 Nmin    NO3_1F4  extr     0.0837   0.000488                   0.583</span></span>
+<span><span class="co">#&gt; 4 Nmin    NO3_1F1  extr     0.0828   0.000463                   0.559</span></span>
+<span><span class="co">#&gt; 5 Nmin    NO3_1F5  extr     0.0838   0.000463                   0.553</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h3 id="blank-correction-of-sample-absorbance">3.4 - Blank-correction of sample absorbance<a class="anchor" aria-label="anchor" href="#blank-correction-of-sample-absorbance"></a>
 </h3>
@@ -709,7 +715,7 @@
 <span>    raw_wells_data <span class="op">=</span> <span class="va">raw_meta</span>, </span>
 <span>    per_plate_avg_blank <span class="op">=</span> <span class="va">extr_avg_clean</span>,</span>
 <span>    map_to_exclude <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"empty"</span>,<span class="st">"Std"</span>,<span class="st">"extr"</span><span class="op">)</span><span class="op">)</span> </span>
-<span><span class="co">#&gt; Joining with `by = join_by(plate_id)`</span></span>
+<span><span class="co">#&gt; Joining with `by = join_by(dataset, plate_id)`</span></span>
 <span><span class="co">#&gt; Joining with `by = join_by(row, column, well_id, unique_well_id, dataset,</span></span>
 <span><span class="co">#&gt; plate_id, map, std_sp, std_unit, std_conc)`</span></span></code></pre></div>
 </div>

@@ -65,7 +65,8 @@ Defaults to NULL, where it would be computed from <code>data</code> using <code>
 
 <dt id="arg-extr-def">extr_def<a class="anchor" aria-label="anchor" href="#arg-extr-def"></a></dt>
 <dd><p>A string that characterizes wells containing the extractant
-in the mapping (<code>map</code>column) of the plate</p></dd>
+in the mapping (<code>map</code>column) of the plate. Defaults to "extr". Can be a vector
+containing several values (see examples)</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -77,15 +78,70 @@ deviation and coefficient of variation of raw absorbance of the extractant</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">data</span> <span class="op">=</span> <span class="va">tidy_plates</span></span></span>
-<span class="r-in"><span><span class="op">(</span><span class="va">blank_avg</span> <span class="op">&lt;-</span> <span class="fu">extractant_average</span><span class="op">(</span><span class="va">data</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 5 × 5</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   plate_id map   blank_avg blank_sdev blank_coeff_var_percent</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> NO3_1F1  extr     0.082<span style="text-decoration: underline;">8</span>   0.000<span style="text-decoration: underline;">463</span>                   0.559</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> NO3_1F2  extr     0.117    0.065<span style="text-decoration: underline;">7</span>                    56.3  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> NO3_1F3  extr     0.084<span style="text-decoration: underline;">6</span>   0.001<span style="text-decoration: underline;">51</span>                    1.78 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> NO3_1F4  extr     0.074<span style="text-decoration: underline;">3</span>   0.026<span style="text-decoration: underline;">8</span>                    36.1  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> NO3_1F5  extr     0.083<span style="text-decoration: underline;">8</span>   0.000<span style="text-decoration: underline;">463</span>                   0.553</span>
+<span class="r-in"><span><span class="op">(</span><span class="va">blank_avg</span> <span class="op">&lt;-</span> <span class="fu">extractant_average</span><span class="op">(</span><span class="va">data</span>, extr_def <span class="op">=</span> <span class="st">"extr"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 5 × 6</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   dataset plate_id map   blank_avg blank_sdev blank_coeff_var_percent</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> Nmin    NO3_1F1  extr     0.082<span style="text-decoration: underline;">8</span>   0.000<span style="text-decoration: underline;">463</span>                   0.559</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> Nmin    NO3_1F2  extr     0.117    0.065<span style="text-decoration: underline;">7</span>                    56.3  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> Nmin    NO3_1F3  extr     0.084<span style="text-decoration: underline;">6</span>   0.001<span style="text-decoration: underline;">51</span>                    1.78 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> Nmin    NO3_1F4  extr     0.074<span style="text-decoration: underline;">3</span>   0.026<span style="text-decoration: underline;">8</span>                    36.1  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> Nmin    NO3_1F5  extr     0.083<span style="text-decoration: underline;">8</span>   0.000<span style="text-decoration: underline;">463</span>                   0.553</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># artificially construct a tibble with 2 extractants and an additional column for extractant id</span></span></span>
+<span class="r-in"><span><span class="va">tidy_2_extr</span> <span class="op">&lt;-</span> <span class="va">tidy_plates</span> <span class="op">|&gt;</span></span></span>
+<span class="r-in"><span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    map <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/case-and-replace-when.html" class="external-link">case_when</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>      <span class="va">column</span> <span class="op">==</span> <span class="fl">8</span> <span class="op">~</span> <span class="st">"extr_1"</span>,</span></span>
+<span class="r-in"><span>      <span class="va">column</span> <span class="op">==</span> <span class="fl">4</span> <span class="op">~</span> <span class="st">"extr_2"</span>,</span></span>
+<span class="r-in"><span>      .default <span class="op">=</span> <span class="va">map</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">multiple_extractant_id</span> <span class="co"># check it out</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 78 × 4</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    dataset plate_id map      extr_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> Nmin    NO3_1F1  Std      none   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> Nmin    NO3_1F2  Std      none   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> Nmin    NO3_1F3  Std      none   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> Nmin    NO3_1F4  Std      none   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> Nmin    NO3_1F5  Std      none   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> Nmin    NO3_1F1  81_t1_z2 extr_1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> Nmin    NO3_1F2  97_t1_z1 extr_2 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> Nmin    NO3_1F3  89_t1_z3 extr_2 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> Nmin    NO3_1F4  81_t1_z1 extr_1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> Nmin    NO3_1F5  Std_3_t1 extr_2 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 68 more rows</span></span>
+<span class="r-in"><span><span class="co"># joining with multiple_extractant_id</span></span></span>
+<span class="r-in"><span><span class="op">(</span><span class="va">dbl_extr_plate</span> <span class="op">&lt;-</span> <span class="va">tidy_2_extr</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">multiple_extractant_id</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Joining with `by = join_by(dataset, plate_id, map)`</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 480 × 9</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    row   column well_id unique_well_id dataset plate_id map      abs   extr_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> A     1      A1      A1_NO3_1F1     Nmin    NO3_1F1  Std      0.092 none   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> A     1      A1      A1_NO3_1F2     Nmin    NO3_1F2  Std      0.091 none   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> A     1      A1      A1_NO3_1F3     Nmin    NO3_1F3  Std      0.110 none   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> A     1      A1      A1_NO3_1F4     Nmin    NO3_1F4  Std      0.092 none   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> A     1      A1      A1_NO3_1F5     Nmin    NO3_1F5  Std      0.113 none   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  81_t1_z2 0.114 extr_1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  97_t1_z1 0.107 extr_2 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  89_t1_z3 0.095 extr_2 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  81_t1_z1 0.118 extr_1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  Std_3_t1 0.167 extr_2 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 470 more rows</span></span>
+<span class="r-in"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="va">dbl_extr_plate</span></span></span>
+<span class="r-in"><span><span class="op">(</span><span class="va">blank_avg</span> <span class="op">&lt;-</span> <span class="fu">extractant_average</span><span class="op">(</span><span class="va">data</span>, extr_def <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"extr_1"</span>, <span class="st">"extr_2"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 10 × 6</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    dataset plate_id map    blank_avg blank_sdev blank_coeff_var_percent</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> Nmin    NO3_1F1  extr_1    0.082<span style="text-decoration: underline;">8</span>   0.000<span style="text-decoration: underline;">463</span>                   0.559</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> Nmin    NO3_1F2  extr_1    0.117    0.065<span style="text-decoration: underline;">7</span>                    56.3  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> Nmin    NO3_1F3  extr_1    0.084<span style="text-decoration: underline;">6</span>   0.001<span style="text-decoration: underline;">51</span>                    1.78 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> Nmin    NO3_1F4  extr_1    0.074<span style="text-decoration: underline;">3</span>   0.026<span style="text-decoration: underline;">8</span>                    36.1  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> Nmin    NO3_1F5  extr_1    0.083<span style="text-decoration: underline;">8</span>   0.000<span style="text-decoration: underline;">463</span>                   0.553</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> Nmin    NO3_1F1  extr_2    0.101    0.009<span style="text-decoration: underline;">10</span>                    9.01 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> Nmin    NO3_1F2  extr_2    0.097<span style="text-decoration: underline;">2</span>   0.005<span style="text-decoration: underline;">39</span>                    5.54 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> Nmin    NO3_1F3  extr_2    0.097<span style="text-decoration: underline;">4</span>   0.003<span style="text-decoration: underline;">74</span>                    3.84 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> Nmin    NO3_1F4  extr_2    0.111    0.003<span style="text-decoration: underline;">62</span>                    3.26 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> Nmin    NO3_1F5  extr_2    0.088<span style="text-decoration: underline;">2</span>   0.007<span style="text-decoration: underline;">74</span>                    8.77 </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

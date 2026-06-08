@@ -87,88 +87,111 @@ plate<a class="anchor" aria-label="anchor" href="#test-for-extractant_average-in
 </h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># TEST CHUNK</span></span>
-<span><span class="co">#tidy_plates &lt;- tidy_plates</span></span>
 <span></span>
-<span><span class="co"># replace "extr" by "extr_1", and create "extr_2"</span></span>
+<span><span class="va">multiple_extractant_id</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 78 × 4</span></span></span>
+<span><span class="co">#&gt;    dataset plate_id map      extr_id</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> Nmin    NO3_1F1  Std      none   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> Nmin    NO3_1F2  Std      none   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> Nmin    NO3_1F3  Std      none   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> Nmin    NO3_1F4  Std      none   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> Nmin    NO3_1F5  Std      none   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> Nmin    NO3_1F1  81_t1_z2 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> Nmin    NO3_1F2  97_t1_z1 extr_2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> Nmin    NO3_1F3  89_t1_z3 extr_2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> Nmin    NO3_1F4  81_t1_z1 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> Nmin    NO3_1F5  Std_3_t1 extr_2 </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 68 more rows</span></span></span>
+<span></span>
+<span><span class="co"># replace "extr" by "extr_1", and create "extr_2" to create plate that artificially has 2 extractants</span></span>
 <span><span class="va">tidy_2_extr</span> <span class="op">&lt;-</span> <span class="va">tidy_plates</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
 <span>    map <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/case-and-replace-when.html" class="external-link">case_when</a></span><span class="op">(</span></span>
 <span>      <span class="va">column</span> <span class="op">==</span> <span class="fl">8</span> <span class="op">~</span> <span class="st">"extr_1"</span>,</span>
 <span>      <span class="va">column</span> <span class="op">==</span> <span class="fl">4</span> <span class="op">~</span> <span class="st">"extr_2"</span>,</span>
-<span>      .default <span class="op">=</span> <span class="va">map</span><span class="op">)</span>,</span>
-<span>  extr_id <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/case-and-replace-when.html" class="external-link">case_when</a></span><span class="op">(</span></span>
-<span>      <span class="fu"><a href="https://rdrr.io/r/base/double.html" class="external-link">as.double</a></span><span class="op">(</span><span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_extract.html" class="external-link">str_extract</a></span><span class="op">(</span><span class="va">map</span>, <span class="st">"(\\d)_t1_"</span>, group <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">&lt;</span> <span class="fl">5</span> <span class="op">~</span> <span class="st">"extr_1"</span>,</span>
-<span>      <span class="va">map</span> <span class="op">==</span> <span class="st">"Std"</span> <span class="op">~</span> <span class="st">""</span>,</span>
-<span>      <span class="va">map</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"extr_1"</span>, <span class="st">"extr_2"</span><span class="op">)</span> <span class="op">~</span> <span class="va">map</span>,</span>
-<span>      .default <span class="op">=</span> <span class="st">"extr_2"</span></span>
-<span>    <span class="op">)</span><span class="op">)</span></span>
+<span>      .default <span class="op">=</span> <span class="va">map</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="co"># extr_id = dplyr::case_when(</span></span>
+<span>  <span class="co">#     as.double(stringr::str_extract(map, "(\\d)_t1_", group = 1)) &lt; 5 ~ "extr_1",</span></span>
+<span>  <span class="co">#     map == "Std" ~ "",</span></span>
+<span>  <span class="co">#     map %in% c("extr_1", "extr_2") ~ map,</span></span>
+<span>  <span class="co">#     .default = "extr_2"</span></span>
+<span>  </span>
+<span><span class="co"># joining both</span></span>
+<span><span class="va">dbl_extr_plate</span> <span class="op">&lt;-</span> <span class="va">tidy_2_extr</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">multiple_extractant_id</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Joining with `by = join_by(dataset, plate_id, map)`</span></span>
 <span></span>
 <span><span class="co"># check it out</span></span>
-<span><span class="va">tidy_2_extr</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span>
+<span><span class="va">dbl_extr_plate</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 480 × 9</span></span></span>
-<span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id map       abs   extr_id </span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> A     1      A1      A1_NO3_1F1     Nmin    NO3_1F1  Std       0.092 <span style="color: #949494;">""</span>      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> A     1      A1      A1_NO3_1F2     Nmin    NO3_1F2  Std       0.091 <span style="color: #949494;">""</span>      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> A     1      A1      A1_NO3_1F3     Nmin    NO3_1F3  Std       0.110 <span style="color: #949494;">""</span>      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> A     1      A1      A1_NO3_1F4     Nmin    NO3_1F4  Std       0.092 <span style="color: #949494;">""</span>      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> A     1      A1      A1_NO3_1F5     Nmin    NO3_1F5  Std       0.113 <span style="color: #949494;">""</span>      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  81_t1_z2  0.114 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  97_t1_z1  0.107 <span style="color: #949494;">"</span>extr_2<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  89_t1_z3  0.095 <span style="color: #949494;">"</span>extr_2<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  81_t1_z1  0.118 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  Std_3_t1  0.167 <span style="color: #949494;">"</span>extr_2<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> A     3      A3      A3_NO3_1F1     Nmin    NO3_1F1  82_t1_z2  0.128 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> A     3      A3      A3_NO3_1F2     Nmin    NO3_1F2  98_t1_z1  0.104 <span style="color: #949494;">"</span>extr_2<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> A     3      A3      A3_NO3_1F3     Nmin    NO3_1F3  90_t1_z3  0.097 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> A     3      A3      A3_NO3_1F4     Nmin    NO3_1F4  82_t1_z3  0.138 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> A     3      A3      A3_NO3_1F5     Nmin    NO3_1F5  98_t1_z3  0.107 <span style="color: #949494;">"</span>extr_2<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> A     4      A4      A4_NO3_1F1     Nmin    NO3_1F1  extr_2    0.110 <span style="color: #949494;">"</span>extr_2<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> A     4      A4      A4_NO3_1F2     Nmin    NO3_1F2  extr_2    0.093 <span style="color: #949494;">"</span>extr_2<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">18</span> A     4      A4      A4_NO3_1F3     Nmin    NO3_1F3  extr_2    0.102 <span style="color: #949494;">"</span>extr_2<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">19</span> A     4      A4      A4_NO3_1F4     Nmin    NO3_1F4  extr_2    0.108 <span style="color: #949494;">"</span>extr_2<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">20</span> A     4      A4      A4_NO3_1F5     Nmin    NO3_1F5  extr_2    0.101 <span style="color: #949494;">"</span>extr_2<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">21</span> A     5      A5      A5_NO3_1F1     Nmin    NO3_1F1  84_t1_z1  0.108 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">22</span> A     5      A5      A5_NO3_1F2     Nmin    NO3_1F2  100_t1_z1 0.104 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">23</span> A     5      A5      A5_NO3_1F3     Nmin    NO3_1F3  92_t1_z2  0.094 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">24</span> A     5      A5      A5_NO3_1F4     Nmin    NO3_1F4  84_t1_z2  0.098 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">25</span> A     5      A5      A5_NO3_1F5     Nmin    NO3_1F5  100_t1_z2 0.093 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">26</span> A     6      A6      A6_NO3_1F1     Nmin    NO3_1F1  85_t1_z1  0.106 <span style="color: #949494;">"</span>extr_2<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">27</span> A     6      A6      A6_NO3_1F2     Nmin    NO3_1F2  101_t1_z3 0.103 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">28</span> A     6      A6      A6_NO3_1F3     Nmin    NO3_1F3  93_t1_z2  0.093 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">29</span> A     6      A6      A6_NO3_1F4     Nmin    NO3_1F4  85_t1_z2  0.104 <span style="color: #949494;">"</span>extr_2<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">30</span> A     6      A6      A6_NO3_1F5     Nmin    NO3_1F5  101_t1_z2 0.103 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">31</span> A     7      A7      A7_NO3_1F1     Nmin    NO3_1F1  86_t1_z3  0.101 <span style="color: #949494;">"</span>extr_2<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">32</span> A     7      A7      A7_NO3_1F2     Nmin    NO3_1F2  102_t1_z3 0.101 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">33</span> A     7      A7      A7_NO3_1F3     Nmin    NO3_1F3  94_t1_z3  0.099 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">34</span> A     7      A7      A7_NO3_1F4     Nmin    NO3_1F4  86_t1_z1  0.107 <span style="color: #949494;">"</span>extr_2<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">35</span> A     7      A7      A7_NO3_1F5     Nmin    NO3_1F5  102_t1_z1 0.120 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">36</span> A     8      A8      A8_NO3_1F1     Nmin    NO3_1F1  extr_1    0.083 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">37</span> A     8      A8      A8_NO3_1F2     Nmin    NO3_1F2  extr_1    0.083 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">38</span> A     8      A8      A8_NO3_1F3     Nmin    NO3_1F3  extr_1    0.084 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">39</span> A     8      A8      A8_NO3_1F4     Nmin    NO3_1F4  extr_1    0.084 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">40</span> A     8      A8      A8_NO3_1F5     Nmin    NO3_1F5  extr_1    0.084 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">41</span> A     9      A9      A9_NO3_1F1     Nmin    NO3_1F1  87_t1_z3  0.119 <span style="color: #949494;">"</span>extr_2<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">42</span> A     9      A9      A9_NO3_1F2     Nmin    NO3_1F2  103_t1_z1 0.105 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">43</span> A     9      A9      A9_NO3_1F3     Nmin    NO3_1F3  95_t1_z2  0.098 <span style="color: #949494;">"</span>extr_2<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">44</span> A     9      A9      A9_NO3_1F4     Nmin    NO3_1F4  87_t1_z1  0.121 <span style="color: #949494;">"</span>extr_2<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">45</span> A     9      A9      A9_NO3_1F5     Nmin    NO3_1F5  103_t1_z3 0.113 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">46</span> A     10     A10     A10_NO3_1F1    Nmin    NO3_1F1  88_t1_z3  0.113 <span style="color: #949494;">"</span>extr_2<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">47</span> A     10     A10     A10_NO3_1F2    Nmin    NO3_1F2  104_t1_z1 0.091 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">48</span> A     10     A10     A10_NO3_1F3    Nmin    NO3_1F3  96_t1_z3  0.102 <span style="color: #949494;">"</span>extr_2<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">49</span> A     10     A10     A10_NO3_1F4    Nmin    NO3_1F4  88_t1_z1  0.119 <span style="color: #949494;">"</span>extr_2<span style="color: #949494;">"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">50</span> A     10     A10     A10_NO3_1F5    Nmin    NO3_1F5  104_t1_z3 0.099 <span style="color: #949494;">"</span>extr_1<span style="color: #949494;">"</span></span></span>
+<span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id map       abs   extr_id</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> A     1      A1      A1_NO3_1F1     Nmin    NO3_1F1  Std       0.092 none   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> A     1      A1      A1_NO3_1F2     Nmin    NO3_1F2  Std       0.091 none   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> A     1      A1      A1_NO3_1F3     Nmin    NO3_1F3  Std       0.110 none   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> A     1      A1      A1_NO3_1F4     Nmin    NO3_1F4  Std       0.092 none   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> A     1      A1      A1_NO3_1F5     Nmin    NO3_1F5  Std       0.113 none   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  81_t1_z2  0.114 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  97_t1_z1  0.107 extr_2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  89_t1_z3  0.095 extr_2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  81_t1_z1  0.118 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  Std_3_t1  0.167 extr_2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> A     3      A3      A3_NO3_1F1     Nmin    NO3_1F1  82_t1_z2  0.128 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> A     3      A3      A3_NO3_1F2     Nmin    NO3_1F2  98_t1_z1  0.104 extr_2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> A     3      A3      A3_NO3_1F3     Nmin    NO3_1F3  90_t1_z3  0.097 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> A     3      A3      A3_NO3_1F4     Nmin    NO3_1F4  82_t1_z3  0.138 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> A     3      A3      A3_NO3_1F5     Nmin    NO3_1F5  98_t1_z3  0.107 extr_2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> A     4      A4      A4_NO3_1F1     Nmin    NO3_1F1  extr_2    0.110 extr_2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> A     4      A4      A4_NO3_1F2     Nmin    NO3_1F2  extr_2    0.093 extr_2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">18</span> A     4      A4      A4_NO3_1F3     Nmin    NO3_1F3  extr_2    0.102 extr_2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">19</span> A     4      A4      A4_NO3_1F4     Nmin    NO3_1F4  extr_2    0.108 extr_2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">20</span> A     4      A4      A4_NO3_1F5     Nmin    NO3_1F5  extr_2    0.101 extr_2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">21</span> A     5      A5      A5_NO3_1F1     Nmin    NO3_1F1  84_t1_z1  0.108 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">22</span> A     5      A5      A5_NO3_1F2     Nmin    NO3_1F2  100_t1_z1 0.104 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">23</span> A     5      A5      A5_NO3_1F3     Nmin    NO3_1F3  92_t1_z2  0.094 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">24</span> A     5      A5      A5_NO3_1F4     Nmin    NO3_1F4  84_t1_z2  0.098 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">25</span> A     5      A5      A5_NO3_1F5     Nmin    NO3_1F5  100_t1_z2 0.093 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">26</span> A     6      A6      A6_NO3_1F1     Nmin    NO3_1F1  85_t1_z1  0.106 extr_2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">27</span> A     6      A6      A6_NO3_1F2     Nmin    NO3_1F2  101_t1_z3 0.103 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">28</span> A     6      A6      A6_NO3_1F3     Nmin    NO3_1F3  93_t1_z2  0.093 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">29</span> A     6      A6      A6_NO3_1F4     Nmin    NO3_1F4  85_t1_z2  0.104 extr_2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">30</span> A     6      A6      A6_NO3_1F5     Nmin    NO3_1F5  101_t1_z2 0.103 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">31</span> A     7      A7      A7_NO3_1F1     Nmin    NO3_1F1  86_t1_z3  0.101 extr_2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">32</span> A     7      A7      A7_NO3_1F2     Nmin    NO3_1F2  102_t1_z3 0.101 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">33</span> A     7      A7      A7_NO3_1F3     Nmin    NO3_1F3  94_t1_z3  0.099 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">34</span> A     7      A7      A7_NO3_1F4     Nmin    NO3_1F4  86_t1_z1  0.107 extr_2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">35</span> A     7      A7      A7_NO3_1F5     Nmin    NO3_1F5  102_t1_z1 0.120 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">36</span> A     8      A8      A8_NO3_1F1     Nmin    NO3_1F1  extr_1    0.083 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">37</span> A     8      A8      A8_NO3_1F2     Nmin    NO3_1F2  extr_1    0.083 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">38</span> A     8      A8      A8_NO3_1F3     Nmin    NO3_1F3  extr_1    0.084 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">39</span> A     8      A8      A8_NO3_1F4     Nmin    NO3_1F4  extr_1    0.084 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">40</span> A     8      A8      A8_NO3_1F5     Nmin    NO3_1F5  extr_1    0.084 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">41</span> A     9      A9      A9_NO3_1F1     Nmin    NO3_1F1  87_t1_z3  0.119 extr_2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">42</span> A     9      A9      A9_NO3_1F2     Nmin    NO3_1F2  103_t1_z1 0.105 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">43</span> A     9      A9      A9_NO3_1F3     Nmin    NO3_1F3  95_t1_z2  0.098 extr_2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">44</span> A     9      A9      A9_NO3_1F4     Nmin    NO3_1F4  87_t1_z1  0.121 extr_2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">45</span> A     9      A9      A9_NO3_1F5     Nmin    NO3_1F5  103_t1_z3 0.113 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">46</span> A     10     A10     A10_NO3_1F1    Nmin    NO3_1F1  88_t1_z3  0.113 extr_2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">47</span> A     10     A10     A10_NO3_1F2    Nmin    NO3_1F2  104_t1_z1 0.091 extr_1 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">48</span> A     10     A10     A10_NO3_1F3    Nmin    NO3_1F3  96_t1_z3  0.102 extr_2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">49</span> A     10     A10     A10_NO3_1F4    Nmin    NO3_1F4  88_t1_z1  0.119 extr_2 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">50</span> A     10     A10     A10_NO3_1F5    Nmin    NO3_1F5  104_t1_z3 0.099 extr_1 </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 430 more rows</span></span></span>
 <span></span>
 <span></span>
-<span><span class="va">tidy_extr_1</span> <span class="op">&lt;-</span> <span class="va">tidy_2_extr</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">extr_id</span> <span class="op">==</span> <span class="st">"extr_1"</span><span class="op">)</span>  </span>
-<span><span class="va">tidy_extr_2</span> <span class="op">&lt;-</span> <span class="va">tidy_2_extr</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">extr_id</span> <span class="op">==</span> <span class="st">"extr_2"</span><span class="op">)</span>  </span>
+<span><span class="va">tidy_extr_1</span> <span class="op">&lt;-</span> <span class="va">dbl_extr_plate</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">extr_id</span> <span class="op">==</span> <span class="st">"extr_1"</span><span class="op">)</span>  </span>
+<span><span class="va">tidy_extr_2</span> <span class="op">&lt;-</span> <span class="va">dbl_extr_plate</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">extr_id</span> <span class="op">==</span> <span class="st">"extr_2"</span><span class="op">)</span>  </span>
 <span></span>
 <span><span class="va">extr_1_data</span> <span class="op">&lt;-</span> <span class="va">tidy_extr_1</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">map</span> <span class="op">==</span> <span class="st">"extr_1"</span><span class="op">)</span></span>
 <span><span class="va">extr_2_data</span> <span class="op">&lt;-</span> <span class="va">tidy_extr_2</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">map</span> <span class="op">==</span> <span class="st">"extr_2"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">extr_1_avg</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extractant_average.html">extractant_average</a></span><span class="op">(</span>extractant_data <span class="op">=</span> <span class="va">extr_1_data</span>, extr_def <span class="op">=</span> <span class="st">"extr_1"</span><span class="op">)</span></span>
-<span><span class="va">extr_2_avg</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extractant_average.html">extractant_average</a></span><span class="op">(</span>extractant_data <span class="op">=</span> <span class="va">extr_2_data</span>, extr_def <span class="op">=</span> <span class="st">"extr_2"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co">#extr_1_avg &lt;- extractant_average(extractant_data = extr_1_data, extr_def = "extr_1")</span></span>
+<span><span class="co">#extr_2_avg &lt;- extractant_average(extractant_data = extr_2_data, extr_def = "extr_2")</span></span>
+<span></span>
+<span><span class="co">#extr_1_avg</span></span>
+<span><span class="co">#extr_2_avg</span></span>
+<span></span>
+<span><span class="co">#(extr_avg &lt;- dplyr::bind_rows(extr_1_avg, extr_2_avg))</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
