@@ -3,8 +3,10 @@ title: "translate-abs"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{translate-abs}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r, include = FALSE}
@@ -20,7 +22,39 @@ library(plate2N)
 
 # **TO DO**
 
-
 ## introduce example data (tidy_plates, tidy_table, lm_outputs, molar_masses)
 
+# TEST for extractant_average in case of several extractants per plate
 
+```{r}
+# TEST CHUNK
+#tidy_plates <- tidy_plates
+
+# replace "extr" by "extr_1", and create "extr_2"
+tidy_2_extr <- tidy_plates |> 
+  dplyr::mutate(
+    map = dplyr::case_when(
+      column == 8 ~ "extr_1",
+      column == 4 ~ "extr_2",
+      .default = map),
+  extr_id = dplyr::case_when(
+      as.double(stringr::str_extract(map, "(\\d)_t1_", group = 1)) < 5 ~ "extr_1",
+      map == "Std" ~ "",
+      map %in% c("extr_1", "extr_2") ~ map,
+      .default = "extr_2"
+    ))
+
+# check it out
+tidy_2_extr |> print(n = 50)
+
+
+tidy_extr_1 <- tidy_2_extr |> dplyr::filter(extr_id == "extr_1")  
+tidy_extr_2 <- tidy_2_extr |> dplyr::filter(extr_id == "extr_2")  
+
+extr_1_data <- tidy_extr_1 |> dplyr::filter(map == "extr_1")
+extr_2_data <- tidy_extr_2 |> dplyr::filter(map == "extr_2")
+
+extr_1_avg <- extractant_average(extractant_data = extr_1_data, extr_def = "extr_1")
+extr_2_avg <- extractant_average(extractant_data = extr_2_data, extr_def = "extr_2")
+
+```

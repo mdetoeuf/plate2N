@@ -56,8 +56,6 @@ The interest of this tibble is that it can easily
 
 - be exported as a csv, then made "pretty" for printing and usage in the lab, for example with `readr::write_csv("path/to/my/mapping_data.csv)`
 
-<!-- -->
-
 - be inputted back into the import pipeline, either with `csv_to_tibble()` or as this tibble in post-import steps.
 
 Either way, but especially if the tibble is not exported as a csv, we recommend saving this tibble on the disk, for example using `readr::wrtite_rds("path/to/my/output/data.rds)`
