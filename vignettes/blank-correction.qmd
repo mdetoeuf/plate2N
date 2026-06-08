@@ -273,6 +273,12 @@ This string "extr" is the default of the argument `extr_def` of `extractant_aver
 (extr_avg <- extractant_average(raw_meta, extr_def = "extr")) 
 ```
 
+::: callout-tip
+## More than 1 extractant per plate?
+
+`extractant_average()` should also work when there are several extractants per plate, but the argument `extr_def` must be given a vector with extractant (e.g., `extr_def = c("extr_1", "extr_2")`. See also `?extractant_average()` for examples.
+:::
+
 ## 3.3 - Quality check of extractant and outlier removal
 
 `plot_blank_var_distrib()` plots a distribution of this coefficient of variation throughout the data set (which becomes relevant in big data sets).

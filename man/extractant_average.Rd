@@ -13,7 +13,8 @@ extractant_average(data = NULL, extractant_data = NULL, extr_def = "extr")
 Defaults to NULL, where it would be computed from \code{data} using \code{extract_extractant(data)}}
 
 \item{extr_def}{A string that characterizes wells containing the extractant
-in the mapping (\code{map}column) of the plate}
+in the mapping (\code{map}column) of the plate. Defaults to "extr". Can be a vector
+containing several values (see examples)}
 }
 \value{
 A tibble with one row per plate, contianing the average, standard
@@ -24,5 +25,18 @@ Computing the per-plate average for raw absorbance of the extractant (blank for 
 }
 \examples{
 data = tidy_plates
-(blank_avg <- extractant_average(data))
+(blank_avg <- extractant_average(data, extr_def = "extr"))
+
+# artificially construct a tibble with 2 extractants and an additional column for extractant id
+tidy_2_extr <- tidy_plates |>
+  dplyr::mutate(
+    map = dplyr::case_when(
+      column == 8 ~ "extr_1",
+      column == 4 ~ "extr_2",
+      .default = map))
+multiple_extractant_id # check it out
+# joining with multiple_extractant_id
+(dbl_extr_plate <- tidy_2_extr |> dplyr::left_join(multiple_extractant_id))
+data <- dbl_extr_plate
+(blank_avg <- extractant_average(data, extr_def = c("extr_1", "extr_2")))
 }

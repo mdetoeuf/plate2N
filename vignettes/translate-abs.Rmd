@@ -28,33 +28,40 @@ library(plate2N)
 
 ```{r}
 # TEST CHUNK
-#tidy_plates <- tidy_plates
 
-# replace "extr" by "extr_1", and create "extr_2"
+multiple_extractant_id
+
+# replace "extr" by "extr_1", and create "extr_2" to create plate that artificially has 2 extractants
 tidy_2_extr <- tidy_plates |> 
   dplyr::mutate(
     map = dplyr::case_when(
       column == 8 ~ "extr_1",
       column == 4 ~ "extr_2",
-      .default = map),
-  extr_id = dplyr::case_when(
-      as.double(stringr::str_extract(map, "(\\d)_t1_", group = 1)) < 5 ~ "extr_1",
-      map == "Std" ~ "",
-      map %in% c("extr_1", "extr_2") ~ map,
-      .default = "extr_2"
-    ))
+      .default = map))
+  # extr_id = dplyr::case_when(
+  #     as.double(stringr::str_extract(map, "(\\d)_t1_", group = 1)) < 5 ~ "extr_1",
+  #     map == "Std" ~ "",
+  #     map %in% c("extr_1", "extr_2") ~ map,
+  #     .default = "extr_2"
+  
+# joining both
+dbl_extr_plate <- tidy_2_extr |> dplyr::left_join(multiple_extractant_id)
 
 # check it out
-tidy_2_extr |> print(n = 50)
+dbl_extr_plate |> print(n = 50)
 
 
-tidy_extr_1 <- tidy_2_extr |> dplyr::filter(extr_id == "extr_1")  
-tidy_extr_2 <- tidy_2_extr |> dplyr::filter(extr_id == "extr_2")  
+tidy_extr_1 <- dbl_extr_plate |> dplyr::filter(extr_id == "extr_1")  
+tidy_extr_2 <- dbl_extr_plate |> dplyr::filter(extr_id == "extr_2")  
 
 extr_1_data <- tidy_extr_1 |> dplyr::filter(map == "extr_1")
 extr_2_data <- tidy_extr_2 |> dplyr::filter(map == "extr_2")
 
-extr_1_avg <- extractant_average(extractant_data = extr_1_data, extr_def = "extr_1")
-extr_2_avg <- extractant_average(extractant_data = extr_2_data, extr_def = "extr_2")
+#extr_1_avg <- extractant_average(extractant_data = extr_1_data, extr_def = "extr_1")
+#extr_2_avg <- extractant_average(extractant_data = extr_2_data, extr_def = "extr_2")
 
+#extr_1_avg
+#extr_2_avg
+
+#(extr_avg <- dplyr::bind_rows(extr_1_avg, extr_2_avg))
 ```
