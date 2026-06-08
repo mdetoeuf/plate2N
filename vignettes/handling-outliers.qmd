@@ -31,18 +31,30 @@ This vignette is still under development, bugs are to be expected
 
 This vignette introduces the handling of several functions to help deal with outliers, at several steps of the data transformation pipeline.
 
-[**--\> Briefly introduce all functions**]{.underline}
+- `remove_wells()` allows an easy filtering out of outlier wells from a `tidy_plate`.
+
+- `failed_wells_template()` creates a template of failed wells to be manually filled, e.g., in the lab while conducting experiments
+
+- `qc_raw_abs()` helps in the identification of wells that recorded suspicious absorbance readings (outside of an expected range)
+
+- Additional functions are introduced in vignettes `blank-correction` and `abs-to-conc`
 
 # 1 - Manual removal of single wells
 
 It is not unusual to have to manually remove wells from a data set. This is often due to pipetting errors, whether we know that we failed a well in the lab, or we identify aberrant values during data processing (see also **vignette xx - upcoming** for how to identify such wells). `remove_wells()` does just that.
 
-According to the logic of this package, 3 pieces of information uniquely define a well: `dataset`, `plate_id` and `well_id`. The function `remove_wells()` allows manual removal of wells from a table formated as `tidy_table`, taking a small tibble such as `failed_wells_example` to decide which wells to remove.
+According to the logic of this package, 3 pieces of information uniquely define a well: `dataset`, `plate_id` and `well_id`. The function `remove_wells()` allows manual removal of wells from a table formatted as `tidy_table`, taking a small tibble such as `failed_wells_example` to decide which wells to remove.
+
+First, let's check out the input data: a `tidy_table` with 960 rows and a small table referring to failed wells with 2 rows.
 
 ```{r}
 # check out input
 tidy_table ; failed_wells_example
+```
 
+Here is how to use the function `remove_wells()`. Notice that `clean_table` has 958 rows, i.e., 2 rows less than the 960 of `tidy_table`.
+
+```{r}
 # remove wells
 (clean_table <- tidy_table |> remove_wells(failed_wells_example))
 
@@ -50,9 +62,11 @@ tidy_table ; failed_wells_example
 tidy_table |> nrow() ; failed_wells_example |> nrow() ; clean_table |> nrow()
 ```
 
+Note that `remove_wells()` requires the columns `dataset`, `plate_id` and `well_id` in both input tables, but they may contain other columns as well.
+
 # 2 - Defining wells to remove
 
-In **vignette xx - upcoming**, we go in detail into how to identify potential outlier wells at various stages of the analytical pipeline. `failed_wells_example` has a very simple structure that can easily be created either in R or imported from a csv file.
+In vignettes **`blank-correction`** and **`abs-to-conc`**, we go in detail into how to identify potential outliers wells at various stages of the analytic pipeline. `failed_wells_example` has a very simple structure that can easily be created either in R or imported from a csv file.
 
 ## 2.1 - From a csv
 
@@ -72,7 +86,9 @@ Importing it back can be done with
 
 ## 2.2 - Manually in R
 
-**Option 1:** use `dplyr::select()` and `dplyr::filter()` to extract `failed_wells` from an existing table
+**Option 1:** use `dplyr::filter()` to extract `failed_wells` from an existing table.
+
+The use of `dplyr::select()` is optional and only allows a cleaner table for the purpose of this vignette. `remove_wells()` works regardless.
 
 ```{r}
 failed_wells <- tidy_table |> 
@@ -82,9 +98,24 @@ failed_wells <- tidy_table |>
     ((plate_id == "M16" & well_id == "A1") |
        (plate_id == "M23" & well_id == "H12"))
   )
+# check it out
+failed_wells
 ```
 
-**Option 2:** Encode it manually from scratch, using `tibble::tibble()`.
+Notice that applying `remove_wells()` to `tidy_table` from this table of `failed_wells` results in the same as just filtering out those wells. So simply using `dplyr::filter_out()` may be more efficient in this case:
+
+```{r}
+tidy_table |> remove_wells(failed_wells)
+
+tidy_table |> dplyr::filter_out(
+    dataset == "expe1" &
+    ((plate_id == "M16" & well_id == "A1") |
+       (plate_id == "M23" & well_id == "H12"))
+  )
+  
+```
+
+**Option 2:** Encode it manually from scratch, using `tibble::tibble()`. This can be more efficient for a handful of wells to remove, but it easily becomes a source of errors with numerous outlier wells because row-correspondence between dataset, plate_id and well_id is not easily followed visually.
 
 ```{r}
 failed_wells <- tibble::tibble(
@@ -102,7 +133,7 @@ There is a range of values that are deemed acceptable for absorbance readings. W
 
 By default, `qc_raw_abs()` also draws a plot of the distribution of raw absorbance values in the data set, and sends either a message (all is well) or a warning (some wells are out of range). These outputs can be repressed. See `?qc_raw_abs()` for more details.
 
-Default range of accepted absorbance is \[0.1, 1\].
+Default range of accepted absorbance is \[0.1, 1\], but it can be modulated with the arguments `min_abs` and `max_abs`.
 
 ```{r}
 # check out the raw table
@@ -117,3 +148,29 @@ It can happen that some wells are very striking, e.g., a single well with an abs
 ```{r}
 tidy_plates |> remove_wells(suspicious_wells)
 ```
+
+# 4 - When to remove outliers?
+
+From the end of the `import-tidy` vignette until linear model application, tables are in the same "tidy" format, with one row per well and one column for absorbance (blank-corrected or raw), like this:
+
+```{r}
+tidy_table
+```
+
+Main steps of the pipeline are: blank-correction of standard curves, blank-correction of sample data, computation of the linear or polynomial model, and inference of sample concentration. `remove_wells()` can be applied at any of those steps. So when is it important to perform outlier removal?
+
+We find it a good practice to check for outliers directly before any aggregation of data, which needs to be computed on wells that we trust, so that we can also trust the aggregated value that is computed. Key moments that should be preceded by an outlier removal step are thus
+
+- any average of several wells:
+
+  - [standard blank](https://mdetoeuf.github.io/plate2N/articles/blank-correction.html#blank-correction-of-standard-curves) (when there are several standard curves per plate)
+
+  - [sample blank](https://mdetoeuf.github.io/plate2N/articles/blank-correction.html#blank-correction-of-samples) (extractant)
+
+  - triplicate or n-replicates of sample wells (**under development**)
+
+- [computation of the model parameters](https://mdetoeuf.github.io/plate2N/articles/abs-to-conc.html#compute-linear-model-on-standard-curves) (e.g., slope and intercept for the linear model)
+
+# 5 - Next steps
+
+if you already have tidy imported data as produced by `import-tidy`, move on to `blank-correction`.

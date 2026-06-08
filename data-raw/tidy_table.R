@@ -1,6 +1,5 @@
 ## code to prepare `tidy_table` dataset goes here
 
-usethis::use_data(tidy_table, overwrite = TRUE)
 
 skanit_csv <- system.file("extdata", "skanit.csv", package = "plate2N")
 
@@ -32,4 +31,4 @@ tidy_table <- too_long |>
     ) |>
     dplyr::relocate(plate_id, .before = "unique_well_id")
 
-#usethis::use_data(tidy_table, overwrite = TRUE)
+usethis::use_data(tidy_table, overwrite = TRUE)
