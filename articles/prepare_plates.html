@@ -91,20 +91,20 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">LETTERS</span>, size <span class="op">=</span> <span class="fl">15</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;  [1] "Q" "I" "L" "M" "K" "O" "Y" "X" "F" "A" "T" "B" "W" "J" "S"</span></span>
+<span><span class="co">#&gt;  [1] "B" "K" "L" "R" "D" "I" "E" "V" "H" "J" "N" "G" "S" "Y" "M"</span></span>
 <span><span class="fu"><a href="../reference/map_1_plate.html">map_1_plate</a></span><span class="op">(</span>plate_id <span class="op">=</span> <span class="st">"test_plate"</span>, samples <span class="op">=</span> <span class="va">samples</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 9 × 13</span></span>
 <span><span class="co">#&gt;   row    X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12  </span></span>
 <span><span class="co">#&gt;   &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;</span></span>
 <span><span class="co">#&gt; 1 test_… 1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
-<span><span class="co">#&gt; 2 A      Std   Q     L     K     Y     F     T     extr  W     S     empty Std  </span></span>
-<span><span class="co">#&gt; 3 B      Std   Q     L     K     Y     F     T     extr  W     S     empty Std  </span></span>
-<span><span class="co">#&gt; 4 C      Std   Q     L     K     Y     F     T     extr  W     S     empty Std  </span></span>
-<span><span class="co">#&gt; 5 D      Std   Q     L     K     Y     F     T     extr  W     S     empty Std  </span></span>
-<span><span class="co">#&gt; 6 E      Std   I     M     O     X     A     B     extr  J     empty empty Std  </span></span>
-<span><span class="co">#&gt; 7 F      Std   I     M     O     X     A     B     extr  J     empty empty Std  </span></span>
-<span><span class="co">#&gt; 8 G      Std   I     M     O     X     A     B     extr  J     empty empty Std  </span></span>
-<span><span class="co">#&gt; 9 H      Std   I     M     O     X     A     B     extr  J     empty empty Std</span></span></code></pre></div>
+<span><span class="co">#&gt; 2 A      Std   B     L     D     E     H     N     extr  S     M     empty Std  </span></span>
+<span><span class="co">#&gt; 3 B      Std   B     L     D     E     H     N     extr  S     M     empty Std  </span></span>
+<span><span class="co">#&gt; 4 C      Std   B     L     D     E     H     N     extr  S     M     empty Std  </span></span>
+<span><span class="co">#&gt; 5 D      Std   B     L     D     E     H     N     extr  S     M     empty Std  </span></span>
+<span><span class="co">#&gt; 6 E      Std   K     R     I     V     J     G     extr  Y     empty empty Std  </span></span>
+<span><span class="co">#&gt; 7 F      Std   K     R     I     V     J     G     extr  Y     empty empty Std  </span></span>
+<span><span class="co">#&gt; 8 G      Std   K     R     I     V     J     G     extr  Y     empty empty Std  </span></span>
+<span><span class="co">#&gt; 9 H      Std   K     R     I     V     J     G     extr  Y     empty empty Std</span></span></code></pre></div>
 </div>
 <p>Usually, more than one plate needs to be prepared. Let’s say we need to prepare 5 plates, and we have a list of 5 x 14 samples (we want exactly 14 samples in each plate). <code><a href="../reference/map_plates.html">map_plates()</a></code> builds on <code><a href="../reference/map_1_plate.html">map_1_plate()</a></code> to map several plates.</p>
 <div class="cell">
@@ -143,11 +143,8 @@
 </div>
 <p>The interest of this tibble is that it can easily</p>
 <ul>
-<li>be exported as a csv, then made “pretty” for printing and usage in the lab, for example with <code>readr::write_csv("path/to/my/mapping_data.csv)</code>
-</li>
-</ul>
-<!-- --><ul>
-<li>be inputted back into the import pipeline, either with <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code> or as this tibble in post-import steps.</li>
+<li><p>be exported as a csv, then made “pretty” for printing and usage in the lab, for example with <code>readr::write_csv("path/to/my/mapping_data.csv)</code></p></li>
+<li><p>be inputted back into the import pipeline, either with <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code> or as this tibble in post-import steps.</p></li>
 </ul>
 <p>Either way, but especially if the tibble is not exported as a csv, we recommend saving this tibble on the disk, for example using <code>readr::wrtite_rds("path/to/my/output/data.rds)</code></p>
 </section><script id="quarto-html-after-body" type="application/javascript">

@@ -24,20 +24,20 @@ a mapped plate format where the plate id is in the upper left corner.
 ``` r
 
 (samples <- sample(LETTERS, size = 15))
-#>  [1] "Q" "I" "L" "M" "K" "O" "Y" "X" "F" "A" "T" "B" "W" "J" "S"
+#>  [1] "B" "K" "L" "R" "D" "I" "E" "V" "H" "J" "N" "G" "S" "Y" "M"
 map_1_plate(plate_id = "test_plate", samples = samples)
 #> # A tibble: 9 × 13
 #>   row    X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12  
 #>   <chr>  <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr>
 #> 1 test_… 1     2     3     4     5     6     7     8     9     10    11    12   
-#> 2 A      Std   Q     L     K     Y     F     T     extr  W     S     empty Std  
-#> 3 B      Std   Q     L     K     Y     F     T     extr  W     S     empty Std  
-#> 4 C      Std   Q     L     K     Y     F     T     extr  W     S     empty Std  
-#> 5 D      Std   Q     L     K     Y     F     T     extr  W     S     empty Std  
-#> 6 E      Std   I     M     O     X     A     B     extr  J     empty empty Std  
-#> 7 F      Std   I     M     O     X     A     B     extr  J     empty empty Std  
-#> 8 G      Std   I     M     O     X     A     B     extr  J     empty empty Std  
-#> 9 H      Std   I     M     O     X     A     B     extr  J     empty empty Std
+#> 2 A      Std   B     L     D     E     H     N     extr  S     M     empty Std  
+#> 3 B      Std   B     L     D     E     H     N     extr  S     M     empty Std  
+#> 4 C      Std   B     L     D     E     H     N     extr  S     M     empty Std  
+#> 5 D      Std   B     L     D     E     H     N     extr  S     M     empty Std  
+#> 6 E      Std   K     R     I     V     J     G     extr  Y     empty empty Std  
+#> 7 F      Std   K     R     I     V     J     G     extr  Y     empty empty Std  
+#> 8 G      Std   K     R     I     V     J     G     extr  Y     empty empty Std  
+#> 9 H      Std   K     R     I     V     J     G     extr  Y     empty empty Std
 ```
 
 Usually, more than one plate needs to be prepared. Let’s say we need to
@@ -87,8 +87,6 @@ The interest of this tibble is that it can easily
 
 - be exported as a csv, then made “pretty” for printing and usage in the
   lab, for example with `readr::write_csv("path/to/my/mapping_data.csv)`
-
-&nbsp;
 
 - be inputted back into the import pipeline, either with
   [`csv_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/csv_to_tibble.md)
