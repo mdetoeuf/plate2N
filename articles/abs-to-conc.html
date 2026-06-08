@@ -111,16 +111,16 @@
 <span><span class="co">#&gt; # A tibble: 264 × 25</span></span>
 <span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id map      abs_corrected</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;            &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt;  1 A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  81_t1_z2        0.0312</span></span>
-<span><span class="co">#&gt;  2 A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  97_t1_z1        0.0249</span></span>
-<span><span class="co">#&gt;  3 A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  89_t1_z3        0.0104</span></span>
-<span><span class="co">#&gt;  4 A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  81_t1_z1        0.0342</span></span>
-<span><span class="co">#&gt;  5 A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  Std_3_t1        0.0832</span></span>
-<span><span class="co">#&gt;  6 A     3      A3      A3_NO3_1F1     Nmin    NO3_1F1  82_t1_z2        0.0452</span></span>
-<span><span class="co">#&gt;  7 A     3      A3      A3_NO3_1F2     Nmin    NO3_1F2  98_t1_z1        0.0219</span></span>
-<span><span class="co">#&gt;  8 A     3      A3      A3_NO3_1F3     Nmin    NO3_1F3  90_t1_z3        0.0124</span></span>
-<span><span class="co">#&gt;  9 A     3      A3      A3_NO3_1F4     Nmin    NO3_1F4  82_t1_z3        0.0543</span></span>
-<span><span class="co">#&gt; 10 A     3      A3      A3_NO3_1F5     Nmin    NO3_1F5  98_t1_z3        0.0232</span></span>
+<span><span class="co">#&gt;  1 A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  81_t1_z2       0.0312 </span></span>
+<span><span class="co">#&gt;  2 A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  97_t1_z1      -0.00975</span></span>
+<span><span class="co">#&gt;  3 A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  89_t1_z3       0.0104 </span></span>
+<span><span class="co">#&gt;  4 A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  81_t1_z1       0.0437 </span></span>
+<span><span class="co">#&gt;  5 A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  Std_3_t1       0.0832 </span></span>
+<span><span class="co">#&gt;  6 A     3      A3      A3_NO3_1F1     Nmin    NO3_1F1  82_t1_z2       0.0452 </span></span>
+<span><span class="co">#&gt;  7 A     3      A3      A3_NO3_1F2     Nmin    NO3_1F2  98_t1_z1      -0.0128 </span></span>
+<span><span class="co">#&gt;  8 A     3      A3      A3_NO3_1F3     Nmin    NO3_1F3  90_t1_z3       0.0124 </span></span>
+<span><span class="co">#&gt;  9 A     3      A3      A3_NO3_1F4     Nmin    NO3_1F4  82_t1_z3       0.0638 </span></span>
+<span><span class="co">#&gt; 10 A     3      A3      A3_NO3_1F5     Nmin    NO3_1F5  98_t1_z3       0.0232 </span></span>
 <span><span class="co">#&gt; # ℹ 254 more rows</span></span>
 <span><span class="co">#&gt; # ℹ 17 more variables: blank_sdev &lt;dbl&gt;, blank_coeff_var_percent &lt;dbl&gt;,</span></span>
 <span><span class="co">#&gt; #   date &lt;lgl&gt;, time &lt;lgl&gt;, sampling_time &lt;chr&gt;, std_column &lt;chr&gt;,</span></span>
@@ -148,7 +148,7 @@
 <span><span class="co">#&gt; #   sampling_time &lt;chr&gt;, std_column &lt;chr&gt;, std_sp &lt;chr&gt;, std_unit &lt;chr&gt;,</span></span>
 <span><span class="co">#&gt; #   std_prep &lt;chr&gt;, sample_dilution &lt;chr&gt;, extractant_column &lt;lgl&gt;,</span></span>
 <span><span class="co">#&gt; #   extractant_sp &lt;chr&gt;, extractant_unit &lt;chr&gt;, extractant_conc &lt;dbl&gt;,</span></span>
-<span><span class="co">#&gt; #   empty_column &lt;lgl&gt;, wait_min &lt;chr&gt;, std_conc &lt;chr&gt;, blank_sdev &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   empty_column &lt;lgl&gt;, wait_min &lt;chr&gt;, std_conc &lt;dbl&gt;, blank_sdev &lt;dbl&gt;,</span></span>
 <span><span class="co">#&gt; #   blank_coeff_var_percent &lt;dbl&gt;</span></span></code></pre></div>
 </div>
 </section><section class="section level2"><h2 id="compute-linear-model-on-standard-curves">2 - Compute linear model on Standard Curves<a class="anchor" aria-label="anchor" href="#compute-linear-model-on-standard-curves"></a>
@@ -167,12 +167,12 @@
 <span><span class="co">#&gt;  2 NO3_1F1  NO3_1F1_col12   NO3    0.0179     0.999         0.999 2.79e-10</span></span>
 <span><span class="co">#&gt;  3 NO3_1F2  NO3_1F2_col1    NO3    0.0178     0.999         0.999 6.03e-11</span></span>
 <span><span class="co">#&gt;  4 NO3_1F2  NO3_1F2_col12   NO3    0.0190     0.999         0.999 1.64e-10</span></span>
-<span><span class="co">#&gt;  5 NO3_1F3  NO3_1F3_col1    NO3    0.0186     0.999         0.999 2.07e-10</span></span>
-<span><span class="co">#&gt;  6 NO3_1F3  NO3_1F3_col12   NO3    0.0184     0.999         0.999 4.07e-10</span></span>
+<span><span class="co">#&gt;  5 NO3_1F3  NO3_1F3_col1    NO3    0.0187     0.999         0.999 9.25e-11</span></span>
+<span><span class="co">#&gt;  6 NO3_1F3  NO3_1F3_col12   NO3    0.0185     0.999         0.999 1.69e-10</span></span>
 <span><span class="co">#&gt;  7 NO3_1F4  NO3_1F4_col1    NO3    0.0178     0.999         0.999 2.16e-10</span></span>
 <span><span class="co">#&gt;  8 NO3_1F4  NO3_1F4_col12   NO3    0.0188     0.999         0.999 2.43e-10</span></span>
-<span><span class="co">#&gt;  9 NO3_1F5  NO3_1F5_col1    NO3    0.0194     0.999         0.999 1.31e-10</span></span>
-<span><span class="co">#&gt; 10 NO3_1F5  NO3_1F5_col12   NO3    0.0185     0.999         0.999 3.49e-10</span></span>
+<span><span class="co">#&gt;  9 NO3_1F5  NO3_1F5_col1    NO3    0.0193     0.999         0.999 2.45e-10</span></span>
+<span><span class="co">#&gt; 10 NO3_1F5  NO3_1F5_col12   NO3    0.0185     0.999         0.998 6.15e-10</span></span>
 <span><span class="co">#&gt; # ℹ 4 more variables: normality_lm_residuals &lt;chr&gt;, shapiro_p &lt;dbl&gt;,</span></span>
 <span><span class="co">#&gt; #   homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;</span></span></code></pre></div>
 </div>
@@ -264,9 +264,9 @@
 <span><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;           &lt;chr&gt;   &lt;dbl&gt;     &lt;dbl&gt;         &lt;dbl&gt;    &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt; 1 NO3_1F1  NO3_1F1_col13   NO3    0.0184     0.999         0.999 7.36e-11</span></span>
 <span><span class="co">#&gt; 2 NO3_1F2  NO3_1F2_col13   NO3    0.0184     0.999         0.999 6.32e-11</span></span>
-<span><span class="co">#&gt; 3 NO3_1F3  NO3_1F3_col13   NO3    0.0185     0.999         0.999 2.47e-10</span></span>
+<span><span class="co">#&gt; 3 NO3_1F3  NO3_1F3_col13   NO3    0.0186     0.999         0.999 9.98e-11</span></span>
 <span><span class="co">#&gt; 4 NO3_1F4  NO3_1F4_col13   NO3    0.0183     0.999         0.999 2.23e-10</span></span>
-<span><span class="co">#&gt; 5 NO3_1F5  NO3_1F5_col13   NO3    0.0190     0.999         0.999 2.09e-10</span></span>
+<span><span class="co">#&gt; 5 NO3_1F5  NO3_1F5_col13   NO3    0.0189     0.999         0.999 3.80e-10</span></span>
 <span><span class="co">#&gt; # ℹ 4 more variables: normality_lm_residuals &lt;chr&gt;, shapiro_p &lt;dbl&gt;,</span></span>
 <span><span class="co">#&gt; #   homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;</span></span>
 <span><span class="op">(</span><span class="va">lm_suspicious_mean</span> <span class="op">&lt;-</span> <span class="va">lm_std_mean</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/suspicious_lm.html">suspicious_lm</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
@@ -425,16 +425,16 @@
 <span><span class="co">#&gt; # A tibble: 264 × 13</span></span>
 <span><span class="co">#&gt;    dataset plate_id map   well_id abs_corrected std_sp target_sp std_unit  slope</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt; &lt;chr&gt;           &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;     &lt;chr&gt;     &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt;  1 Nmin    NO3_1F1  81_t… A2             0.0312 NO3    N         mg NO3-… 0.0184</span></span>
-<span><span class="co">#&gt;  2 Nmin    NO3_1F2  97_t… A2             0.0249 NO3    N         mg NO3-… 0.0184</span></span>
-<span><span class="co">#&gt;  3 Nmin    NO3_1F3  89_t… A2             0.0104 NO3    N         mg NO3-… 0.0185</span></span>
-<span><span class="co">#&gt;  4 Nmin    NO3_1F4  81_t… A2             0.0342 NO3    N         mg NO3-… 0.0183</span></span>
-<span><span class="co">#&gt;  5 Nmin    NO3_1F5  Std_… A2             0.0832 NO3    N         mg NO3-… 0.0190</span></span>
-<span><span class="co">#&gt;  6 Nmin    NO3_1F1  82_t… A3             0.0452 NO3    N         mg NO3-… 0.0184</span></span>
-<span><span class="co">#&gt;  7 Nmin    NO3_1F2  98_t… A3             0.0219 NO3    N         mg NO3-… 0.0184</span></span>
-<span><span class="co">#&gt;  8 Nmin    NO3_1F3  90_t… A3             0.0124 NO3    N         mg NO3-… 0.0185</span></span>
-<span><span class="co">#&gt;  9 Nmin    NO3_1F4  82_t… A3             0.0543 NO3    N         mg NO3-… 0.0183</span></span>
-<span><span class="co">#&gt; 10 Nmin    NO3_1F5  98_t… A3             0.0232 NO3    N         mg NO3-… 0.0190</span></span>
+<span><span class="co">#&gt;  1 Nmin    NO3_1F1  81_t… A2            0.0312  NO3    N         mg NO3-… 0.0184</span></span>
+<span><span class="co">#&gt;  2 Nmin    NO3_1F2  97_t… A2           -0.00975 NO3    N         mg NO3-… 0.0184</span></span>
+<span><span class="co">#&gt;  3 Nmin    NO3_1F3  89_t… A2            0.0104  NO3    N         mg NO3-… 0.0186</span></span>
+<span><span class="co">#&gt;  4 Nmin    NO3_1F4  81_t… A2            0.0437  NO3    N         mg NO3-… 0.0183</span></span>
+<span><span class="co">#&gt;  5 Nmin    NO3_1F5  Std_… A2            0.0832  NO3    N         mg NO3-… 0.0189</span></span>
+<span><span class="co">#&gt;  6 Nmin    NO3_1F1  82_t… A3            0.0452  NO3    N         mg NO3-… 0.0184</span></span>
+<span><span class="co">#&gt;  7 Nmin    NO3_1F2  98_t… A3           -0.0128  NO3    N         mg NO3-… 0.0184</span></span>
+<span><span class="co">#&gt;  8 Nmin    NO3_1F3  90_t… A3            0.0124  NO3    N         mg NO3-… 0.0186</span></span>
+<span><span class="co">#&gt;  9 Nmin    NO3_1F4  82_t… A3            0.0638  NO3    N         mg NO3-… 0.0183</span></span>
+<span><span class="co">#&gt; 10 Nmin    NO3_1F5  98_t… A3            0.0232  NO3    N         mg NO3-… 0.0189</span></span>
 <span><span class="co">#&gt; # ℹ 254 more rows</span></span>
 <span><span class="co">#&gt; # ℹ 4 more variables: adj_r_squared &lt;dbl&gt;, lm_p &lt;dbl&gt;, conc_mgNsp_L &lt;dbl&gt;,</span></span>
 <span><span class="co">#&gt; #   conc_mgN_L &lt;dbl&gt;</span></span></code></pre></div>

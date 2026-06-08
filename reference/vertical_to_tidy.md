@@ -49,9 +49,9 @@ joined_vertical <- join_abs_map(
 #>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr>    <chr>
 #>  1 A     1      A1      A1_NO3_1F1     Nmin    NO3_1F1  Std      0.092
 #>  2 A     1      A1      A1_NO3_1F2     Nmin    NO3_1F2  Std      0.091
-#>  3 A     1      A1      A1_NO3_1F3     Nmin    NO3_1F3  Std      0.093
+#>  3 A     1      A1      A1_NO3_1F3     Nmin    NO3_1F3  Std      0.110
 #>  4 A     1      A1      A1_NO3_1F4     Nmin    NO3_1F4  Std      0.092
-#>  5 A     1      A1      A1_NO3_1F5     Nmin    NO3_1F5  Std      0.092
+#>  5 A     1      A1      A1_NO3_1F5     Nmin    NO3_1F5  Std      0.113
 #>  6 A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  81_t1_z2 0.114
 #>  7 A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  97_t1_z1 0.107
 #>  8 A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  89_t1_z3 0.095

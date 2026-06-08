@@ -40,16 +40,16 @@ reg_join_abs(lm_table, sample_data, target_sp = "N")
 #> # A tibble: 528 × 11
 #>    dataset plate_id map   well_id abs_corrected std_sp target_sp std_unit  slope
 #>    <chr>   <chr>    <chr> <chr>           <dbl> <chr>  <chr>     <chr>     <dbl>
-#>  1 Nmin    NO3_1F1  81_t… A2             0.0312 NO3    N         mg NO3-… 0.0189
-#>  2 Nmin    NO3_1F1  81_t… A2             0.0312 NO3    N         mg NO3-… 0.0179
-#>  3 Nmin    NO3_1F2  97_t… A2             0.0249 NO3    N         mg NO3-… 0.0178
-#>  4 Nmin    NO3_1F2  97_t… A2             0.0249 NO3    N         mg NO3-… 0.0190
-#>  5 Nmin    NO3_1F3  89_t… A2             0.0104 NO3    N         mg NO3-… 0.0186
-#>  6 Nmin    NO3_1F3  89_t… A2             0.0104 NO3    N         mg NO3-… 0.0184
-#>  7 Nmin    NO3_1F4  81_t… A2             0.0342 NO3    N         mg NO3-… 0.0178
-#>  8 Nmin    NO3_1F4  81_t… A2             0.0342 NO3    N         mg NO3-… 0.0188
-#>  9 Nmin    NO3_1F5  Std_… A2             0.0832 NO3    N         mg NO3-… 0.0194
-#> 10 Nmin    NO3_1F5  Std_… A2             0.0832 NO3    N         mg NO3-… 0.0185
+#>  1 Nmin    NO3_1F1  81_t… A2            0.0312  NO3    N         mg NO3-… 0.0189
+#>  2 Nmin    NO3_1F1  81_t… A2            0.0312  NO3    N         mg NO3-… 0.0179
+#>  3 Nmin    NO3_1F2  97_t… A2           -0.00975 NO3    N         mg NO3-… 0.0178
+#>  4 Nmin    NO3_1F2  97_t… A2           -0.00975 NO3    N         mg NO3-… 0.0190
+#>  5 Nmin    NO3_1F3  89_t… A2            0.0104  NO3    N         mg NO3-… 0.0186
+#>  6 Nmin    NO3_1F3  89_t… A2            0.0104  NO3    N         mg NO3-… 0.0184
+#>  7 Nmin    NO3_1F4  81_t… A2            0.0437  NO3    N         mg NO3-… 0.0178
+#>  8 Nmin    NO3_1F4  81_t… A2            0.0437  NO3    N         mg NO3-… 0.0188
+#>  9 Nmin    NO3_1F5  Std_… A2            0.0832  NO3    N         mg NO3-… 0.0194
+#> 10 Nmin    NO3_1F5  Std_… A2            0.0832  NO3    N         mg NO3-… 0.0185
 #> # ℹ 518 more rows
 #> # ℹ 2 more variables: adj_r_squared <dbl>, lm_p <dbl>
 ```

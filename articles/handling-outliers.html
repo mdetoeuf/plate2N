@@ -89,11 +89,16 @@
 </ul></section><section class="section level2"><h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
 <p>This vignette introduces the handling of several functions to help deal with outliers, at several steps of the data transformation pipeline.</p>
-<p><u><strong>–&gt; Briefly introduce all functions</strong></u></p>
-</section><section class="section level2"><h2 id="manual-removal-of-single-wells">1 - Manual removal of single wells<a class="anchor" aria-label="anchor" href="#manual-removal-of-single-wells"></a>
+<ul>
+<li><p><code><a href="../reference/remove_wells.html">remove_wells()</a></code> allows an easy filtering out of outlier wells from a <code>tidy_plate</code>.</p></li>
+<li><p><code><a href="../reference/failed_wells_template.html">failed_wells_template()</a></code> creates a template of failed wells to be manually filled, e.g., in the lab while conducting experiments</p></li>
+<li><p><code><a href="../reference/qc_raw_abs.html">qc_raw_abs()</a></code> helps in the identification of wells that recorded suspicious absorbance readings (outside of an expected range)</p></li>
+<li><p>Additional functions are introduced in vignettes <code>blank-correction</code> and <code>abs-to-conc</code></p></li>
+</ul></section><section class="section level2"><h2 id="manual-removal-of-single-wells">1 - Manual removal of single wells<a class="anchor" aria-label="anchor" href="#manual-removal-of-single-wells"></a>
 </h2>
 <p>It is not unusual to have to manually remove wells from a data set. This is often due to pipetting errors, whether we know that we failed a well in the lab, or we identify aberrant values during data processing (see also <strong>vignette xx - upcoming</strong> for how to identify such wells). <code><a href="../reference/remove_wells.html">remove_wells()</a></code> does just that.</p>
-<p>According to the logic of this package, 3 pieces of information uniquely define a well: <code>dataset</code>, <code>plate_id</code> and <code>well_id</code>. The function <code><a href="../reference/remove_wells.html">remove_wells()</a></code> allows manual removal of wells from a table formated as <code>tidy_table</code>, taking a small tibble such as <code>failed_wells_example</code> to decide which wells to remove.</p>
+<p>According to the logic of this package, 3 pieces of information uniquely define a well: <code>dataset</code>, <code>plate_id</code> and <code>well_id</code>. The function <code><a href="../reference/remove_wells.html">remove_wells()</a></code> allows manual removal of wells from a table formatted as <code>tidy_table</code>, taking a small tibble such as <code>failed_wells_example</code> to decide which wells to remove.</p>
+<p>First, let’s check out the input data: a <code>tidy_table</code> with 960 rows and a small table referring to failed wells with 2 rows.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># check out input</span></span>
@@ -116,9 +121,12 @@
 <span><span class="co">#&gt;   dataset plate_id well_id</span></span>
 <span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;  </span></span>
 <span><span class="co">#&gt; 1 expe1   M16      A1     </span></span>
-<span><span class="co">#&gt; 2 expe1   M23      H12</span></span>
-<span></span>
-<span><span class="co"># remove wells</span></span>
+<span><span class="co">#&gt; 2 expe1   M23      H12</span></span></code></pre></div>
+</div>
+<p>Here is how to use the function <code><a href="../reference/remove_wells.html">remove_wells()</a></code>. Notice that <code>clean_table</code> has 958 rows, i.e., 2 rows less than the 960 of <code>tidy_table</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># remove wells</span></span>
 <span><span class="op">(</span><span class="va">clean_table</span> <span class="op">&lt;-</span> <span class="va">tidy_table</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/remove_wells.html">remove_wells</a></span><span class="op">(</span><span class="va">failed_wells_example</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 958 × 8</span></span>
 <span><span class="co">#&gt;    row   column well_id plate_id unique_well_id dataset map     abs   </span></span>
@@ -141,14 +149,15 @@
 <span><span class="co">#&gt; [1] 2</span></span>
 <span><span class="co">#&gt; [1] 958</span></span></code></pre></div>
 </div>
+<p>Note that <code><a href="../reference/remove_wells.html">remove_wells()</a></code> requires the columns <code>dataset</code>, <code>plate_id</code> and <code>well_id</code> in both input tables, but they may contain other columns as well.</p>
 </section><section class="section level2"><h2 id="defining-wells-to-remove">2 - Defining wells to remove<a class="anchor" aria-label="anchor" href="#defining-wells-to-remove"></a>
 </h2>
-<p>In <strong>vignette xx - upcoming</strong>, we go in detail into how to identify potential outlier wells at various stages of the analytical pipeline. <code>failed_wells_example</code> has a very simple structure that can easily be created either in R or imported from a csv file.</p>
+<p>In vignettes <strong><code>blank-correction</code></strong> and <strong><code>abs-to-conc</code></strong>, we go in detail into how to identify potential outliers wells at various stages of the analytic pipeline. <code>failed_wells_example</code> has a very simple structure that can easily be created either in R or imported from a csv file.</p>
 <section class="level2"><h3 id="from-a-csv">2.1 - From a csv<a class="anchor" aria-label="anchor" href="#from-a-csv"></a>
 </h3>
 <p>It can he handy to have a printed table in the lab, to quickly fill in by hand the information on wells where we know that something went wrong. For this, the function <code><a href="../reference/failed_wells_template.html">failed_wells_template()</a></code> quickly generates a table that can be exported as a csv, printed, then manually encoded and imported back into R. By default, it will generate a csv with 30 rows.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">failed_wells_template</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/failed_wells_template.html">failed_wells_template</a></span><span class="op">(</span>nrow <span class="op">=</span> <span class="fl">30</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 30 × 3</span></span>
 <span><span class="co">#&gt;    dataset plate_id well_id</span></span>
@@ -171,20 +180,67 @@
 <p><code>readr::read_csv("path/to/folder/failed_wells_lab.csv")</code></p>
 </section><section class="level2"><h3 id="manually-in-r">2.2 - Manually in R<a class="anchor" aria-label="anchor" href="#manually-in-r"></a>
 </h3>
-<p><strong>Option 1:</strong> use <code><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">dplyr::select()</a></code> and <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">dplyr::filter()</a></code> to extract <code>failed_wells</code> from an existing table</p>
+<p><strong>Option 1:</strong> use <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">dplyr::filter()</a></code> to extract <code>failed_wells</code> from an existing table.</p>
+<p>The use of <code><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">dplyr::select()</a></code> is optional and only allows a cleaner table for the purpose of this vignette. <code><a href="../reference/remove_wells.html">remove_wells()</a></code> works regardless.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">failed_wells</span> <span class="op">&lt;-</span> <span class="va">tidy_table</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span>, <span class="va">well_id</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span></span>
 <span>    <span class="va">dataset</span> <span class="op">==</span> <span class="st">"expe1"</span> <span class="op">&amp;</span></span>
 <span>    <span class="op">(</span><span class="op">(</span><span class="va">plate_id</span> <span class="op">==</span> <span class="st">"M16"</span> <span class="op">&amp;</span> <span class="va">well_id</span> <span class="op">==</span> <span class="st">"A1"</span><span class="op">)</span> <span class="op">|</span></span>
 <span>       <span class="op">(</span><span class="va">plate_id</span> <span class="op">==</span> <span class="st">"M23"</span> <span class="op">&amp;</span> <span class="va">well_id</span> <span class="op">==</span> <span class="st">"H12"</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="op">)</span></span></code></pre></div>
+<span>  <span class="op">)</span></span>
+<span><span class="co"># check it out</span></span>
+<span><span class="va">failed_wells</span></span>
+<span><span class="co">#&gt; # A tibble: 2 × 3</span></span>
+<span><span class="co">#&gt;   dataset plate_id well_id</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;  </span></span>
+<span><span class="co">#&gt; 1 expe1   M16      A1     </span></span>
+<span><span class="co">#&gt; 2 expe1   M23      H12</span></span></code></pre></div>
 </div>
-<p><strong>Option 2:</strong> Encode it manually from scratch, using <code><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble::tibble()</a></code>.</p>
+<p>Notice that applying <code><a href="../reference/remove_wells.html">remove_wells()</a></code> to <code>tidy_table</code> from this table of <code>failed_wells</code> results in the same as just filtering out those wells. So simply using <code><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">dplyr::filter_out()</a></code> may be more efficient in this case:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">tidy_table</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/remove_wells.html">remove_wells</a></span><span class="op">(</span><span class="va">failed_wells</span><span class="op">)</span></span>
+<span><span class="co">#&gt; # A tibble: 958 × 8</span></span>
+<span><span class="co">#&gt;    row   column well_id plate_id unique_well_id dataset map     abs   </span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt; </span></span>
+<span><span class="co">#&gt;  1 A     1      A1      M12      A1_M12         expe1   Std0001 1.4402</span></span>
+<span><span class="co">#&gt;  2 A     1      A1      M17      A1_M17         expe1   Std0193 1.5611</span></span>
+<span><span class="co">#&gt;  3 A     1      A1      M18      A1_M18         expe1   Std0289 1.7013</span></span>
+<span><span class="co">#&gt;  4 A     1      A1      M19      A1_M19         expe1   Std0385 1.6865</span></span>
+<span><span class="co">#&gt;  5 A     1      A1      M20      A1_M20         expe1   Std0481 1.7936</span></span>
+<span><span class="co">#&gt;  6 A     1      A1      M21      A1_M21         expe1   Std0577 1.7925</span></span>
+<span><span class="co">#&gt;  7 A     1      A1      M22      A1_M22         expe1   Std0673 1.8274</span></span>
+<span><span class="co">#&gt;  8 A     1      A1      M23      A1_M23         expe1   Std0769 1.9330</span></span>
+<span><span class="co">#&gt;  9 A     1      A1      M1       A1_M1          expe1   Std0865 0.9254</span></span>
+<span><span class="co">#&gt; 10 A     2      A2      M12      A2_M12         expe1   Std0002 1.4802</span></span>
+<span><span class="co">#&gt; # ℹ 948 more rows</span></span>
+<span></span>
+<span><span class="va">tidy_table</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter_out</a></span><span class="op">(</span></span>
+<span>    <span class="va">dataset</span> <span class="op">==</span> <span class="st">"expe1"</span> <span class="op">&amp;</span></span>
+<span>    <span class="op">(</span><span class="op">(</span><span class="va">plate_id</span> <span class="op">==</span> <span class="st">"M16"</span> <span class="op">&amp;</span> <span class="va">well_id</span> <span class="op">==</span> <span class="st">"A1"</span><span class="op">)</span> <span class="op">|</span></span>
+<span>       <span class="op">(</span><span class="va">plate_id</span> <span class="op">==</span> <span class="st">"M23"</span> <span class="op">&amp;</span> <span class="va">well_id</span> <span class="op">==</span> <span class="st">"H12"</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="co">#&gt; # A tibble: 958 × 8</span></span>
+<span><span class="co">#&gt;    row   column well_id plate_id unique_well_id dataset map     abs   </span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt; </span></span>
+<span><span class="co">#&gt;  1 A     1      A1      M12      A1_M12         expe1   Std0001 1.4402</span></span>
+<span><span class="co">#&gt;  2 A     1      A1      M17      A1_M17         expe1   Std0193 1.5611</span></span>
+<span><span class="co">#&gt;  3 A     1      A1      M18      A1_M18         expe1   Std0289 1.7013</span></span>
+<span><span class="co">#&gt;  4 A     1      A1      M19      A1_M19         expe1   Std0385 1.6865</span></span>
+<span><span class="co">#&gt;  5 A     1      A1      M20      A1_M20         expe1   Std0481 1.7936</span></span>
+<span><span class="co">#&gt;  6 A     1      A1      M21      A1_M21         expe1   Std0577 1.7925</span></span>
+<span><span class="co">#&gt;  7 A     1      A1      M22      A1_M22         expe1   Std0673 1.8274</span></span>
+<span><span class="co">#&gt;  8 A     1      A1      M23      A1_M23         expe1   Std0769 1.9330</span></span>
+<span><span class="co">#&gt;  9 A     1      A1      M1       A1_M1          expe1   Std0865 0.9254</span></span>
+<span><span class="co">#&gt; 10 A     2      A2      M12      A2_M12         expe1   Std0002 1.4802</span></span>
+<span><span class="co">#&gt; # ℹ 948 more rows</span></span></code></pre></div>
+</div>
+<p><strong>Option 2:</strong> Encode it manually from scratch, using <code><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble::tibble()</a></code>. This can be more efficient for a handful of wells to remove, but it easily becomes a source of errors with numerous outlier wells because row-correspondence between dataset, plate_id and well_id is not easily followed visually.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">failed_wells</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
 <span>  dataset <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"expe1"</span>, <span class="fl">2</span><span class="op">)</span>,</span>
 <span>  plate_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"M16"</span>, <span class="st">"M23"</span><span class="op">)</span>,</span>
@@ -196,9 +252,9 @@
 <p>There is a range of values that are deemed acceptable for absorbance readings. Whereas there is a long-lasting tradition of setting “acceptable” absorbance values between 0.1 and 1, in reality, the acceptable range will depend on experiment, usage and quality of the spectrophotomer. Note that for N dosage, values lower than 0.1 are not rare, especially for blanks and lower values in the standard curve.</p>
 <p><code><a href="../reference/qc_raw_abs.html">qc_raw_abs()</a></code> checks raw absorbance values in a dataset and returns a table allowing the identification of suspicious wells.</p>
 <p>By default, <code><a href="../reference/qc_raw_abs.html">qc_raw_abs()</a></code> also draws a plot of the distribution of raw absorbance values in the data set, and sends either a message (all is well) or a warning (some wells are out of range). These outputs can be repressed. See <code>?qc_raw_abs()</code> for more details.</p>
-<p>Default range of accepted absorbance is [0.1, 1].</p>
+<p>Default range of accepted absorbance is [0.1, 1], but it can be modulated with the arguments <code>min_abs</code> and <code>max_abs</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># check out the raw table</span></span>
 <span><span class="va">tidy_plates</span></span>
 <span><span class="co">#&gt; # A tibble: 480 × 8</span></span>
@@ -206,9 +262,9 @@
 <span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;</span></span>
 <span><span class="co">#&gt;  1 A     1      A1      A1_NO3_1F1     Nmin    NO3_1F1  Std      0.092</span></span>
 <span><span class="co">#&gt;  2 A     1      A1      A1_NO3_1F2     Nmin    NO3_1F2  Std      0.091</span></span>
-<span><span class="co">#&gt;  3 A     1      A1      A1_NO3_1F3     Nmin    NO3_1F3  Std      0.093</span></span>
+<span><span class="co">#&gt;  3 A     1      A1      A1_NO3_1F3     Nmin    NO3_1F3  Std      0.110</span></span>
 <span><span class="co">#&gt;  4 A     1      A1      A1_NO3_1F4     Nmin    NO3_1F4  Std      0.092</span></span>
-<span><span class="co">#&gt;  5 A     1      A1      A1_NO3_1F5     Nmin    NO3_1F5  Std      0.092</span></span>
+<span><span class="co">#&gt;  5 A     1      A1      A1_NO3_1F5     Nmin    NO3_1F5  Std      0.113</span></span>
 <span><span class="co">#&gt;  6 A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  81_t1_z2 0.114</span></span>
 <span><span class="co">#&gt;  7 A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  97_t1_z1 0.107</span></span>
 <span><span class="co">#&gt;  8 A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  89_t1_z3 0.095</span></span>
@@ -218,15 +274,15 @@
 <span></span>
 <span><span class="co"># run the function</span></span>
 <span><span class="op">(</span><span class="va">suspicious_wells</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/qc_raw_abs.html">qc_raw_abs</a></span><span class="op">(</span><span class="va">tidy_plates</span>, min_abs <span class="op">=</span> <span class="fl">0.09</span>, max_abs <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning in qc_raw_abs(tidy_plates, min_abs = 0.09, max_abs = 1): 48 wells out of 384 are out of range for absorbance, i.e., not in the set boundaries of [0.09; 1]. </span></span>
+<span><span class="co">#&gt; Warning in qc_raw_abs(tidy_plates, min_abs = 0.09, max_abs = 1): 46 wells out of 384 are out of range for absorbance, i.e., not in the set boundaries of [0.09; 1]. </span></span>
 <span><span class="co">#&gt; See table to identify suspicious wells.</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="handling-outliers_files/figure-html/unnamed-chunk-5-1.png" width="672"></p>
+<figure><p><img src="handling-outliers_files/figure-html/unnamed-chunk-7-1.png" width="672"></p>
 </figure>
 </div>
 </div>
-<pre><code><span><span class="co">#&gt; # A tibble: 48 × 5</span></span>
+<pre><code><span><span class="co">#&gt; # A tibble: 46 × 5</span></span>
 <span><span class="co">#&gt;    dataset plate_id well_id map      abs</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;</span></span>
 <span><span class="co">#&gt;  1 Nmin    NO3_1F1  A8      extr     0.083</span></span>
@@ -239,27 +295,63 @@
 <span><span class="co">#&gt;  8 Nmin    NO3_1F2  B8      extr     0.082</span></span>
 <span><span class="co">#&gt;  9 Nmin    NO3_1F3  B8      extr     0.085</span></span>
 <span><span class="co">#&gt; 10 Nmin    NO3_1F4  B8      extr     0.084</span></span>
-<span><span class="co">#&gt; # ℹ 38 more rows</span></span></code></pre>
+<span><span class="co">#&gt; # ℹ 36 more rows</span></span></code></pre>
 </div>
 <p>It can happen that some wells are very striking, e.g., a single well with an absorbance of 3 where the rest of the dataset is around 1 and the experiment has been ran in 4 technical replicates (there should always be 4 wells for each value). In such cases, the output of <code><a href="../reference/qc_raw_abs.html">qc_raw_abs()</a></code> can be used in combination with <code><a href="../reference/remove_wells.html">remove_wells()</a></code>, possibly with additional selection and filtering steps as shown above.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tidy_plates</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/remove_wells.html">remove_wells</a></span><span class="op">(</span><span class="va">suspicious_wells</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 432 × 8</span></span>
+<span><span class="co">#&gt; # A tibble: 434 × 8</span></span>
 <span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id map      abs  </span></span>
 <span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;</span></span>
 <span><span class="co">#&gt;  1 A     1      A1      A1_NO3_1F1     Nmin    NO3_1F1  Std      0.092</span></span>
 <span><span class="co">#&gt;  2 A     1      A1      A1_NO3_1F2     Nmin    NO3_1F2  Std      0.091</span></span>
-<span><span class="co">#&gt;  3 A     1      A1      A1_NO3_1F3     Nmin    NO3_1F3  Std      0.093</span></span>
+<span><span class="co">#&gt;  3 A     1      A1      A1_NO3_1F3     Nmin    NO3_1F3  Std      0.110</span></span>
 <span><span class="co">#&gt;  4 A     1      A1      A1_NO3_1F4     Nmin    NO3_1F4  Std      0.092</span></span>
-<span><span class="co">#&gt;  5 A     1      A1      A1_NO3_1F5     Nmin    NO3_1F5  Std      0.092</span></span>
+<span><span class="co">#&gt;  5 A     1      A1      A1_NO3_1F5     Nmin    NO3_1F5  Std      0.113</span></span>
 <span><span class="co">#&gt;  6 A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  81_t1_z2 0.114</span></span>
 <span><span class="co">#&gt;  7 A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  97_t1_z1 0.107</span></span>
 <span><span class="co">#&gt;  8 A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  89_t1_z3 0.095</span></span>
 <span><span class="co">#&gt;  9 A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  81_t1_z1 0.118</span></span>
 <span><span class="co">#&gt; 10 A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  Std_3_t1 0.167</span></span>
-<span><span class="co">#&gt; # ℹ 422 more rows</span></span></code></pre></div>
+<span><span class="co">#&gt; # ℹ 424 more rows</span></span></code></pre></div>
 </div>
+</section><section class="section level2"><h2 id="when-to-remove-outliers">4 - When to remove outliers?<a class="anchor" aria-label="anchor" href="#when-to-remove-outliers"></a>
+</h2>
+<p>From the end of the <code>import-tidy</code> vignette until linear model application, tables are in the same “tidy” format, with one row per well and one column for absorbance (blank-corrected or raw), like this:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">tidy_table</span></span>
+<span><span class="co">#&gt; # A tibble: 960 × 8</span></span>
+<span><span class="co">#&gt;    row   column well_id plate_id unique_well_id dataset map     abs   </span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt; </span></span>
+<span><span class="co">#&gt;  1 A     1      A1      M12      A1_M12         expe1   Std0001 1.4402</span></span>
+<span><span class="co">#&gt;  2 A     1      A1      M16      A1_M16         expe1   Std0097 1.5789</span></span>
+<span><span class="co">#&gt;  3 A     1      A1      M17      A1_M17         expe1   Std0193 1.5611</span></span>
+<span><span class="co">#&gt;  4 A     1      A1      M18      A1_M18         expe1   Std0289 1.7013</span></span>
+<span><span class="co">#&gt;  5 A     1      A1      M19      A1_M19         expe1   Std0385 1.6865</span></span>
+<span><span class="co">#&gt;  6 A     1      A1      M20      A1_M20         expe1   Std0481 1.7936</span></span>
+<span><span class="co">#&gt;  7 A     1      A1      M21      A1_M21         expe1   Std0577 1.7925</span></span>
+<span><span class="co">#&gt;  8 A     1      A1      M22      A1_M22         expe1   Std0673 1.8274</span></span>
+<span><span class="co">#&gt;  9 A     1      A1      M23      A1_M23         expe1   Std0769 1.9330</span></span>
+<span><span class="co">#&gt; 10 A     1      A1      M1       A1_M1          expe1   Std0865 0.9254</span></span>
+<span><span class="co">#&gt; # ℹ 950 more rows</span></span></code></pre></div>
+</div>
+<p>Main steps of the pipeline are: blank-correction of standard curves, blank-correction of sample data, computation of the linear or polynomial model, and inference of sample concentration. <code><a href="../reference/remove_wells.html">remove_wells()</a></code> can be applied at any of those steps. So when is it important to perform outlier removal?</p>
+<p>We find it a good practice to check for outliers directly before any aggregation of data, which needs to be computed on wells that we trust, so that we can also trust the aggregated value that is computed. Key moments that should be preceded by an outlier removal step are thus</p>
+<ul>
+<li>
+<p>any average of several wells:</p>
+<ul>
+<li><p><a href="https://mdetoeuf.github.io/plate2N/articles/blank-correction.html#blank-correction-of-standard-curves">standard blank</a> (when there are several standard curves per plate)</p></li>
+<li><p><a href="https://mdetoeuf.github.io/plate2N/articles/blank-correction.html#blank-correction-of-samples">sample blank</a> (extractant)</p></li>
+<li><p>triplicate or n-replicates of sample wells (<strong>under development</strong>)</p></li>
+</ul>
+</li>
+<li><p><a href="https://mdetoeuf.github.io/plate2N/articles/abs-to-conc.html#compute-linear-model-on-standard-curves">computation of the model parameters</a> (e.g., slope and intercept for the linear model)</p></li>
+</ul></section><section class="section level2"><h2 id="next-steps">5 - Next steps<a class="anchor" aria-label="anchor" href="#next-steps"></a>
+</h2>
+<p>if you already have tidy imported data as produced by <code>import-tidy</code>, move on to <code>blank-correction</code>.</p>
 </section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);

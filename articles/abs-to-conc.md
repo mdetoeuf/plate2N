@@ -50,16 +50,16 @@ sample_corrected
 #> # A tibble: 264 × 25
 #>    row   column well_id unique_well_id dataset plate_id map      abs_corrected
 #>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr>            <dbl>
-#>  1 A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  81_t1_z2        0.0312
-#>  2 A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  97_t1_z1        0.0249
-#>  3 A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  89_t1_z3        0.0104
-#>  4 A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  81_t1_z1        0.0342
-#>  5 A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  Std_3_t1        0.0832
-#>  6 A     3      A3      A3_NO3_1F1     Nmin    NO3_1F1  82_t1_z2        0.0452
-#>  7 A     3      A3      A3_NO3_1F2     Nmin    NO3_1F2  98_t1_z1        0.0219
-#>  8 A     3      A3      A3_NO3_1F3     Nmin    NO3_1F3  90_t1_z3        0.0124
-#>  9 A     3      A3      A3_NO3_1F4     Nmin    NO3_1F4  82_t1_z3        0.0543
-#> 10 A     3      A3      A3_NO3_1F5     Nmin    NO3_1F5  98_t1_z3        0.0232
+#>  1 A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  81_t1_z2       0.0312 
+#>  2 A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  97_t1_z1      -0.00975
+#>  3 A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  89_t1_z3       0.0104 
+#>  4 A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  81_t1_z1       0.0437 
+#>  5 A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  Std_3_t1       0.0832 
+#>  6 A     3      A3      A3_NO3_1F1     Nmin    NO3_1F1  82_t1_z2       0.0452 
+#>  7 A     3      A3      A3_NO3_1F2     Nmin    NO3_1F2  98_t1_z1      -0.0128 
+#>  8 A     3      A3      A3_NO3_1F3     Nmin    NO3_1F3  90_t1_z3       0.0124 
+#>  9 A     3      A3      A3_NO3_1F4     Nmin    NO3_1F4  82_t1_z3       0.0638 
+#> 10 A     3      A3      A3_NO3_1F5     Nmin    NO3_1F5  98_t1_z3       0.0232 
 #> # ℹ 254 more rows
 #> # ℹ 17 more variables: blank_sdev <dbl>, blank_coeff_var_percent <dbl>,
 #> #   date <lgl>, time <lgl>, sampling_time <chr>, std_column <chr>,
@@ -87,7 +87,7 @@ std_corrected
 #> #   sampling_time <chr>, std_column <chr>, std_sp <chr>, std_unit <chr>,
 #> #   std_prep <chr>, sample_dilution <chr>, extractant_column <lgl>,
 #> #   extractant_sp <chr>, extractant_unit <chr>, extractant_conc <dbl>,
-#> #   empty_column <lgl>, wait_min <chr>, std_conc <chr>, blank_sdev <dbl>,
+#> #   empty_column <lgl>, wait_min <chr>, std_conc <dbl>, blank_sdev <dbl>,
 #> #   blank_coeff_var_percent <dbl>
 ```
 
@@ -121,12 +121,12 @@ also requires the column `unique_curve_id`.
 #>  2 NO3_1F1  NO3_1F1_col12   NO3    0.0179     0.999         0.999 2.79e-10
 #>  3 NO3_1F2  NO3_1F2_col1    NO3    0.0178     0.999         0.999 6.03e-11
 #>  4 NO3_1F2  NO3_1F2_col12   NO3    0.0190     0.999         0.999 1.64e-10
-#>  5 NO3_1F3  NO3_1F3_col1    NO3    0.0186     0.999         0.999 2.07e-10
-#>  6 NO3_1F3  NO3_1F3_col12   NO3    0.0184     0.999         0.999 4.07e-10
+#>  5 NO3_1F3  NO3_1F3_col1    NO3    0.0187     0.999         0.999 9.25e-11
+#>  6 NO3_1F3  NO3_1F3_col12   NO3    0.0185     0.999         0.999 1.69e-10
 #>  7 NO3_1F4  NO3_1F4_col1    NO3    0.0178     0.999         0.999 2.16e-10
 #>  8 NO3_1F4  NO3_1F4_col12   NO3    0.0188     0.999         0.999 2.43e-10
-#>  9 NO3_1F5  NO3_1F5_col1    NO3    0.0194     0.999         0.999 1.31e-10
-#> 10 NO3_1F5  NO3_1F5_col12   NO3    0.0185     0.999         0.999 3.49e-10
+#>  9 NO3_1F5  NO3_1F5_col1    NO3    0.0193     0.999         0.999 2.45e-10
+#> 10 NO3_1F5  NO3_1F5_col12   NO3    0.0185     0.999         0.998 6.15e-10
 #> # ℹ 4 more variables: normality_lm_residuals <chr>, shapiro_p <dbl>,
 #> #   homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>
 ```
@@ -252,9 +252,9 @@ of linear model, identification of suspicious curves and plotting
 #>   <chr>    <chr>           <chr>   <dbl>     <dbl>         <dbl>    <dbl>
 #> 1 NO3_1F1  NO3_1F1_col13   NO3    0.0184     0.999         0.999 7.36e-11
 #> 2 NO3_1F2  NO3_1F2_col13   NO3    0.0184     0.999         0.999 6.32e-11
-#> 3 NO3_1F3  NO3_1F3_col13   NO3    0.0185     0.999         0.999 2.47e-10
+#> 3 NO3_1F3  NO3_1F3_col13   NO3    0.0186     0.999         0.999 9.98e-11
 #> 4 NO3_1F4  NO3_1F4_col13   NO3    0.0183     0.999         0.999 2.23e-10
-#> 5 NO3_1F5  NO3_1F5_col13   NO3    0.0190     0.999         0.999 2.09e-10
+#> 5 NO3_1F5  NO3_1F5_col13   NO3    0.0189     0.999         0.999 3.80e-10
 #> # ℹ 4 more variables: normality_lm_residuals <chr>, shapiro_p <dbl>,
 #> #   homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>
 (lm_suspicious_mean <- lm_std_mean |> suspicious_lm())
@@ -436,16 +436,16 @@ data_mg_N_L
 #> # A tibble: 264 × 13
 #>    dataset plate_id map   well_id abs_corrected std_sp target_sp std_unit  slope
 #>    <chr>   <chr>    <chr> <chr>           <dbl> <chr>  <chr>     <chr>     <dbl>
-#>  1 Nmin    NO3_1F1  81_t… A2             0.0312 NO3    N         mg NO3-… 0.0184
-#>  2 Nmin    NO3_1F2  97_t… A2             0.0249 NO3    N         mg NO3-… 0.0184
-#>  3 Nmin    NO3_1F3  89_t… A2             0.0104 NO3    N         mg NO3-… 0.0185
-#>  4 Nmin    NO3_1F4  81_t… A2             0.0342 NO3    N         mg NO3-… 0.0183
-#>  5 Nmin    NO3_1F5  Std_… A2             0.0832 NO3    N         mg NO3-… 0.0190
-#>  6 Nmin    NO3_1F1  82_t… A3             0.0452 NO3    N         mg NO3-… 0.0184
-#>  7 Nmin    NO3_1F2  98_t… A3             0.0219 NO3    N         mg NO3-… 0.0184
-#>  8 Nmin    NO3_1F3  90_t… A3             0.0124 NO3    N         mg NO3-… 0.0185
-#>  9 Nmin    NO3_1F4  82_t… A3             0.0543 NO3    N         mg NO3-… 0.0183
-#> 10 Nmin    NO3_1F5  98_t… A3             0.0232 NO3    N         mg NO3-… 0.0190
+#>  1 Nmin    NO3_1F1  81_t… A2            0.0312  NO3    N         mg NO3-… 0.0184
+#>  2 Nmin    NO3_1F2  97_t… A2           -0.00975 NO3    N         mg NO3-… 0.0184
+#>  3 Nmin    NO3_1F3  89_t… A2            0.0104  NO3    N         mg NO3-… 0.0186
+#>  4 Nmin    NO3_1F4  81_t… A2            0.0437  NO3    N         mg NO3-… 0.0183
+#>  5 Nmin    NO3_1F5  Std_… A2            0.0832  NO3    N         mg NO3-… 0.0189
+#>  6 Nmin    NO3_1F1  82_t… A3            0.0452  NO3    N         mg NO3-… 0.0184
+#>  7 Nmin    NO3_1F2  98_t… A3           -0.0128  NO3    N         mg NO3-… 0.0184
+#>  8 Nmin    NO3_1F3  90_t… A3            0.0124  NO3    N         mg NO3-… 0.0186
+#>  9 Nmin    NO3_1F4  82_t… A3            0.0638  NO3    N         mg NO3-… 0.0183
+#> 10 Nmin    NO3_1F5  98_t… A3            0.0232  NO3    N         mg NO3-… 0.0189
 #> # ℹ 254 more rows
 #> # ℹ 4 more variables: adj_r_squared <dbl>, lm_p <dbl>, conc_mgNsp_L <dbl>,
 #> #   conc_mgN_L <dbl>

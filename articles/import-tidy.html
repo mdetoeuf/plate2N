@@ -130,32 +130,32 @@
 <code class="sourceCode R"><span><span class="va">vertical_plates</span> ; </span>
 <span><span class="co">#&gt; # A tibble: 96 × 6</span></span>
 <span><span class="co">#&gt;    row   column NO3_TDN_01 NO3_TDN_02 NO3_TDN_03 NO3_TDN_04</span></span>
-<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;       &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt;  1 A     1           0.095      0.097      0.113      0.114</span></span>
-<span><span class="co">#&gt;  2 A     2           0.537      0.552      0.53       0.535</span></span>
-<span><span class="co">#&gt;  3 A     3           0.528      0.559      0.528      0.534</span></span>
-<span><span class="co">#&gt;  4 A     4           0.562      0.555      0.521      0.531</span></span>
-<span><span class="co">#&gt;  5 A     5           0.51       0.538      0.521      0.506</span></span>
-<span><span class="co">#&gt;  6 A     6           0.507      0.552      0.54       0.551</span></span>
-<span><span class="co">#&gt;  7 A     7           0.546      0.534      0.551      0.528</span></span>
-<span><span class="co">#&gt;  8 A     8           0.078      0.079      0.097      0.102</span></span>
-<span><span class="co">#&gt;  9 A     9           0.519      0.589      0.559      0.541</span></span>
-<span><span class="co">#&gt; 10 A     10          0.543      0.535      0.528      0.544</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;      &lt;chr&gt;      &lt;chr&gt;      &lt;chr&gt;     </span></span>
+<span><span class="co">#&gt;  1 A     1      0.095      0.097      0.113      0.114     </span></span>
+<span><span class="co">#&gt;  2 A     2      0.537      0.552      0.53       0.535     </span></span>
+<span><span class="co">#&gt;  3 A     3      0.528      0.559      0.528      0.534     </span></span>
+<span><span class="co">#&gt;  4 A     4      0.562      0.555      0.521      0.531     </span></span>
+<span><span class="co">#&gt;  5 A     5      0.51       0.538      0.521      0.506     </span></span>
+<span><span class="co">#&gt;  6 A     6      0.507      0.552      0.54       0.551     </span></span>
+<span><span class="co">#&gt;  7 A     7      0.546      0.534      0.551      0.528     </span></span>
+<span><span class="co">#&gt;  8 A     8      0.078      0.079      0.097      0.102     </span></span>
+<span><span class="co">#&gt;  9 A     9      0.519      0.589      0.559      0.541     </span></span>
+<span><span class="co">#&gt; 10 A     10     0.543      0.535      0.528      0.544     </span></span>
 <span><span class="co">#&gt; # ℹ 86 more rows</span></span>
 <span><span class="va">vertical_plates</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">row</span><span class="op">:</span><span class="va">column</span>, <span class="fu">tidyselect</span><span class="fu">::</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">ends_with</a></span><span class="op">(</span><span class="st">"04"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 96 × 3</span></span>
 <span><span class="co">#&gt;    row   column NO3_TDN_04</span></span>
-<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;       &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt;  1 A     1           0.114</span></span>
-<span><span class="co">#&gt;  2 A     2           0.535</span></span>
-<span><span class="co">#&gt;  3 A     3           0.534</span></span>
-<span><span class="co">#&gt;  4 A     4           0.531</span></span>
-<span><span class="co">#&gt;  5 A     5           0.506</span></span>
-<span><span class="co">#&gt;  6 A     6           0.551</span></span>
-<span><span class="co">#&gt;  7 A     7           0.528</span></span>
-<span><span class="co">#&gt;  8 A     8           0.102</span></span>
-<span><span class="co">#&gt;  9 A     9           0.541</span></span>
-<span><span class="co">#&gt; 10 A     10          0.544</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;     </span></span>
+<span><span class="co">#&gt;  1 A     1      0.114     </span></span>
+<span><span class="co">#&gt;  2 A     2      0.535     </span></span>
+<span><span class="co">#&gt;  3 A     3      0.534     </span></span>
+<span><span class="co">#&gt;  4 A     4      0.531     </span></span>
+<span><span class="co">#&gt;  5 A     5      0.506     </span></span>
+<span><span class="co">#&gt;  6 A     6      0.551     </span></span>
+<span><span class="co">#&gt;  7 A     7      0.528     </span></span>
+<span><span class="co">#&gt;  8 A     8      0.102     </span></span>
+<span><span class="co">#&gt;  9 A     9      0.541     </span></span>
+<span><span class="co">#&gt; 10 A     10     0.544     </span></span>
 <span><span class="co">#&gt; # ℹ 86 more rows</span></span></code></pre></div>
 </div>
 <p><strong>3) Tidying</strong> of the verticalized plate into the <code>tidy_table</code> displayed at the beginning of this vignette, a format that is easily usable for downstream data transformations and analyses. This step is done using the <code>tidyr</code> package</p>
@@ -332,14 +332,14 @@
 <span><span class="co">#&gt; 10 NO3_… 1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
 <span><span class="co">#&gt; 11 A     0.091 0.107 0.104 0.093 0.104 0.103 0.101 0.083 0.105 0.091 0.084 0.090</span></span>
 <span><span class="co">#&gt; 12 B     0.099 0.103 0.100 0.092 0.101 0.104 0.101 0.082 0.107 0.089 0.084 0.098</span></span>
-<span><span class="co">#&gt; 13 C     0.106 0.101 0.100 0.091 0.102 0.108 0.100 0.081 0.104 0.089 0.084 0.104</span></span>
-<span><span class="co">#&gt; 14 D     0.119 0.101 0.100 0.093 0.101 0.109 0.100 0.082 0.105 0.092 0.084 0.131</span></span>
+<span><span class="co">#&gt; 13 C     0.106 0.101 0.100 0.091 0.102 0.108 0.100 0.250 0.104 0.089 0.084 0.104</span></span>
+<span><span class="co">#&gt; 14 D     0.119 0.101 0.100 0.093 0.101 0.109 0.100 0.190 0.105 0.092 0.084 0.131</span></span>
 <span><span class="co">#&gt; 15 E     0.153 0.103 0.114 0.102 0.108 0.103 0.112 0.083 0.118 0.121 0.085 0.155</span></span>
 <span><span class="co">#&gt; 16 F     0.230 0.106 0.113 0.102 0.109 0.105 0.107 0.082 0.116 0.122 0.084 0.234</span></span>
 <span><span class="co">#&gt; 17 G     0.374 0.114 0.116 0.103 0.109 0.104 0.108 0.082 0.117 0.120 0.085 0.393</span></span>
 <span><span class="co">#&gt; 18 H     0.523 0.116 0.119 0.102 0.111 0.106 0.108 0.082 0.121 0.125 0.085 0.551</span></span>
 <span><span class="co">#&gt; 19 NO3_… 1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
-<span><span class="co">#&gt; 20 A     0.093 0.095 0.097 0.102 0.094 0.093 0.099 0.084 0.098 0.102 0.081 0.090</span></span>
+<span><span class="co">#&gt; 20 A     0.110 0.095 0.097 0.102 0.094 0.093 0.099 0.084 0.098 0.102 0.081 0.090</span></span>
 <span><span class="co">#&gt; # ℹ 25 more rows</span></span></code></pre></div>
 </div>
 <p><strong>Note:</strong> Should the need arises to import .TXT files structured in a different way, please reach out, and we can propose an adapted importing step into our function definition.</p>
@@ -367,7 +367,7 @@
 <span><span class="co">#&gt; # A tibble: 96 × 7</span></span>
 <span><span class="co">#&gt;    row   column NO3_1F1 NO3_1F2 NO3_1F3 NO3_1F4 NO3_1F5</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;  </span></span>
-<span><span class="co">#&gt;  1 A     1      0.092   0.091   0.093   0.092   0.092  </span></span>
+<span><span class="co">#&gt;  1 A     1      0.092   0.091   0.110   0.092   0.113  </span></span>
 <span><span class="co">#&gt;  2 A     2      0.114   0.107   0.095   0.118   0.167  </span></span>
 <span><span class="co">#&gt;  3 A     3      0.128   0.104   0.097   0.138   0.107  </span></span>
 <span><span class="co">#&gt;  4 A     4      0.110   0.093   0.102   0.108   0.101  </span></span>
@@ -449,7 +449,7 @@
 <span><span class="co">#&gt; # A tibble: 96 × 7</span></span>
 <span><span class="co">#&gt;    row   column NO3_1F1 NO3_1F2 NO3_1F3 NO3_1F4 NO3_1F5</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;  </span></span>
-<span><span class="co">#&gt;  1 A     1      0.092   0.091   0.093   0.092   0.092  </span></span>
+<span><span class="co">#&gt;  1 A     1      0.092   0.091   0.110   0.092   0.113  </span></span>
 <span><span class="co">#&gt;  2 A     2      0.114   0.107   0.095   0.118   0.167  </span></span>
 <span><span class="co">#&gt;  3 A     3      0.128   0.104   0.097   0.138   0.107  </span></span>
 <span><span class="co">#&gt;  4 A     4      0.110   0.093   0.102   0.108   0.101  </span></span>
@@ -460,7 +460,7 @@
 <span><span class="co">#&gt;  9 A     9      0.119   0.105   0.098   0.121   0.113  </span></span>
 <span><span class="co">#&gt; 10 A     10     0.113   0.091   0.102   0.119   0.099  </span></span>
 <span><span class="co">#&gt; 11 A     11     0.082   0.084   0.081   0.081   0.168  </span></span>
-<span><span class="co">#&gt; 12 A     12     0.091   0.090   0.090   0.091   0.090  </span></span>
+<span><span class="co">#&gt; 12 A     12     0.091   0.090   0.090   0.091   0.092  </span></span>
 <span><span class="co">#&gt; # ℹ 84 more rows</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h3 id="joined-verticalization-of-2-related-tibbles">2.2 - Joined verticalization of 2 related tibbles<a class="anchor" aria-label="anchor" href="#joined-verticalization-of-2-related-tibbles"></a>
@@ -528,9 +528,9 @@
 <span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;</span></span>
 <span><span class="co">#&gt;  1 A     1      A1      A1_NO3_1F1     Nmin    NO3_1F1  Std      0.092</span></span>
 <span><span class="co">#&gt;  2 A     1      A1      A1_NO3_1F2     Nmin    NO3_1F2  Std      0.091</span></span>
-<span><span class="co">#&gt;  3 A     1      A1      A1_NO3_1F3     Nmin    NO3_1F3  Std      0.093</span></span>
+<span><span class="co">#&gt;  3 A     1      A1      A1_NO3_1F3     Nmin    NO3_1F3  Std      0.110</span></span>
 <span><span class="co">#&gt;  4 A     1      A1      A1_NO3_1F4     Nmin    NO3_1F4  Std      0.092</span></span>
-<span><span class="co">#&gt;  5 A     1      A1      A1_NO3_1F5     Nmin    NO3_1F5  Std      0.092</span></span>
+<span><span class="co">#&gt;  5 A     1      A1      A1_NO3_1F5     Nmin    NO3_1F5  Std      0.113</span></span>
 <span><span class="co">#&gt;  6 A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  81_t1_z2 0.114</span></span>
 <span><span class="co">#&gt;  7 A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  97_t1_z1 0.107</span></span>
 <span><span class="co">#&gt;  8 A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  89_t1_z3 0.095</span></span>

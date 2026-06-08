@@ -41,7 +41,7 @@ std_corrected
 #> #   sampling_time <chr>, std_column <chr>, std_sp <chr>, std_unit <chr>,
 #> #   std_prep <chr>, sample_dilution <chr>, extractant_column <lgl>,
 #> #   extractant_sp <chr>, extractant_unit <chr>, extractant_conc <dbl>,
-#> #   empty_column <lgl>, wait_min <chr>, std_conc <chr>, blank_sdev <dbl>,
+#> #   empty_column <lgl>, wait_min <chr>, std_conc <dbl>, blank_sdev <dbl>,
 #> #   blank_coeff_var_percent <dbl>
 std_dilution_average(std_corrected)
 #> # A tibble: 35 × 25
@@ -62,6 +62,6 @@ std_dilution_average(std_corrected)
 #> # ℹ 16 more variables: time <lgl>, sampling_time <chr>, std_column <chr>,
 #> #   std_sp <chr>, std_unit <chr>, std_prep <chr>, sample_dilution <chr>,
 #> #   extractant_column <lgl>, extractant_sp <chr>, extractant_unit <chr>,
-#> #   extractant_conc <dbl>, empty_column <lgl>, wait_min <chr>, std_conc <chr>,
+#> #   extractant_conc <dbl>, empty_column <lgl>, wait_min <chr>, std_conc <dbl>,
 #> #   blank_sdev <dbl>, blank_coeff_var_percent <dbl>
 ```
