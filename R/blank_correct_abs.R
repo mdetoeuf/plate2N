@@ -8,6 +8,9 @@ utils::globalVariables(c("map", "abs", "blank_avg", "abs_corrected"))
 #'     Must contain columns "abs" and "map".
 #' @param per_plate_avg_blank Contains the per-plate average absorbance of the blank
 #'     Must contain column "blank_avg" (rename it prior to function call if needed)
+#' @param extr_def A string that characterizes wells containing the extractant
+#'    in the mapping (`map`column) of the plate. Defaults to "extr". Can be a vector
+#'    containing several values (see examples)
 #' @param map_to_exclude A vector of strings containing all `map` definitions of
 #'     wells that are not data per se (e.g., empty wells, etc.).
 #'     Defaults to `c("empty","Std","extr")`. If wells to exclude are not defined
@@ -30,10 +33,20 @@ utils::globalVariables(c("map", "abs", "blank_avg", "abs_corrected"))
 #'     raw_wells_data = data,
 #'     per_plate_avg_blank = extractant_average,
 #'     map_to_exclude = c("empty","Std","extr"))
+#'
+#' # case of double extractant
+#' data <- dbl_extr_plate
+#' extractant_average <- dbl_extr_plate |> extractant_average(extr_def = c("extr_1", "extr_2"))
+#' blank_correct_abs(
+#'     raw_wells_data = data,
+#'     per_plate_avg_blank = extractant_average,
+#'     extr_def = c("extr_1", "extr_2"),
+#'     map_to_exclude = c("empty","Std","extr_1", "extr_2"))
 blank_correct_abs <- function(
-    raw_wells_data,
+    raw_wells_data, #raw_wells_data = dbl_extr_plate
     per_plate_avg_blank,
-    map_to_exclude = c("empty","Std","extr")
+    extr_def = "extr",
+    map_to_exclude = c("empty","Std","extr") # map_to_exclude = c("empty","Std","extr_1", "extr_2")
 ) {
 
   # Reformat raw_wells_data
@@ -43,11 +56,17 @@ blank_correct_abs <- function(
     dplyr::filter(map %ni% map_to_exclude) |>
     dplyr::mutate(abs = as.numeric(abs))
 
+  # add "extr_id" column if missing (case when there is only 1 extractant)
+  if ("extr_id" %ni% names(to_correct)) {
+    to_correct <- to_correct |> dplyr::mutate(extr_id = rep(extr_def))
+  }
+
   # Reformat blank_avg_data
   if ("map" %in% names(per_plate_avg_blank)) {
-    blank_avg_data <- per_plate_avg_blank |> dplyr::select(!map)
+    per_plate_avg_blank <- per_plate_avg_blank |> dplyr::rename(extr_id = map)
+    #blank_avg_data <- per_plate_avg_blank |> dplyr::select(!map)
   } else {
-    blank_avg_data <- per_plate_avg_blank
+    #blank_avg_data <- per_plate_avg_blank
   }
 
 
@@ -55,7 +74,7 @@ blank_correct_abs <- function(
   corrected_data <-
     to_correct |>
     # dplyr::mutate(abs = as.numeric(abs)) |>
-    dplyr::right_join(blank_avg_data) |>
+    dplyr::right_join(per_plate_avg_blank) |>
     dplyr::mutate(abs_corrected = abs - blank_avg, .keep = "unused", .after = map) |>
     # remove rows where no corrected absorbance data (untrusted or blanks)
     dplyr::filter(!is.na(abs_corrected))

@@ -540,9 +540,17 @@ sample_corrected <-
     raw_wells_data = raw_meta, 
     per_plate_avg_blank = extr_avg_clean,
     map_to_exclude = c("empty","Std","extr")) 
+
+# for case of 2 extractants:
+sample_corrected_dbl <- 
+  blank_correct_abs(
+    raw_wells_data = dbl_extr_plate, 
+    per_plate_avg_blank = extr_avg_clean_dbl,
+    extr_def = c("extr_1", "extr_2"),
+    map_to_exclude = c("empty","Std","extr_1", "extr_2")) 
 ```
 
-Let's have a look at the output and notice the absence of the value `1` in the column `column` (no data for standard curve[^5]), and of the value `extr` in the column `map` (though it is present in `raw_meta`.
+Let's have a look at the output and notice the absence of the value `1` in the column `column` (no data for standard curve[^5]), and of the value `extr` in the column `map` (though it was present in `raw_meta` and still can be found under `extr_id`).
 
 [^5]: In case the blanks are the same for sample wells and standard curve wells, this blank-correction should also be applied on Standard curve data. In this case, remove `"Std"` from the call to `map_to_exclude`.
 

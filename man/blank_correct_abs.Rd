@@ -7,6 +7,7 @@
 blank_correct_abs(
   raw_wells_data,
   per_plate_avg_blank,
+  extr_def = "extr",
   map_to_exclude = c("empty", "Std", "extr")
 )
 }
@@ -17,6 +18,10 @@ Must contain columns "abs" and "map".}
 
 \item{per_plate_avg_blank}{Contains the per-plate average absorbance of the blank
 Must contain column "blank_avg" (rename it prior to function call if needed)}
+
+\item{extr_def}{A string that characterizes wells containing the extractant
+in the mapping (\code{map}column) of the plate. Defaults to "extr". Can be a vector
+containing several values (see examples)}
 
 \item{map_to_exclude}{A vector of strings containing all \code{map} definitions of
 wells that are not data per se (e.g., empty wells, etc.).
@@ -40,4 +45,13 @@ blank_correct_abs(
     raw_wells_data = data,
     per_plate_avg_blank = extractant_average,
     map_to_exclude = c("empty","Std","extr"))
+
+# case of double extractant
+data <- dbl_extr_plate
+extractant_average <- dbl_extr_plate |> extractant_average(extr_def = c("extr_1", "extr_2"))
+blank_correct_abs(
+    raw_wells_data = data,
+    per_plate_avg_blank = extractant_average,
+    extr_def = c("extr_1", "extr_2"),
+    map_to_exclude = c("empty","Std","extr_1", "extr_2"))
 }
