@@ -281,6 +281,8 @@ This string "extr" is the default of the argument `extr_def` of `extractant_aver
 
 ## 3.3 - Quality check of extractant and outlier removal
 
+### 3.3.1 - One extractant per plate
+
 `plot_blank_var_distrib()` plots a distribution of this coefficient of variation throughout the data set (which becomes relevant in big data sets).
 
 ```{r}
@@ -301,14 +303,14 @@ A `max_coeff` threshold of 5% is reasonable to segregate "acceptable" coefficien
 ```{r}
 threshold <- 5
 
-suspicious_plate_ids <- raw_meta |> 
+suspicious_extr_per_plate <- raw_meta |> 
   qc_raw_extr(suppress_warning = FALSE, max_coeff = threshold)
 ```
 
 We get a warning message (to suppress it, opt for `suppress_warning = TRUE`). The identifiers of the suspicious plates have been recorded in `suspicious_plate_ids`.
 
 ```{r}
-suspicious_plate_ids
+suspicious_extr_per_plate
 ```
 
 Should all plates have a coefficient of variation for the absorbance of the extractant below the threshold, `qc_raw_extr()` returns a happy message, instead of a warning, which can also be suppressed, using `suppress_message = TRUE`.
@@ -324,7 +326,7 @@ To obtain the full extractant data corresponding to our `suspicious plate_ids`, 
 ```{r}
 (suspicious_extr <- suspicious_extr(
   raw_meta, 
-  suspicious_plate_id = suspicious_plate_ids, 
+  suspicious_extr_per_plate = suspicious_extr_per_plate, 
   max_coeff = threshold))
 ```
 
@@ -332,8 +334,10 @@ Finally, we can use `boxplot_outlier_extr()` to plot extractant plates containin
 
 ```{r}
 # plot outliers
-suspicious_extr |> boxplot_outlier_extr(max_coeff = threshold)
+suspicious_extr |> boxplot_outlier_extr(max_coeff = threshold) + ggplot2::facet_wrap(~map)
 ```
+
+### 3.3.2 - Outlier removal steps
 
 He have here 2 very obvious outliers: wells D8 and C8 in plate 1 (NO3_1F2) and well F8 in plate 2 (NO3_1F4), which we want to remove. The plot given by `boxplot_outlier_extr()` gives all necessary information to do so. First, we create a small tibble that will serve to construct the tibble of wells to remove: first get dataset and plate_ids from `suspicious_extr`, then add a column "plate_order" that will help checking which plate is which (compared to the plot, useful when several plates are plotted).
 
@@ -419,10 +423,41 @@ extr_avg_clean <- extractant_average(
   extractant_data = extr_data_clean, extr_def = "extr") 
 ```
 
-Check that the highest coefficients of variation are now indeed satisfactory (below our threshold of `threshold`%).
+Check that the highest coefficients of variation are now indeed satisfactory (below our threshold of 5%).
 
 ```{r}
 extr_avg_clean |> dplyr::arrange(dplyr::desc(blank_coeff_var_percent)) |> head()
+```
+
+### 3.3.3 - 2 or more extractants per plate
+
+The steps are the same as with one extractant, but the syntax changes slightly. Let's take the example data set `dbl_extr_plate`:
+
+```{r}
+dbl_extr_plate
+```
+
+Here is, in brief, how to adapt the same steps as described above:
+
+```{r}
+#computing extractant average
+(extr_avg_dbl <- extractant_average(dbl_extr_plate, extr_def = c("extr_1", "extr_2"))) 
+
+# Quality checking of coefficient of variation
+plot_blank_var_distrib(extr_avg_dbl)
+
+# identifying suspicious plate-extractant combinations
+(suspicious_extr_per_plate_dbl <- dbl_extr_plate |> 
+  qc_raw_extr(suppress_warning = FALSE, extr_def = c("extr_1", "extr_2"), max_coeff = 5))
+
+# subsetting from extractant data only the plate-extractant combinations that are suspicious
+(suspicious_extr_dbl <- suspicious_extr(
+  dbl_extr_plate, extr_def = c("extr_1", "extr_2"),
+  suspicious_extr_per_plate = suspicious_extr_per_plate_dbl, 
+  max_coeff = 5))
+
+# plot outliers
+suspicious_extr_dbl |> boxplot_outlier_extr(max_coeff = 5) 
 ```
 
 ## 3.4 - Blank-correction of sample absorbance

@@ -30,11 +30,11 @@ Multiple distribution plot to review suspicious extractant values and spot outli
 \examples{
 data <- tidy_plates
 # 0.5 is unreasonable in most uses, but is used here to ensure some output
-suspicious_plate_id <- qc_raw_extr(data, max_coeff = 0.5,
+suspicious_extr_per_plate <- qc_raw_extr(data, max_coeff = 5,
     suppress_message = TRUE, suppress_warning = TRUE)
-suspicious_extr <- suspicious_extr(data, max_coeff = 0.5,
-    suspicious_plate_id = suspicious_plate_id)
-multiplot_outlier_extr(suspicious_extractant = suspicious_extr, max_coeff = 0.5)
+suspicious_extr <- suspicious_extr(data, max_coeff = 5,
+    suspicious_extr_per_plate = suspicious_extr_per_plate)
+multiplot_outlier_extr(suspicious_extractant = suspicious_extr, max_coeff = 5)
 ## Tip: if too many curves appear, consider cutting `suspicious_extractant`
 ##.     into several subsets, to be given as input for multiple runs of `multiplot_outlier_extr()`
 }

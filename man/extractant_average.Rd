@@ -37,6 +37,5 @@ tidy_2_extr <- tidy_plates |>
 multiple_extractant_id # check it out
 # joining with multiple_extractant_id
 (dbl_extr_plate <- tidy_2_extr |> dplyr::left_join(multiple_extractant_id))
-data <- dbl_extr_plate
-(blank_avg <- extractant_average(data, extr_def = c("extr_1", "extr_2")))
+(blank_avg <- extractant_average(dbl_extr_plate, extr_def = c("extr_1", "extr_2")))
 }

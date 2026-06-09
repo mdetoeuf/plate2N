@@ -80,8 +80,7 @@ utils::globalVariables(c("blank_sdev", "blank_avg", "plate_id", "map", "abs"))
 #' multiple_extractant_id # check it out
 #' # joining with multiple_extractant_id
 #' (dbl_extr_plate <- tidy_2_extr |> dplyr::left_join(multiple_extractant_id))
-#' data <- dbl_extr_plate
-#' (blank_avg <- extractant_average(data, extr_def = c("extr_1", "extr_2")))
+#' (blank_avg <- extractant_average(dbl_extr_plate, extr_def = c("extr_1", "extr_2")))
 extractant_average <- function(
     data = NULL, #either data or extractant_data must be provided
     extractant_data = NULL,

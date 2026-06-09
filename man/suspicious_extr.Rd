@@ -4,20 +4,30 @@
 \alias{suspicious_extr}
 \title{Extract suspicious extractant wells}
 \usage{
-suspicious_extr(data, suspicious_plate_id = NULL, max_coeff = 5)
+suspicious_extr(
+  data,
+  extr_def = "extr",
+  suspicious_extr_per_plate = NULL,
+  max_coeff = 5
+)
 }
 \arguments{
-\item{data}{Tibble formatted as \code{tidy_plates}}
+\item{data}{A tibble, as in \code{tidy_plates}.}
 
-\item{suspicious_plate_id}{If NULL (default), computed from \code{data} with \code{qc_raw_extr(data, max_coeff = max_coeff)}}
+\item{extr_def}{Needed to compute \code{extractant_average}. Defaults to "extr"}
+
+\item{suspicious_extr_per_plate}{If NULL (default), computed from \code{data} with
+\code{qc_raw_extr(data, max_coeff = max_coeff)}. Should be a tibble with 2 columns:
+\code{plate_id} and \code{map}}
 
 \item{max_coeff}{User-defined threshold value, defaults at 5\%. All plates for which
 the coefficient of variation for extractant raw absorbance is above this threshold
 will be considered "suspicious plates"}
 }
 \value{
-A subset of \code{data} containing only plates where
-raw extractant values should be reviewed
+A subset of \code{data} containing only plates where raw extractant values
+should be reviewed (because their coefficient of variation is above the
+user-defined threshold)
 }
 \description{
 Extract suspicious extractant wells
@@ -25,9 +35,17 @@ Extract suspicious extractant wells
 \examples{
 data <- tidy_plates
 # 0.5 is unreasonable in most uses, but is used here to ensure some output
-suspicious_plate_id <- qc_raw_extr(data, max_coeff = 0.5,
+suspicious_plate_id <- qc_raw_extr(data, max_coeff = 5,
     suppress_message = TRUE, suppress_warning = TRUE)
-suspicious_extr <- suspicious_extr(data, max_coeff = 0.5,
-    suspicious_plate_id = suspicious_plate_id)
-suspicious_extr
+(suspicious_extr <- suspicious_extr(data, max_coeff = 0.5,
+    suspicious_extr_per_plate = suspicious_plate_id))
+
+# example with 2 extractants
+dbl_extr_plate
+(suspicious_extr_per_plate <- qc_raw_extr(
+    dbl_extr_plate, extr_def = c("extr_1", "extr_2"),
+    max_coeff = 5, suppress_message = TRUE, suppress_warning = TRUE))
+(suspicious_extr <- suspicious_extr(
+    dbl_extr_plate, extr_def = c("extr_1", "extr_2"),
+    max_coeff = 5, suspicious_extr_per_plate = suspicious_extr_per_plate))
 }

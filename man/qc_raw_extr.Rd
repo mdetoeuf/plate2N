@@ -5,14 +5,24 @@
 \title{Quality check of raw absorbance data for extractant wells}
 \usage{
 qc_raw_extr(
-  data,
+  data = NULL,
+  extractant_average = NULL,
+  extr_def = "extr",
   max_coeff = 5,
   suppress_message = FALSE,
   suppress_warning = FALSE
 )
 }
 \arguments{
-\item{data}{A tibble, as in \code{tidy_plates}}
+\item{data}{A tibble, as in \code{tidy_plates}, optional. It is only used if argument
+\code{extractant_data} is \code{NULL} to compute it with \code{extractant_average()} and
+the argument \code{extr_def}.}
+
+\item{extractant_average}{Defaults to NULL, where it is computed from \code{data}
+using \code{extractant_average(data)}}
+
+\item{extr_def}{Optional: is needed to compute \code{extractant_average} if needed.
+Defaults to "extr"}
 
 \item{max_coeff}{User-defined, in \% (defaults at 5): determines the threshold
 coefficient of variation for raw absorbance of extractant wells, above which
@@ -30,9 +40,22 @@ Extracts plate ID's where it is suspected that raw absorbance
 data for extractant (sample blank) still contain some outliers.
 The criterion for a plate to be deemed "suspicious" is defined by max_coeff
 }
+\details{
+\code{qc_raw_extr()} is not yet optimized for the case where there are 2 exractant:
+it works, but it returns a list of problematic plates without telling which
+extractant is problematic on that plate
+}
 \examples{
 # example code
 data <- tidy_plates
 extractant_average <- tidy_plates |> extractant_average()
-suspicious_plate_id <- qc_raw_extr(data, max_coeff = 0.5)
+(suspicious_plate_id <- qc_raw_extr(data, max_coeff = 5))
+
+# example with 2 extractants
+dbl_extr_plate
+(suspicious_extr_per_plate <- qc_raw_extr(
+    dbl_extr_plate, extr_def = c("extr_1", "extr_2"),
+    max_coeff = 5, suppress_message = TRUE, suppress_warning = TRUE))
+
+
 }
