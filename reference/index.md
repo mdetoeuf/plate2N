@@ -14,6 +14,8 @@
   absorbance values.
 - [`csv_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/csv_to_tibble.md)
   : Import 96-well plate data in csv format
+- [`dbl_extr_plate`](https://mdetoeuf.github.io/plate2N/reference/dbl_extr_plate.md)
+  : Tidy Table with 2 different Extractant IDs
 - [`density_lm_param()`](https://mdetoeuf.github.io/plate2N/reference/density_lm_param.md)
   : Plot Distribution of Model QC Parameters (p-val, R2 and adjusted R2)
 - [`extract_curve()`](https://mdetoeuf.github.io/plate2N/reference/extract_curve.md)

@@ -440,7 +440,7 @@ std_corrected <-
   dplyr::select(row:abs_corrected)
 #> Joining with `by = join_by(dataset, plate_id)`
 #> Joining with `by = join_by(row, column, well_id, unique_well_id, dataset,
-#> plate_id, unique_curve_id, map, std_sp, std_unit, std_conc)`
+#> plate_id, unique_curve_id, map, std_sp, std_unit, std_conc, extr_id)`
 
 # Check it out
 std_corrected
@@ -557,6 +557,8 @@ computes the average, standard deviation and coefficient of variation
 
 ### 3.3 - Quality check of extractant and outlier removal
 
+#### 3.3.1 - One extractant per plate
+
 [`plot_blank_var_distrib()`](https://mdetoeuf.github.io/plate2N/reference/plot_blank_var_distrib.md)
 plots a distribution of this coefficient of variation throughout the
 data set (which becomes relevant in big data sets).
@@ -608,7 +610,7 @@ extractant.
 
 threshold <- 5
 
-suspicious_plate_ids <- raw_meta |> 
+suspicious_extr_per_plate <- raw_meta |> 
   qc_raw_extr(suppress_warning = FALSE, max_coeff = threshold)
 #> Warning in qc_raw_extr(raw_meta, suppress_warning = FALSE, max_coeff = threshold): 
 #>         There is a big variation in absorbance values for the blank (more than 5%).
@@ -622,8 +624,12 @@ have been recorded in `suspicious_plate_ids`.
 
 ``` r
 
-suspicious_plate_ids
-#> [1] "NO3_1F2" "NO3_1F4"
+suspicious_extr_per_plate
+#> # A tibble: 2 × 2
+#>   plate_id map  
+#>   <chr>    <chr>
+#> 1 NO3_1F2  extr 
+#> 2 NO3_1F4  extr
 ```
 
 Should all plates have a coefficient of variation for the absorbance of
@@ -649,10 +655,10 @@ To obtain the full extractant data corresponding to our
 
 (suspicious_extr <- suspicious_extr(
   raw_meta, 
-  suspicious_plate_id = suspicious_plate_ids, 
+  suspicious_extr_per_plate = suspicious_extr_per_plate, 
   max_coeff = threshold))
+#> Joining with `by = join_by(plate_id, map)`
 #> # A tibble: 16 × 11
-#> # Groups:   plate_id, map [2]
 #>    row   column well_id unique_well_id dataset plate_id map     abs std_sp
 #>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr> <dbl> <chr> 
 #>  1 A     8      A8      A8_NO3_1F2     Nmin    NO3_1F2  extr  0.083 NO3   
@@ -687,10 +693,13 @@ Should there be too many plates for a proper visualization, split
 ``` r
 
 # plot outliers
-suspicious_extr |> boxplot_outlier_extr(max_coeff = threshold)
+suspicious_extr |> boxplot_outlier_extr(max_coeff = threshold) + ggplot2::facet_wrap(~map)
+#> Joining with `by = join_by(plate_id)`
 ```
 
 ![](blank-correction_files/figure-html/unnamed-chunk-24-1.png)
+
+#### 3.3.2 - Outlier removal steps
 
 He have here 2 very obvious outliers: wells D8 and C8 in plate 1
 (NO3_1F2) and well F8 in plate 2 (NO3_1F4), which we want to remove. The
@@ -815,7 +824,7 @@ extr_avg_clean <- extractant_average(
 ```
 
 Check that the highest coefficients of variation are now indeed
-satisfactory (below our threshold of `threshold`%).
+satisfactory (below our threshold of 5%).
 
 ``` r
 
@@ -829,6 +838,209 @@ extr_avg_clean |> dplyr::arrange(dplyr::desc(blank_coeff_var_percent)) |> head()
 #> 4 Nmin    NO3_1F1  extr     0.0828   0.000463                   0.559
 #> 5 Nmin    NO3_1F5  extr     0.0838   0.000463                   0.553
 ```
+
+#### 3.3.3 - 2 or more extractants per plate
+
+The steps are the same as with one extractant, but the syntax changes
+slightly. Let’s take the example data set `dbl_extr_plate`:
+
+``` r
+
+dbl_extr_plate
+#> # A tibble: 480 × 9
+#>    row   column well_id unique_well_id dataset plate_id map      abs   extr_id
+#>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr>    <chr> <chr>  
+#>  1 A     1      A1      A1_NO3_1F1     Nmin    NO3_1F1  Std      0.092 none   
+#>  2 A     1      A1      A1_NO3_1F2     Nmin    NO3_1F2  Std      0.091 none   
+#>  3 A     1      A1      A1_NO3_1F3     Nmin    NO3_1F3  Std      0.110 none   
+#>  4 A     1      A1      A1_NO3_1F4     Nmin    NO3_1F4  Std      0.092 none   
+#>  5 A     1      A1      A1_NO3_1F5     Nmin    NO3_1F5  Std      0.113 none   
+#>  6 A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  81_t1_z2 0.114 extr_1 
+#>  7 A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  97_t1_z1 0.107 extr_2 
+#>  8 A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  89_t1_z3 0.095 extr_2 
+#>  9 A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  81_t1_z1 0.118 extr_1 
+#> 10 A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  Std_3_t1 0.167 extr_2 
+#> # ℹ 470 more rows
+```
+
+Here is, in brief, how to adapt the same steps as described above:
+
+``` r
+
+# extracting only extractant data
+(extr_data_dbl <- extract_extractant(dbl_extr_plate,extr_def = c("extr_1", "extr_2"))) 
+#> # A tibble: 80 × 9
+#>    row   column well_id unique_well_id dataset plate_id map    abs   extr_id
+#>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr>  <chr> <chr>  
+#>  1 A     4      A4      A4_NO3_1F1     Nmin    NO3_1F1  extr_2 0.110 extr_2 
+#>  2 A     4      A4      A4_NO3_1F2     Nmin    NO3_1F2  extr_2 0.093 extr_2 
+#>  3 A     4      A4      A4_NO3_1F3     Nmin    NO3_1F3  extr_2 0.102 extr_2 
+#>  4 A     4      A4      A4_NO3_1F4     Nmin    NO3_1F4  extr_2 0.108 extr_2 
+#>  5 A     4      A4      A4_NO3_1F5     Nmin    NO3_1F5  extr_2 0.101 extr_2 
+#>  6 A     8      A8      A8_NO3_1F1     Nmin    NO3_1F1  extr_1 0.083 extr_1 
+#>  7 A     8      A8      A8_NO3_1F2     Nmin    NO3_1F2  extr_1 0.083 extr_1 
+#>  8 A     8      A8      A8_NO3_1F3     Nmin    NO3_1F3  extr_1 0.084 extr_1 
+#>  9 A     8      A8      A8_NO3_1F4     Nmin    NO3_1F4  extr_1 0.084 extr_1 
+#> 10 A     8      A8      A8_NO3_1F5     Nmin    NO3_1F5  extr_1 0.084 extr_1 
+#> # ℹ 70 more rows
+
+#computing extractant average
+(extr_avg_dbl <- extractant_average(dbl_extr_plate, extr_def = c("extr_1", "extr_2"))) 
+#> # A tibble: 10 × 6
+#>    dataset plate_id map    blank_avg blank_sdev blank_coeff_var_percent
+#>    <chr>   <chr>    <chr>      <dbl>      <dbl>                   <dbl>
+#>  1 Nmin    NO3_1F1  extr_1    0.0828   0.000463                   0.559
+#>  2 Nmin    NO3_1F2  extr_1    0.117    0.0657                    56.3  
+#>  3 Nmin    NO3_1F3  extr_1    0.0846   0.00151                    1.78 
+#>  4 Nmin    NO3_1F4  extr_1    0.0743   0.0268                    36.1  
+#>  5 Nmin    NO3_1F5  extr_1    0.0838   0.000463                   0.553
+#>  6 Nmin    NO3_1F1  extr_2    0.101    0.00910                    9.01 
+#>  7 Nmin    NO3_1F2  extr_2    0.0972   0.00539                    5.54 
+#>  8 Nmin    NO3_1F3  extr_2    0.0974   0.00374                    3.84 
+#>  9 Nmin    NO3_1F4  extr_2    0.111    0.00362                    3.26 
+#> 10 Nmin    NO3_1F5  extr_2    0.0882   0.00774                    8.77
+
+# Quality checking of coefficient of variation
+plot_blank_var_distrib(extr_avg_dbl)
+```
+
+![](blank-correction_files/figure-html/unnamed-chunk-33-1.png)
+
+``` r
+
+
+# identifying suspicious plate-extractant combinations
+(suspicious_extr_per_plate_dbl <- dbl_extr_plate |> 
+  qc_raw_extr(suppress_warning = FALSE, extr_def = c("extr_1", "extr_2"), max_coeff = 5))
+#> Warning in qc_raw_extr(dbl_extr_plate, suppress_warning = FALSE, extr_def = c("extr_1", : 
+#>         There is a big variation in absorbance values for the blank (more than 5%).
+#>         Remove the most unlikely values / remove outliers manually.
+#>         Suspicious plate ID's are returned
+#> # A tibble: 5 × 2
+#>   plate_id map   
+#>   <chr>    <chr> 
+#> 1 NO3_1F2  extr_1
+#> 2 NO3_1F4  extr_1
+#> 3 NO3_1F1  extr_2
+#> 4 NO3_1F2  extr_2
+#> 5 NO3_1F5  extr_2
+
+# subsetting from extractant data only the plate-extractant combinations that are suspicious
+(suspicious_extr_dbl <- suspicious_extr(
+  dbl_extr_plate, extr_def = c("extr_1", "extr_2"),
+  suspicious_extr_per_plate = suspicious_extr_per_plate_dbl, 
+  max_coeff = 5))
+#> Joining with `by = join_by(plate_id, map)`
+#> # A tibble: 40 × 9
+#>    row   column well_id unique_well_id dataset plate_id map      abs extr_id
+#>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr>  <dbl> <chr>  
+#>  1 A     4      A4      A4_NO3_1F1     Nmin    NO3_1F1  extr_2 0.11  extr_2 
+#>  2 B     4      B4      B4_NO3_1F1     Nmin    NO3_1F1  extr_2 0.109 extr_2 
+#>  3 C     4      C4      C4_NO3_1F1     Nmin    NO3_1F1  extr_2 0.11  extr_2 
+#>  4 D     4      D4      D4_NO3_1F1     Nmin    NO3_1F1  extr_2 0.109 extr_2 
+#>  5 E     4      E4      E4_NO3_1F1     Nmin    NO3_1F1  extr_2 0.092 extr_2 
+#>  6 F     4      F4      F4_NO3_1F1     Nmin    NO3_1F1  extr_2 0.093 extr_2 
+#>  7 G     4      G4      G4_NO3_1F1     Nmin    NO3_1F1  extr_2 0.093 extr_2 
+#>  8 H     4      H4      H4_NO3_1F1     Nmin    NO3_1F1  extr_2 0.092 extr_2 
+#>  9 A     8      A8      A8_NO3_1F2     Nmin    NO3_1F2  extr_1 0.083 extr_1 
+#> 10 B     8      B8      B8_NO3_1F2     Nmin    NO3_1F2  extr_1 0.082 extr_1 
+#> # ℹ 30 more rows
+
+# plot outliers
+suspicious_extr_dbl |> boxplot_outlier_extr(max_coeff = 5) 
+#> Joining with `by = join_by(plate_id)`
+```
+
+![](blank-correction_files/figure-html/unnamed-chunk-33-2.png)
+
+Now, adapting the outlier removal steps
+
+> **Even with facetting, read each plate once**
+>
+> When determining outliers to remove, still read plates only once.
+> Indeed, even if each plate receives up to 2 boxplots, any well within
+> a boxplot will be unique, as both boxplots come from the data of the
+> same plate. Therefore, inputting outlier removal follows strictly the
+> same steps as above
+
+``` r
+
+# Construct tibble to remove
+(plate_ids_dbl <- suspicious_extr_dbl |> 
+    dplyr::ungroup() |> 
+    dplyr::select(dataset, plate_id) |> 
+    unique()) 
+#> # A tibble: 4 × 2
+#>   dataset plate_id
+#>   <chr>   <chr>   
+#> 1 Nmin    NO3_1F1 
+#> 2 Nmin    NO3_1F2 
+#> 3 Nmin    NO3_1F4 
+#> 4 Nmin    NO3_1F5
+
+# save numbers for plate order in the plot
+(plate_ids_dbl <- plate_ids_dbl |> 
+  dplyr::mutate(plate_order = seq(1, nrow(plate_ids_dbl))))
+#> # A tibble: 4 × 3
+#>   dataset plate_id plate_order
+#>   <chr>   <chr>          <int>
+#> 1 Nmin    NO3_1F1            1
+#> 2 Nmin    NO3_1F2            2
+#> 3 Nmin    NO3_1F4            3
+#> 4 Nmin    NO3_1F5            4
+
+#** !!! MANUAL INPUT !!! *
+
+# Which plate needs 2 outliers removed?
+plate_with_2_outliers <- c(2) # if no plate fits this description: give a "too high" number 
+# Which plate needs no outlier removed?
+plate_without_outliers <- c(1, 4) 
+
+# Which wells are outliers? 
+well_ids <- c("C8", "D8", "F8") # only fill in well_ids that need to be removed, in the order of the plates
+
+# complete the table of wells to remove (strictly identical as above)
+to_remove_dbl <- plate_ids_dbl |> 
+  # double rows for plates with 2 outliers
+  dplyr::bind_rows(
+    plate_ids_dbl |> dplyr::filter(plate_order %in% plate_with_2_outliers)) |> 
+  #remove plate without outliers
+  dplyr::filter_out(plate_order %in% plate_without_outliers) |> 
+  #reorder plates (if some were doubled)
+  dplyr::arrange(plate_order) |> 
+  # add column with well ids from vector defined above
+  dplyr::mutate(well_id = well_ids) |> 
+  # remove plate_order(optional)
+  dplyr::select(!plate_order)
+
+# check it out
+to_remove_dbl
+#> # A tibble: 3 × 3
+#>   dataset plate_id well_id
+#>   <chr>   <chr>    <chr>  
+#> 1 Nmin    NO3_1F2  C8     
+#> 2 Nmin    NO3_1F2  D8     
+#> 3 Nmin    NO3_1F4  F8
+
+# remove those wells
+extr_data_clean_dbl <- extr_data_dbl |> remove_wells(to_remove_dbl) 
+
+# check out nb of rows
+nrow(extr_data_dbl) ; nrow(to_remove_dbl); nrow(extr_data_clean_dbl)
+#> [1] 80
+#> [1] 3
+#> [1] 77
+
+# re-run average
+extr_avg_clean_dbl <- extractant_average(
+  extractant_data = extr_data_clean_dbl, extr_def = c("extr_1", "extr_2")) 
+```
+
+Here we do not re-check that the coefficient of variation is under the
+threshold because: the data under “extr_2” were artificially changed,
+but their absorbance readings are actually those of samples, therefore
+the distribution of values was not really presenting the sort of
+outliers that was expected. But it would be good to run it in real life
 
 ### 3.4 - Blank-correction of sample absorbance
 
@@ -859,20 +1071,32 @@ sample_corrected <-
     raw_wells_data = raw_meta, 
     per_plate_avg_blank = extr_avg_clean,
     map_to_exclude = c("empty","Std","extr")) 
-#> Joining with `by = join_by(dataset, plate_id)`
+#> Joining with `by = join_by(dataset, plate_id, extr_id)`
 #> Joining with `by = join_by(row, column, well_id, unique_well_id, dataset,
-#> plate_id, map, std_sp, std_unit, std_conc)`
+#> plate_id, map, std_sp, std_unit, std_conc, extr_id)`
+
+# for case of 2 extractants:
+sample_corrected_dbl <- 
+  blank_correct_abs(
+    raw_wells_data = dbl_extr_plate, 
+    per_plate_avg_blank = extr_avg_clean_dbl,
+    extr_def = c("extr_1", "extr_2"),
+    map_to_exclude = c("empty","Std","extr_1", "extr_2")) 
+#> Joining with `by = join_by(dataset, plate_id, extr_id)`
+#> Joining with `by = join_by(row, column, well_id, unique_well_id, dataset,
+#> plate_id, map, extr_id)`
 ```
 
 Let’s have a look at the output and notice the absence of the value `1`
 in the column `column` (no data for standard curve[^5]), and of the
-value `extr` in the column `map` (though it is present in `raw_meta`.
+value `extr` in the column `map` (though it was present in `raw_meta`
+and still can be found under `extr_id`).
 
 ``` r
 
 # Check it out
 sample_corrected
-#> # A tibble: 264 × 13
+#> # A tibble: 264 × 14
 #>    row   column well_id unique_well_id dataset plate_id map      abs_corrected
 #>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr>            <dbl>
 #>  1 A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  81_t1_z2        0.0312
@@ -886,8 +1110,8 @@ sample_corrected
 #>  9 A     3      A3      A3_NO3_1F4     Nmin    NO3_1F4  82_t1_z3        0.0543
 #> 10 A     3      A3      A3_NO3_1F5     Nmin    NO3_1F5  98_t1_z3        0.0232
 #> # ℹ 254 more rows
-#> # ℹ 5 more variables: std_sp <chr>, std_unit <chr>, std_conc <chr>,
-#> #   blank_sdev <dbl>, blank_coeff_var_percent <dbl>
+#> # ℹ 6 more variables: std_sp <chr>, std_unit <chr>, std_conc <chr>,
+#> #   extr_id <chr>, blank_sdev <dbl>, blank_coeff_var_percent <dbl>
 
 # "extr" was in raw_meta
 raw_meta |> dplyr::select(map) |> dplyr::arrange(dplyr::desc(map))

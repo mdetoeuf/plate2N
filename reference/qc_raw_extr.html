@@ -11,7 +11,7 @@ The criterion for a plate to be deemed &quot;suspicious&quot; is defined by max_
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.8</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,7 +54,9 @@ The criterion for a plate to be deemed "suspicious" is defined by max_coeff</p>
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">qc_raw_extr</span><span class="op">(</span></span>
-<span>  <span class="va">data</span>,</span>
+<span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  extractant_average <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  extr_def <span class="op">=</span> <span class="st">"extr"</span>,</span>
 <span>  max_coeff <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>  suppress_message <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  suppress_warning <span class="op">=</span> <span class="cn">FALSE</span></span>
@@ -66,7 +68,19 @@ The criterion for a plate to be deemed "suspicious" is defined by max_coeff</p>
 
 
 <dl><dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
-<dd><p>A tibble, as in <code>tidy_plates</code></p></dd>
+<dd><p>A tibble, as in <code>tidy_plates</code>, optional. It is only used if argument
+<code>extractant_data</code> is <code>NULL</code> to compute it with <code><a href="extractant_average.html">extractant_average()</a></code> and
+the argument <code>extr_def</code>.</p></dd>
+
+
+<dt id="arg-extractant-average">extractant_average<a class="anchor" aria-label="anchor" href="#arg-extractant-average"></a></dt>
+<dd><p>Defaults to NULL, where it is computed from <code>data</code>
+using <code>extractant_average(data)</code></p></dd>
+
+
+<dt id="arg-extr-def">extr_def<a class="anchor" aria-label="anchor" href="#arg-extr-def"></a></dt>
+<dd><p>Optional: is needed to compute <code>extractant_average</code> if needed.
+Defaults to "extr"</p></dd>
 
 
 <dt id="arg-max-coeff">max_coeff<a class="anchor" aria-label="anchor" href="#arg-max-coeff"></a></dt>
@@ -87,17 +101,58 @@ plates will be considered "suspicious"</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>ID's of suspicious plates. (+ a message or warning if not suppressed)</p>
     </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p><code>qc_raw_extr()</code> is not yet optimized for the case where there are 2 exractant:
+it works, but it returns a list of problematic plates without telling which
+extractant is problematic on that plate</p>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># example code</span></span></span>
 <span class="r-in"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="va">tidy_plates</span></span></span>
 <span class="r-in"><span><span class="va">extractant_average</span> <span class="op">&lt;-</span> <span class="va">tidy_plates</span> <span class="op">|&gt;</span> <span class="fu"><a href="extractant_average.html">extractant_average</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">suspicious_plate_id</span> <span class="op">&lt;-</span> <span class="fu">qc_raw_extr</span><span class="op">(</span><span class="va">data</span>, max_coeff <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">(</span><span class="va">suspicious_plate_id</span> <span class="op">&lt;-</span> <span class="fu">qc_raw_extr</span><span class="op">(</span><span class="va">data</span>, max_coeff <span class="op">=</span> <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span>         There is a big variation in absorbance values for the blank (more than 0.5%).</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span>         There is a big variation in absorbance values for the blank (more than 5%).</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span>         Remove the most unlikely values / remove outliers manually.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span>         Suspicious plate ID's are returned</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 2 × 2</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   plate_id map  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> NO3_1F2  extr </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> NO3_1F4  extr </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># example with 2 extractants</span></span></span>
+<span class="r-in"><span><span class="va">dbl_extr_plate</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 480 × 9</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    row   column well_id unique_well_id dataset plate_id map      abs   extr_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> A     1      A1      A1_NO3_1F1     Nmin    NO3_1F1  Std      0.092 none   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> A     1      A1      A1_NO3_1F2     Nmin    NO3_1F2  Std      0.091 none   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> A     1      A1      A1_NO3_1F3     Nmin    NO3_1F3  Std      0.110 none   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> A     1      A1      A1_NO3_1F4     Nmin    NO3_1F4  Std      0.092 none   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> A     1      A1      A1_NO3_1F5     Nmin    NO3_1F5  Std      0.113 none   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  81_t1_z2 0.114 extr_1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  97_t1_z1 0.107 extr_2 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  89_t1_z3 0.095 extr_2 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  81_t1_z1 0.118 extr_1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  Std_3_t1 0.167 extr_2 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 470 more rows</span></span>
+<span class="r-in"><span><span class="op">(</span><span class="va">suspicious_extr_per_plate</span> <span class="op">&lt;-</span> <span class="fu">qc_raw_extr</span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="va">dbl_extr_plate</span>, extr_def <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"extr_1"</span>, <span class="st">"extr_2"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    max_coeff <span class="op">=</span> <span class="fl">5</span>, suppress_message <span class="op">=</span> <span class="cn">TRUE</span>, suppress_warning <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 5 × 2</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   plate_id map   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> NO3_1F2  extr_1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> NO3_1F4  extr_1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> NO3_1F1  extr_2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> NO3_1F2  extr_2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> NO3_1F5  extr_2</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

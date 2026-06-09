@@ -86,8 +86,7 @@ multiple_extractant_id # check it out
 #>  9 A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  81_t1_z1 0.118 extr_1 
 #> 10 A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  Std_3_t1 0.167 extr_2 
 #> # ℹ 470 more rows
-data <- dbl_extr_plate
-(blank_avg <- extractant_average(data, extr_def = c("extr_1", "extr_2")))
+(blank_avg <- extractant_average(dbl_extr_plate, extr_def = c("extr_1", "extr_2")))
 #> # A tibble: 10 × 6
 #>    dataset plate_id map    blank_avg blank_sdev blank_coeff_var_percent
 #>    <chr>   <chr>    <chr>      <dbl>      <dbl>                   <dbl>

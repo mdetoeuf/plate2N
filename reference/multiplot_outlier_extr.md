@@ -44,15 +44,12 @@ and definition of threshold values
 ``` r
 data <- tidy_plates
 # 0.5 is unreasonable in most uses, but is used here to ensure some output
-suspicious_plate_id <- qc_raw_extr(data, max_coeff = 0.5,
+suspicious_extr_per_plate <- qc_raw_extr(data, max_coeff = 5,
     suppress_message = TRUE, suppress_warning = TRUE)
-suspicious_extr <- suspicious_extr(data, max_coeff = 0.5,
-    suspicious_plate_id = suspicious_plate_id)
-multiplot_outlier_extr(suspicious_extractant = suspicious_extr, max_coeff = 0.5)
-#> `stat_bin()` using `bins = 30`. Pick better value `binwidth`.
-#> `stat_bin()` using `bins = 30`. Pick better value `binwidth`.
-#> `stat_bin()` using `bins = 30`. Pick better value `binwidth`.
-#> `stat_bin()` using `bins = 30`. Pick better value `binwidth`.
+suspicious_extr <- suspicious_extr(data, max_coeff = 5,
+    suspicious_extr_per_plate = suspicious_extr_per_plate)
+#> Joining with `by = join_by(plate_id, map)`
+multiplot_outlier_extr(suspicious_extractant = suspicious_extr, max_coeff = 5)
 #> `stat_bin()` using `bins = 30`. Pick better value `binwidth`.
 
 ## Tip: if too many curves appear, consider cutting `suspicious_extractant`

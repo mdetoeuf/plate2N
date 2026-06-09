@@ -86,18 +86,18 @@ empty wells will be mapped using the character string defined under
 
 ``` r
 (samples <- sample(LETTERS, size = 15))
-#>  [1] "O" "Z" "D" "F" "I" "E" "U" "Y" "M" "B" "N" "G" "K" "P" "T"
+#>  [1] "O" "M" "B" "W" "K" "V" "E" "L" "X" "F" "Z" "P" "D" "R" "C"
 map_1_plate(plate_id = "test_plate", samples = samples)
 #> # A tibble: 9 × 13
 #>   row    X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12  
 #>   <chr>  <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr>
 #> 1 test_… 1     2     3     4     5     6     7     8     9     10    11    12   
-#> 2 A      Std   O     D     I     U     M     N     extr  K     T     empty Std  
-#> 3 B      Std   O     D     I     U     M     N     extr  K     T     empty Std  
-#> 4 C      Std   O     D     I     U     M     N     extr  K     T     empty Std  
-#> 5 D      Std   O     D     I     U     M     N     extr  K     T     empty Std  
-#> 6 E      Std   Z     F     E     Y     B     G     extr  P     empty empty Std  
-#> 7 F      Std   Z     F     E     Y     B     G     extr  P     empty empty Std  
-#> 8 G      Std   Z     F     E     Y     B     G     extr  P     empty empty Std  
-#> 9 H      Std   Z     F     E     Y     B     G     extr  P     empty empty Std  
+#> 2 A      Std   O     B     K     E     X     Z     extr  D     C     empty Std  
+#> 3 B      Std   O     B     K     E     X     Z     extr  D     C     empty Std  
+#> 4 C      Std   O     B     K     E     X     Z     extr  D     C     empty Std  
+#> 5 D      Std   O     B     K     E     X     Z     extr  D     C     empty Std  
+#> 6 E      Std   M     W     V     L     F     P     extr  R     empty empty Std  
+#> 7 F      Std   M     W     V     L     F     P     extr  R     empty empty Std  
+#> 8 G      Std   M     W     V     L     F     P     extr  R     empty empty Std  
+#> 9 H      Std   M     W     V     L     F     P     extr  R     empty empty Std  
 ```
