@@ -440,6 +440,9 @@ dbl_extr_plate
 Here is, in brief, how to adapt the same steps as described above:
 
 ```{r}
+# extracting only extractant data
+(extr_data_dbl <- extract_extractant(dbl_extr_plate,extr_def = c("extr_1", "extr_2"))) 
+
 #computing extractant average
 (extr_avg_dbl <- extractant_average(dbl_extr_plate, extr_def = c("extr_1", "extr_2"))) 
 
@@ -458,7 +461,68 @@ plot_blank_var_distrib(extr_avg_dbl)
 
 # plot outliers
 suspicious_extr_dbl |> boxplot_outlier_extr(max_coeff = 5) 
+
+
 ```
+
+Now, adapting the outlier removal steps
+
+::: callout-tip
+## Even with facetting, read each plate once
+
+When determining outliers to remove, still read plates only once. Indeed, even if each plate receives up to 2 boxplots, any well within a boxplot will be unique, as both boxplots come from the data of the same plate. Therefore, inputting outlier removal follows strictly the same steps as above
+:::
+
+```{r}
+# Construct tibble to remove
+(plate_ids_dbl <- suspicious_extr_dbl |> 
+    dplyr::ungroup() |> 
+    dplyr::select(dataset, plate_id) |> 
+    unique()) 
+
+# save numbers for plate order in the plot
+(plate_ids_dbl <- plate_ids_dbl |> 
+  dplyr::mutate(plate_order = seq(1, nrow(plate_ids_dbl))))
+
+#** !!! MANUAL INPUT !!! *
+
+# Which plate needs 2 outliers removed?
+plate_with_2_outliers <- c(2) # if no plate fits this description: give a "too high" number 
+# Which plate needs no outlier removed?
+plate_without_outliers <- c(1, 4) 
+
+# Which wells are outliers? 
+well_ids <- c("C8", "D8", "F8") # only fill in well_ids that need to be removed, in the order of the plates
+
+# complete the table of wells to remove (strictly identical as above)
+to_remove_dbl <- plate_ids_dbl |> 
+  # double rows for plates with 2 outliers
+  dplyr::bind_rows(
+    plate_ids_dbl |> dplyr::filter(plate_order %in% plate_with_2_outliers)) |> 
+  #remove plate without outliers
+  dplyr::filter_out(plate_order %in% plate_without_outliers) |> 
+  #reorder plates (if some were doubled)
+  dplyr::arrange(plate_order) |> 
+  # add column with well ids from vector defined above
+  dplyr::mutate(well_id = well_ids) |> 
+  # remove plate_order(optional)
+  dplyr::select(!plate_order)
+
+# check it out
+to_remove_dbl
+
+# remove those wells
+extr_data_clean_dbl <- extr_data_dbl |> remove_wells(to_remove_dbl) 
+
+# check out nb of rows
+nrow(extr_data_dbl) ; nrow(to_remove_dbl); nrow(extr_data_clean_dbl)
+
+# re-run average
+extr_avg_clean_dbl <- extractant_average(
+  extractant_data = extr_data_clean_dbl, extr_def = c("extr_1", "extr_2")) 
+```
+
+Here we do not re-check that the coefficient of variation is under the threshold because: the data under "extr_2" were artificially changed, but their absorbance readings are actually those of samples, therefore the distribution of values was not really presenting the sort of outliers that was expected. But it would be good to run it in real life
 
 ## 3.4 - Blank-correction of sample absorbance
 

@@ -280,15 +280,15 @@ boxplot_outlier_extr <- function(
   plate_numbers <- suspicious_extractant |>
     select(plate_id) |>
     unique() |>
-    mutate(plate_nb = seq(nb_plates,1))
+    mutate(plate_nb = seq(1, nb_plates))
 
   suspicious_extractant <- suspicious_extractant |> left_join(plate_numbers)
 
   text_data <- suspicious_extractant |> select(plate_id, plate_nb) |> unique()
 
   boxplot <- suspicious_extractant |>
-    ggplot2::ggplot(ggplot2::aes(x = abs, y = plate_id)) +
-#    ggplot2::ggplot(ggplot2::aes(x = abs, y = forcats::fct_rev(plate_id))) +
+#    ggplot2::ggplot(ggplot2::aes(x = abs, y = plate_id)) +
+    ggplot2::ggplot(ggplot2::aes(x = abs, y = forcats::fct_rev(plate_id))) +
     ggplot2::theme_minimal() +
     ggplot2::geom_boxplot(
       fill = "grey90", color = "grey70",
