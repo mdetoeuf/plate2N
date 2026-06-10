@@ -7,11 +7,12 @@
 txt_to_tibble(filepath, extension = ".TXT", output = "tibble")
 }
 \arguments{
-\item{filepath}{The path to the folder containing the .TXT files. The folder may contain other non-TXT files, but all .TXT files within the folder will be included. \strong{Warning:} the only "." allowed in the filename is the one before the TXT extension}
+\item{filepath}{The path to the folder containing the .TXT files. The folder
+may contain other non-TXT files, but all .TXT files within the folder will be included.}
 
 \item{extension}{The default is ".TXT". This parameter defines the pattern by which files to be included will be picked from the folder identified by 'filepath'.}
 
-\item{output}{Desired output format. Default is a tibble. Alternative option is a list (one element per plate)}
+\item{output}{Desired output format. Default "tibble." Alternative option is a list (one element of the list attributed to each plate)}
 }
 \value{
 Depends on the output parameter.
@@ -20,4 +21,8 @@ If \code{output = "list"}, a list where each element is a tibble corresponding t
 }
 \description{
 Imports 96-well plate data from .TXT format as exported from the plate reader
+}
+\examples{
+filepath <- system.file("extdata", "txt_examples/", package = "plate2N")
+abs_tibble <- txt_to_tibble(filepath)
 }

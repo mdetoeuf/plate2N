@@ -32,9 +32,10 @@ names(columns) <- c("row", "X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9",
 
 #' Imports 96-well plate data from .TXT format as exported from the plate reader
 #'
-#' @param filepath The path to the folder containing the .TXT files. The folder may contain other non-TXT files, but all .TXT files within the folder will be included. **Warning:** the only "." allowed in the filename is the one before the TXT extension
+#' @param filepath The path to the folder containing the .TXT files. The folder
+#'     may contain other non-TXT files, but all .TXT files within the folder will be included.
 #' @param extension The default is ".TXT". This parameter defines the pattern by which files to be included will be picked from the folder identified by 'filepath'.
-#' @param output Desired output format. Default is a tibble. Alternative option is a list (one element per plate)
+#' @param output Desired output format. Default "tibble." Alternative option is a list (one element of the list attributed to each plate)
 #'
 #' @import dplyr readr stringr tidyr
 #'
@@ -43,13 +44,14 @@ names(columns) <- c("row", "X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9",
 #'          If `output = "list"`, a list where each element is a tibble corresponding to raw plate data (1 file --> 1 plate --> 1 element). Names of the elements correspond to the names of the files (without the extension .TXT). A good practice is thus to name the files as "plate_name.TXT"
 #' @export
 #'
-
-# filepath <- "/Users/Admin/Nextcloud/PhD/2024_trial/Fab_Mo/Red_story/InterBIC_Npools_code/raw_data/Nmin"
-# file <- paste0(filepath, "/", "NH4_1F1.TXT")
+#' @examples
+#' filepath <- system.file("extdata", "txt_examples/", package = "plate2N")
+#' abs_tibble <- txt_to_tibble(filepath)
 txt_to_tibble <- function(
     filepath,
     extension = ".TXT",
     output = "tibble") {
+
   # obtain list of plate files in the filepath
   all_txt_files <- list.files(
     paste0(filepath, "/"),
@@ -65,11 +67,13 @@ txt_to_tibble <- function(
   abs_data_list <- list()
   # i = 3
   for (i in 1:length(all_txt_files)) {
+
     # get name of file nb i
     file <- paste0(filepath, "/", all_txt_files[i])
 
     # store plate id in a variable
-    plate_id <- stringr::str_extract(all_txt_files[i], pattern = "(\\w*)(.)(\\TXT)", group = 1)
+    plate_id <- stringr::str_extract(all_txt_files[i], pattern = "(.*)\\.TXT$", group = 1)
+    #stringr::str_extract("NO3.1F1.TXT", pattern = , group = 1)
 
     # initiate headers
     plate_header <- columns |>
