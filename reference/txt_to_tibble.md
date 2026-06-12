@@ -15,8 +15,7 @@ txt_to_tibble(filepath, extension = ".TXT", output = "tibble")
 
   The path to the folder containing the .TXT files. The folder may
   contain other non-TXT files, but all .TXT files within the folder will
-  be included. **Warning:** the only "." allowed in the filename is the
-  one before the TXT extension
+  be included.
 
 - extension:
 
@@ -26,8 +25,8 @@ txt_to_tibble(filepath, extension = ".TXT", output = "tibble")
 
 - output:
 
-  Desired output format. Default is a tibble. Alternative option is a
-  list (one element per plate)
+  Desired output format. Default "tibble." Alternative option is a list
+  (one element of the list attributed to each plate)
 
 ## Value
 
@@ -38,3 +37,10 @@ tibble corresponding to raw plate data (1 file –\> 1 plate –\> 1
 element). Names of the elements correspond to the names of the files
 (without the extension .TXT). A good practice is thus to name the files
 as "plate_name.TXT"
+
+## Examples
+
+``` r
+filepath <- system.file("extdata", "txt_examples/", package = "plate2N")
+abs_tibble <- txt_to_tibble(filepath)
+```

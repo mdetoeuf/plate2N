@@ -289,30 +289,14 @@ std_blank <- std_data |>
 #> 8 A12     Nmin    NO3_1F5  A     12     A12_NO3_1F5    NO3_1F5_col12   0.092
 ```
 
-- `std_blank$average` computes the per-plate average of standard blanks
-  (relevant if there are several standard curves pipetted in one plate),
-  as well as the standard deviation and the coefficient of variation.
-
-``` r
-
-  std_blank$average
-#> # A tibble: 5 × 5
-#>   dataset plate_id blank_avg blank_sdev blank_coeff_var_percent
-#>   <chr>   <chr>        <dbl>      <dbl>                   <dbl>
-#> 1 Nmin    NO3_1F1     0.0915   0.000707                   0.773
-#> 2 Nmin    NO3_1F2     0.0905   0.000707                   0.781
-#> 3 Nmin    NO3_1F4     0.0915   0.000707                   0.773
-#> 4 Nmin    NO3_1F3     0.09    NA                         NA    
-#> 5 Nmin    NO3_1F5     0.092   NA                         NA
-```
-
 ### 2.4 - Quality check of std_blank & outlier removal
 
 > **Check out untrusted standard blanks**
 >
-> The computation of `std_blank$average` is made on trusted blank wells
-> only. It is therefore important to check curves containing “untrusted”
-> blank wells and decide whether to keep them or not
+> The computation of per-plate standard curve blank average should made
+> on trusted blank wells only. It is therefore important to check curves
+> containing “untrusted” blank wells and decide whether to keep them or
+> not
 
 The function
 [`plot_std()`](https://mdetoeuf.github.io/plate2N/reference/plot_std.md)
@@ -332,58 +316,100 @@ to_plot |>
   ggplot2::theme(legend.position = "none")
 ```
 
-![](blank-correction_files/figure-html/unnamed-chunk-12-1.png)
+![](blank-correction_files/figure-html/unnamed-chunk-11-1.png)
 
 If the absorbance in well A is very obviously wrong (like here), then
-remove those wells, either by keeping `std_blank$average` as is[^2], or
-by using
-[`remove_wells()`](https://mdetoeuf.github.io/plate2N/reference/remove_wells.md)
-and re-computing blank averages (see hereunder). Of course, this only
-works if there were several standard curves on problematic plates,
-otherwise you will be removing the only `std_blank` of the plate[^3].
+remove those wells for the computation of standard blank average. There
+are 2 options to do so:
 
-Here is an example of how to re-compute average blanks in case we decide
-to trust some of the wells from `std_blank$untrusted`: let’s say the
-first one, for plate NO3_1F3 (which is obviously wrong in this case).
+- either by keeping `std_blank$trusted` as is (all “untrusted” wells
+  should indeed be removed)
+
+- or by using
+  [`remove_wells()`](https://mdetoeuf.github.io/plate2N/reference/remove_wells.md)
+  on `std_blank$all` and to generate a better-adapted list of “trusted”
+  standard blank wells.
+
+Either way, blank averages will then be computed on trusted wells only
+(see hereunder). Of course, this only works if there were several
+standard curves on problematic plates, otherwise you will be removing
+the only `std_blank` of the plate[^2]. Here are 2 examples of how to
+compute average blanks.
 
 ``` r
 
-# create artificial version of std_blank$untrusted
-untrusted_blanks <- std_blank$untrusted |> dplyr::filter(plate_id == "NO3_1F3")
-
-# remove those untrusted wells from std_blank$all ~ new version of std_blank$trusted
-blank_clean <- std_blank$all |> remove_wells(untrusted_blanks)
-
-# re-compute per-plate blank average from that new trusted table
-std_blank_avg <- blank_clean |> 
-  dplyr::ungroup() |> 
-  dplyr::summarise(
-    .by = c(dataset, plate_id),
-    blank_avg = mean(abs),
-    blank_sdev = stats::sd(abs)
-  ) |>
-  dplyr::mutate(blank_coeff_var_percent = 100 * blank_sdev / blank_avg)
+# Option 1 - We keep std_blank$trusted
+std_blank_avg_1 <- std_blank_average(std_blank$trusted)
 ```
 
-In case of a manual re-computation of blank averages, all occurrences of
-`std_blank$average` below should be replaced by this new
-`std_blank_avg`.
+For the second option, we decide to reject only one of the wells from
+`std_blank$untrusted`: let’s say the first one, for plate NO3_1F3 (which
+is obviously wrong in this case).
+
+``` r
+
+# Option 2 - We create a table of wells to remove
+(to_remove <- std_blank$untrusted |> dplyr::filter(plate_id == "NO3_1F3"))
+#> # A tibble: 1 × 8
+#> # Groups:   dataset, plate_id, column [1]
+#>   well_id dataset plate_id column unique_curve_id row   unique_well_id   abs
+#>   <chr>   <chr>   <chr>    <chr>  <chr>           <chr> <chr>          <dbl>
+#> 1 A1      Nmin    NO3_1F3  1      NO3_1F3_col1    A     A1_NO3_1F3      0.11
+
+# remove those untrusted wells from std_blank$all ~ new version of std_blank$trusted
+std_blank_clean <- std_blank$all |> remove_wells(to_remove)
+
+# compute per-plate blank average from that new trusted table
+std_blank_avg_2 <- std_blank_average(std_blank_clean)
+```
+
+Let’s compare both options and see that, indeed, plate NO3_1F5 now
+received 2 wells to compute the average from (no NA values)
+
+``` r
+
+std_blank_avg_1 ; std_blank_avg_2
+#> # A tibble: 5 × 5
+#>   dataset plate_id blank_avg blank_sdev blank_coeff_var_percent
+#>   <chr>   <chr>        <dbl>      <dbl>                   <dbl>
+#> 1 Nmin    NO3_1F1     0.0915   0.000707                   0.773
+#> 2 Nmin    NO3_1F2     0.0905   0.000707                   0.781
+#> 3 Nmin    NO3_1F4     0.0915   0.000707                   0.773
+#> 4 Nmin    NO3_1F3     0.09    NA                         NA    
+#> 5 Nmin    NO3_1F5     0.092   NA                         NA
+#> # A tibble: 5 × 5
+#>   dataset plate_id blank_avg blank_sdev blank_coeff_var_percent
+#>   <chr>   <chr>        <dbl>      <dbl>                   <dbl>
+#> 1 Nmin    NO3_1F1     0.0915   0.000707                   0.773
+#> 2 Nmin    NO3_1F2     0.0905   0.000707                   0.781
+#> 3 Nmin    NO3_1F4     0.0915   0.000707                   0.773
+#> 4 Nmin    NO3_1F5     0.103    0.0148                    14.5  
+#> 5 Nmin    NO3_1F3     0.09    NA                         NA
+```
+
+We proposed the 2nd option for the sake of the example, but we will move
+on with the first option from here on, as the decision to keep the
+untrusted well for plate NO3_1F3 was obviously misled.
+
+``` r
+
+std_blank_avg <- std_blank_avg_1
+```
 
 > **Outlier check of the whole curve comes later**
 >
 > In this pipeline, we search for and remove outliers prior to critical
 > aggregation steps that will not be trustworthy otherwise (see also
 > vignette `handling-outliers`. With this logic in mind, the outlier
-> removal of other wells[^4] in the standard curve will be done later
+> removal of other wells[^3] in the standard curve will be done later
 > on, before computing the regression between absorbance and
 > concentration. This is shown in the next vignette, `abs-to-conc`.
 
 ### 2.5 - Blank-correction of Standard Curve
 
 Once we are confident in our `std_blank`s, we can use the
-`std_blank$average` (or `std_blank_avg`) to blank-correct the raw
-absorbance values for the whole standard curves. This is done with the
-function
+`std_blank_avg` to blank-correct the raw absorbance values for the whole
+standard curves. This is done with the function
 [`blank_correct_abs()`](https://mdetoeuf.github.io/plate2N/reference/blank_correct_abs.md),
 which will also be used to correct sample absorbance data in the next
 section.
@@ -395,9 +421,7 @@ takes 3 main arguments:
   ungrouped and contain only non-blank data (i.e., in the case of
   “top_down” pipetting, rows B to H)
 
-- `per_plate_avg_blank` takes the version of blank averages that we
-  trust (e.g., `std_blank$average` or `std_blank_avg` if we needed to
-  re-compute untrusted wells
+- `per_plate_avg_blank` takes blank averages (e.g., `std_blank_avg`)
 
 - `map_to_exclude` tells which rows to exclude from `raw_wells_data`
   based on their value for the column “map”. Its default setting fits
@@ -433,7 +457,7 @@ std_corrected <-
   blank_correct_abs(
     # ungroup std data, remove rows with the blanks (here: row A)
     raw_wells_data = raw_wells_data,
-    per_plate_avg_blank = std_blank$average,
+    per_plate_avg_blank = std_blank_avg,
     map_to_exclude = ""
   ) |> 
   # only keep relevant columns (remove metadata clutter, optional)
@@ -568,7 +592,7 @@ data set (which becomes relevant in big data sets).
 plot_blank_var_distrib(extr_avg)
 ```
 
-![](blank-correction_files/figure-html/unnamed-chunk-18-1.png)
+![](blank-correction_files/figure-html/unnamed-chunk-20-1.png)
 
 In big data sets, there is bound to be some plate where one or two wells
 went wrong in the lab, and seeing that there are some plates with much
@@ -697,7 +721,7 @@ suspicious_extr |> boxplot_outlier_extr(max_coeff = threshold) + ggplot2::facet_
 #> Joining with `by = join_by(plate_id)`
 ```
 
-![](blank-correction_files/figure-html/unnamed-chunk-24-1.png)
+![](blank-correction_files/figure-html/unnamed-chunk-26-1.png)
 
 #### 3.3.2 - Outlier removal steps
 
@@ -904,7 +928,7 @@ Here is, in brief, how to adapt the same steps as described above:
 plot_blank_var_distrib(extr_avg_dbl)
 ```
 
-![](blank-correction_files/figure-html/unnamed-chunk-33-1.png)
+![](blank-correction_files/figure-html/unnamed-chunk-35-1.png)
 
 ``` r
 
@@ -951,7 +975,7 @@ suspicious_extr_dbl |> boxplot_outlier_extr(max_coeff = 5)
 #> Joining with `by = join_by(plate_id)`
 ```
 
-![](blank-correction_files/figure-html/unnamed-chunk-33-2.png)
+![](blank-correction_files/figure-html/unnamed-chunk-35-2.png)
 
 Now, adapting the outlier removal steps
 
@@ -1088,7 +1112,7 @@ sample_corrected_dbl <-
 ```
 
 Let’s have a look at the output and notice the absence of the value `1`
-in the column `column` (no data for standard curve[^5]), and of the
+in the column `column` (no data for standard curve[^4]), and of the
 value `extr` in the column `map` (though it was present in `raw_meta`
 and still can be found under `extr_id`).
 
@@ -1165,18 +1189,14 @@ detailed in vignette **`abs-to-conc`** **(under development)**
     the correct volume. This can end up in various responses in terms of
     absorbance, depending on which reagent has been wrongly pipetted.
 
-[^2]: As detailed above, `std_blank$average` is already computed from
-    the subset of `std_blank$trusted`, thus, by default, already
-    excludes `std_blank$untrusted`
-
-[^3]: In such cases, you must consider your options. If the inter-plate
+[^2]: In such cases, you must consider your options. If the inter-plate
     variability of `std_blank` is sufficiently small, taking an
     across-dataset or an across-batch mean might do the trick.
 
-[^4]: I.e., wells in the rows “B” to “H” (top-down pipetting) or “A” to
+[^3]: I.e., wells in the rows “B” to “H” (top-down pipetting) or “A” to
     “G” (bottom-up pipetting)
 
-[^5]: In case the blanks are the same for sample wells and standard
+[^4]: In case the blanks are the same for sample wells and standard
     curve wells, this blank-correction should also be applied on
     Standard curve data. In this case, remove `"Std"` from the call to
     `map_to_exclude`.

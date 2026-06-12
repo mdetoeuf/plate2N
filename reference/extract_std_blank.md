@@ -64,13 +64,62 @@ averages for blank values are then computed
 
 ``` r
 # reconstruct a proper data table to start from
-map_file <- system.file("extdata", "csv_map.csv", package = "plate2N")
-abs_folder <- system.file("extdata", "txt_examples/", package = "plate2N")
-map_tibble <- csv_to_tibble(map_file)
-abs_tibble <- txt_to_tibble(abs_folder)
-joined_vertical <- join_abs_map(abs_tibble, map_tibble, dataset = "Nmin-")
-tidy_data <- vertical_to_tidy(joined_vertical)
+# map_file <- system.file("extdata", "csv_map.csv", package = "plate2N")
+# abs_folder <- system.file("extdata", "txt_examples/", package = "plate2N")
+# map_tibble <- csv_to_tibble(map_file)
+# abs_tibble <- txt_to_tibble(abs_folder)
+# joined_vertical <- join_abs_map(abs_tibble, map_tibble, dataset = "Nmin-")
+# tidy_data <- vertical_to_tidy(joined_vertical)
+
+# check out input table
+tidy_plates
+#> # A tibble: 480 × 8
+#>    row   column well_id unique_well_id dataset plate_id map      abs  
+#>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr>    <chr>
+#>  1 A     1      A1      A1_NO3_1F1     Nmin    NO3_1F1  Std      0.092
+#>  2 A     1      A1      A1_NO3_1F2     Nmin    NO3_1F2  Std      0.091
+#>  3 A     1      A1      A1_NO3_1F3     Nmin    NO3_1F3  Std      0.110
+#>  4 A     1      A1      A1_NO3_1F4     Nmin    NO3_1F4  Std      0.092
+#>  5 A     1      A1      A1_NO3_1F5     Nmin    NO3_1F5  Std      0.113
+#>  6 A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  81_t1_z2 0.114
+#>  7 A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  97_t1_z1 0.107
+#>  8 A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  89_t1_z3 0.095
+#>  9 A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  81_t1_z1 0.118
+#> 10 A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  Std_3_t1 0.167
+#> # ℹ 470 more rows
 
 # run the function
-list <- tidy_data |> extract_std_blank(std_def = "Std")
+std_blank <- tidy_plates |> extract_std_blank(std_def = "Std")
+std_blank$all ; std_blank$trusted ; std_blank$untrusted
+#> # A tibble: 10 × 8
+#> # Groups:   dataset, plate_id, column [10]
+#>    well_id dataset plate_id row   column unique_well_id unique_curve_id   abs
+#>    <chr>   <chr>   <chr>    <chr> <chr>  <chr>          <chr>           <dbl>
+#>  1 A1      Nmin    NO3_1F1  A     1      A1_NO3_1F1     NO3_1F1_col1    0.092
+#>  2 A1      Nmin    NO3_1F2  A     1      A1_NO3_1F2     NO3_1F2_col1    0.091
+#>  3 A1      Nmin    NO3_1F3  A     1      A1_NO3_1F3     NO3_1F3_col1    0.11 
+#>  4 A1      Nmin    NO3_1F4  A     1      A1_NO3_1F4     NO3_1F4_col1    0.092
+#>  5 A1      Nmin    NO3_1F5  A     1      A1_NO3_1F5     NO3_1F5_col1    0.113
+#>  6 A12     Nmin    NO3_1F1  A     12     A12_NO3_1F1    NO3_1F1_col12   0.091
+#>  7 A12     Nmin    NO3_1F2  A     12     A12_NO3_1F2    NO3_1F2_col12   0.09 
+#>  8 A12     Nmin    NO3_1F3  A     12     A12_NO3_1F3    NO3_1F3_col12   0.09 
+#>  9 A12     Nmin    NO3_1F4  A     12     A12_NO3_1F4    NO3_1F4_col12   0.091
+#> 10 A12     Nmin    NO3_1F5  A     12     A12_NO3_1F5    NO3_1F5_col12   0.092
+#> # A tibble: 8 × 8
+#>   well_id dataset plate_id row   column unique_well_id unique_curve_id   abs
+#>   <chr>   <chr>   <chr>    <chr> <chr>  <chr>          <chr>           <dbl>
+#> 1 A1      Nmin    NO3_1F1  A     1      A1_NO3_1F1     NO3_1F1_col1    0.092
+#> 2 A1      Nmin    NO3_1F2  A     1      A1_NO3_1F2     NO3_1F2_col1    0.091
+#> 3 A1      Nmin    NO3_1F4  A     1      A1_NO3_1F4     NO3_1F4_col1    0.092
+#> 4 A12     Nmin    NO3_1F1  A     12     A12_NO3_1F1    NO3_1F1_col12   0.091
+#> 5 A12     Nmin    NO3_1F2  A     12     A12_NO3_1F2    NO3_1F2_col12   0.09 
+#> 6 A12     Nmin    NO3_1F3  A     12     A12_NO3_1F3    NO3_1F3_col12   0.09 
+#> 7 A12     Nmin    NO3_1F4  A     12     A12_NO3_1F4    NO3_1F4_col12   0.091
+#> 8 A12     Nmin    NO3_1F5  A     12     A12_NO3_1F5    NO3_1F5_col12   0.092
+#> # A tibble: 2 × 8
+#> # Groups:   dataset, plate_id, column [2]
+#>   well_id dataset plate_id column unique_curve_id row   unique_well_id   abs
+#>   <chr>   <chr>   <chr>    <chr>  <chr>           <chr> <chr>          <dbl>
+#> 1 A1      Nmin    NO3_1F3  1      NO3_1F3_col1    A     A1_NO3_1F3     0.11 
+#> 2 A1      Nmin    NO3_1F5  1      NO3_1F5_col1    A     A1_NO3_1F5     0.113
 ```

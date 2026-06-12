@@ -90,6 +90,8 @@ match your analytical needs.
   : Example of Blank-corrected Absorbance Data (samples)
 - [`skanit_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/skanit_to_tibble.md)
   : Import 96-well plate data from Skanit format
+- [`std_blank_average()`](https://mdetoeuf.github.io/plate2N/reference/std_blank_average.md)
+  : Computing per-plate average for raw absorbance of the standard blank
 - [`std_corrected`](https://mdetoeuf.github.io/plate2N/reference/std_corrected.md)
   : Example of Blank-corrected Data for Standard Curve
 - [`std_dilution_average()`](https://mdetoeuf.github.io/plate2N/reference/std_dilution_average.md)
