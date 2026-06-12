@@ -306,7 +306,7 @@ extract_curve <- function(
 #'   extract_std_data() |>
 #'   dplyr::select(!std_conc) |>
 #'   dplyr::left_join(curve_concentration, by = dplyr::join_by(row, dataset, plate_id))
-#' plot_std(std_data, through_origin = FALSE, model = "linear") + ggplot2::facet_wrap(~plate_id)
+#' plot_std(std_data, through_origin = FALSE, model = "linear") + ggplot2::facet_wrap(dataset~plate_id)
 plot_std <- function(
     std_data,
     through_origin = TRUE,

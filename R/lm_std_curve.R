@@ -49,6 +49,7 @@ lm_std_curve <- function(
   # CASE 1 : LINEAR MODEL
   if (model == "linear") {
     lm_data <- tibble::tibble(
+      dataset = character(),
       plate_id = character(),
       unique_curve_id = character(),
       std_sp = character(),
@@ -66,6 +67,7 @@ lm_std_curve <- function(
     # CASE 2 : POLYNOMIAL MODEL
   } else if (model == "poly") {
     lm_data <- tibble::tibble(
+      dataset = character(),
       plate_id = character(),
       unique_curve_id = character(),
       std_sp = character(),
@@ -91,6 +93,7 @@ lm_std_curve <- function(
 
     # curve data, regardless of model
     curve <- dplyr::group_split(full_data)[[i]]
+    dataset <- curve$dataset[1]
     plate_id <- curve |>
       dplyr::select(plate_id) |> magrittr::extract2(1) |> unique()
     unique_curve_id <- curve |>
@@ -120,6 +123,7 @@ lm_std_curve <- function(
 
       # Store all of it in a vector
       new_row <- tibble::tibble(
+        dataset,
         plate_id,
         unique_curve_id,
         std_sp,
@@ -169,6 +173,7 @@ lm_std_curve <- function(
 
       # Store all of it in a vector
       new_row <- tibble::tibble(
+        dataset,
         plate_id,
         unique_curve_id,
         std_sp,
@@ -297,6 +302,7 @@ plot_list_lm <- function(
     # curve data
     lm_curve <- lm_data[i,]
     curve_id <- lm_data$unique_curve_id[i]
+    dataset <- lm_data$dataset[i]
 
     curve_data <- std_data |>
       dplyr::filter(unique_curve_id == curve_id) |>
@@ -337,7 +343,7 @@ plot_list_lm <- function(
 
     # plot
     plot <- plot_std(curve_data |> dplyr::rename(abs = abs_corrected), model = model) +
-      ggplot2::labs(title = curve_id) +
+      ggplot2::labs(title = curve_id, subtitle = dataset) +
       ggplot2::xlab(paste0("Concentration of Standard Curve [", std_unit, "]")) +
       ggplot2::ylab("Blank-corrected Absorbance") +
       ggplot2::theme(legend.position = "none") +
