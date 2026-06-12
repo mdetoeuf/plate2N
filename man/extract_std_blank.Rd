@@ -45,14 +45,18 @@ usually pipetted in row A (\code{pipetting_direction = "top_down"}), or in row H
 }
 \examples{
 # reconstruct a proper data table to start from
-map_file <- system.file("extdata", "csv_map.csv", package = "plate2N")
-abs_folder <- system.file("extdata", "txt_examples/", package = "plate2N")
-map_tibble <- csv_to_tibble(map_file)
-abs_tibble <- txt_to_tibble(abs_folder)
-joined_vertical <- join_abs_map(abs_tibble, map_tibble, dataset = "Nmin-")
-tidy_data <- vertical_to_tidy(joined_vertical)
+# map_file <- system.file("extdata", "csv_map.csv", package = "plate2N")
+# abs_folder <- system.file("extdata", "txt_examples/", package = "plate2N")
+# map_tibble <- csv_to_tibble(map_file)
+# abs_tibble <- txt_to_tibble(abs_folder)
+# joined_vertical <- join_abs_map(abs_tibble, map_tibble, dataset = "Nmin-")
+# tidy_data <- vertical_to_tidy(joined_vertical)
+
+# check out input table
+tidy_plates
 
 # run the function
-list <- tidy_data |> extract_std_blank(std_def = "Std")
+std_blank <- tidy_plates |> extract_std_blank(std_def = "Std")
+std_blank$all ; std_blank$trusted ; std_blank$untrusted
 
 }
