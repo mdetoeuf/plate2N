@@ -9,7 +9,7 @@ the origin (0,0), which only makes sense for blank-corrected absorbance data."><
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -91,21 +91,21 @@ With
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="va">std_corrected</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">plate_id</span>, <span class="va">column</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">lm_std_curve</span><span class="op">(</span><span class="va">data</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 10 × 11</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    plate_id unique_curve_id std_sp  slope r_squared adj_r_squared     lm_p</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> NO3_1F1  NO3_1F1_col1    NO3    0.018<span style="text-decoration: underline;">9</span>     0.999         0.999 6.49<span style="color: #949494;">e</span><span style="color: #BB0000;">-11</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> NO3_1F1  NO3_1F1_col12   NO3    0.017<span style="text-decoration: underline;">9</span>     0.999         0.999 2.79<span style="color: #949494;">e</span><span style="color: #BB0000;">-10</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> NO3_1F2  NO3_1F2_col1    NO3    0.017<span style="text-decoration: underline;">8</span>     0.999         0.999 6.03<span style="color: #949494;">e</span><span style="color: #BB0000;">-11</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> NO3_1F2  NO3_1F2_col12   NO3    0.019<span style="text-decoration: underline;">0</span>     0.999         0.999 1.64<span style="color: #949494;">e</span><span style="color: #BB0000;">-10</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> NO3_1F3  NO3_1F3_col1    NO3    0.018<span style="text-decoration: underline;">7</span>     0.999         0.999 9.25<span style="color: #949494;">e</span><span style="color: #BB0000;">-11</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> NO3_1F3  NO3_1F3_col12   NO3    0.018<span style="text-decoration: underline;">5</span>     0.999         0.999 1.69<span style="color: #949494;">e</span><span style="color: #BB0000;">-10</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> NO3_1F4  NO3_1F4_col1    NO3    0.017<span style="text-decoration: underline;">8</span>     0.999         0.999 2.16<span style="color: #949494;">e</span><span style="color: #BB0000;">-10</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> NO3_1F4  NO3_1F4_col12   NO3    0.018<span style="text-decoration: underline;">8</span>     0.999         0.999 2.43<span style="color: #949494;">e</span><span style="color: #BB0000;">-10</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> NO3_1F5  NO3_1F5_col1    NO3    0.019<span style="text-decoration: underline;">3</span>     0.999         0.999 2.45<span style="color: #949494;">e</span><span style="color: #BB0000;">-10</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> NO3_1F5  NO3_1F5_col12   NO3    0.018<span style="text-decoration: underline;">5</span>     0.999         0.998 6.15<span style="color: #949494;">e</span><span style="color: #BB0000;">-10</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 4 more variables: normality_lm_residuals &lt;chr&gt;, shapiro_p &lt;dbl&gt;,</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 10 × 12</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    dataset plate_id unique_curve_id std_sp  slope r_squared adj_r_squared</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> Nmin    NO3_1F1  NO3_1F1_col1    NO3    0.018<span style="text-decoration: underline;">9</span>     0.999         0.999</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> Nmin    NO3_1F1  NO3_1F1_col12   NO3    0.017<span style="text-decoration: underline;">9</span>     0.999         0.999</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> Nmin    NO3_1F2  NO3_1F2_col1    NO3    0.017<span style="text-decoration: underline;">8</span>     0.999         0.999</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> Nmin    NO3_1F2  NO3_1F2_col12   NO3    0.019<span style="text-decoration: underline;">0</span>     0.999         0.999</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> Nmin    NO3_1F3  NO3_1F3_col1    NO3    0.018<span style="text-decoration: underline;">7</span>     0.999         0.999</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> Nmin    NO3_1F3  NO3_1F3_col12   NO3    0.018<span style="text-decoration: underline;">5</span>     0.999         0.999</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> Nmin    NO3_1F4  NO3_1F4_col1    NO3    0.017<span style="text-decoration: underline;">8</span>     0.999         0.999</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> Nmin    NO3_1F4  NO3_1F4_col12   NO3    0.018<span style="text-decoration: underline;">8</span>     0.999         0.999</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> Nmin    NO3_1F5  NO3_1F5_col1    NO3    0.019<span style="text-decoration: underline;">3</span>     0.999         0.999</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> Nmin    NO3_1F5  NO3_1F5_col12   NO3    0.018<span style="text-decoration: underline;">5</span>     0.999         0.998</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 5 more variables: lm_p &lt;dbl&gt;, normality_lm_residuals &lt;chr&gt;,</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   shapiro_p &lt;dbl&gt;, homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;</span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

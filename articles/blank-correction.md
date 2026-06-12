@@ -13,9 +13,6 @@ library(plate2N)
 
 - Consider making a function of creating the “to_remove” table for
   extractant outliers
-- Split actions within extract_std_blank so that average computes in a
-  separate function, so it can be more easily re-run after outlier
-  removal, then adapt code of the re-run
 
 ## Introduction
 

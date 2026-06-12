@@ -40,10 +40,10 @@ standard curves
 data <- std_corrected |> dplyr::group_by(plate_id, column)
 lm_data <- lm_std_curve(data)
 suspicious_lm(lm_data)
-#> # A tibble: 1 × 11
-#>   plate_id unique_curve_id std_sp  slope r_squared adj_r_squared     lm_p
-#>   <chr>    <chr>           <chr>   <dbl>     <dbl>         <dbl>    <dbl>
-#> 1 NO3_1F1  NO3_1F1_col12   NO3    0.0179     0.999         0.999 2.79e-10
-#> # ℹ 4 more variables: normality_lm_residuals <chr>, shapiro_p <dbl>,
-#> #   homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>
+#> # A tibble: 1 × 12
+#>   dataset plate_id unique_curve_id std_sp  slope r_squared adj_r_squared
+#>   <chr>   <chr>    <chr>           <chr>   <dbl>     <dbl>         <dbl>
+#> 1 Nmin    NO3_1F1  NO3_1F1_col12   NO3    0.0179     0.999         0.999
+#> # ℹ 5 more variables: lm_p <dbl>, normality_lm_residuals <chr>,
+#> #   shapiro_p <dbl>, homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>
 ```
