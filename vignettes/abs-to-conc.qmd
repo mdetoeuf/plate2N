@@ -19,6 +19,8 @@ library(plate2N)
 
 # TODO
 
+- Integrate polynomial modelling
+
 - write out last sections: 2.6, 3 and 4
 
 - Consider creating a function for the multiple-curve QC (+ explain idea why it is relevant to look at it)
