@@ -6,8 +6,8 @@ standard curves. plate2N also provides several quality checks,
 supporting decisions to remove outliers, and proposes functions to do
 so. Although it is designed to support data analysis for dosage of
 Nitrogen compounds using absorbance readings, we believe that plate2N
-could be used for any dosage based on absorbance readings, including
-experiments using fluorescence, as long as the relation between
-absorbance and concentration is linear or polynomial (2nd degree). Feel
-free to reach out to the authors to propose or discuss adaptations to
-match your analytical needs.
+could be used for any dosage based on absorbance readings, as long as
+the relation between absorbance and concentration is linear or
+polynomial (2nd degree). Feel free to reach out to the authors to
+propose or discuss adaptations to match your analytical needs, including
+additional models.
