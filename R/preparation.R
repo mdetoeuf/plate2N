@@ -53,8 +53,8 @@ map_1_plate <- function( #defaults: a whole column (or more) per std or blank
   # # give it names 1 to 12
   # colnames(matrix) <- paste0("X",(c(1:12)))
   # turn it into a tibble and add column with letters
- # empty_plate <- tibble::as_tibble(matrix) |>
-    # dplyr::mutate(row = LETTERS[1:8], .before = 1)
+  # empty_plate <- tibble::as_tibble(matrix) |>
+  # dplyr::mutate(row = LETTERS[1:8], .before = 1)
 
   # compute nb of available wells
   available_wells <-
@@ -73,17 +73,21 @@ map_1_plate <- function( #defaults: a whole column (or more) per std or blank
   }
 
   # fill in std curves
-  col_std_names <- paste0(column_curves)
-  col_std <- empty_plate |> dplyr::select(tidyselect::all_of(col_std_names))
-  for (i in 1:ncol(col_std)) {
-    col_std[i] <- rep(std_def)
+  if (!is.null(column_curves)) {
+    col_std_names <- paste0(column_curves)
+    col_std <- empty_plate |> dplyr::select(tidyselect::all_of(col_std_names))
+    for (i in 1:ncol(col_std)) {
+      col_std[i] <- rep(std_def)
+    }
   }
 
   # fill in blank wells
-  col_blank_names <- paste0(column_blank)
-  col_blank <- empty_plate |> dplyr::select(tidyselect::all_of(col_blank_names))
-  for (i in 1:ncol(col_blank)) {
-    col_blank[i] <- rep(blank_def)
+  if (!is.null(column_blank)) {
+    col_blank_names <- paste0(column_blank)
+    col_blank <- empty_plate |> dplyr::select(tidyselect::all_of(col_blank_names))
+    for (i in 1:ncol(col_blank)) {
+      col_blank[i] <- rep(blank_def)
+    }
   }
 
   # fill in empty wells
@@ -96,7 +100,13 @@ map_1_plate <- function( #defaults: a whole column (or more) per std or blank
   }
 
   # start building the plate
-  plate <- dplyr::bind_cols(empty_plate |> dplyr::select(row),col_std, col_blank)
+  plate <- empty_plate |> dplyr::select(row)
+  if (exists("col_std")) {
+    plate <- dplyr::bind_cols(plate, col_std)
+  }
+  if (exists("col_blank")) {
+    plate <- dplyr::bind_cols(plate, col_blank)
+  }
   if (exists("col_empty")) {
     plate <- dplyr::bind_cols(plate, col_empty)
   }
