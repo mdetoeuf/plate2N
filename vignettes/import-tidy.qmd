@@ -2,12 +2,14 @@
 title: "import-tidy"
 vignette: >
   %\VignetteIndexEntry{import-tidy}
-  %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{quarto::html}
 knitr:
   opts_chunk:
     collapse: true
     comment: '#>'
+editor_options: 
+  chunk_output_type: console
 ---
 
 **TO DO**
@@ -163,8 +165,8 @@ In practice, we often import absorbance data with one function (typically `skani
 
 ```{r}
 (joined_vertical <- join_abs_map(
-  skanit_tibble_abs,
-  skanit_tibble_map,
+  tibble_list = list(skanit_tibble_abs,
+  skanit_tibble_map),
   dataset = "expe1-"))
 ```
 
@@ -194,8 +196,8 @@ abs_tibble <- txt_to_tibble(abs_folder)
 
 # joining both data
 joined_vertical <- join_abs_map(
-    abs_tibble, map_tibble,
-    dataset = "Nmin-", abs_map = c("abs-", "map-"))
+  list(abs_tibble, map_tibble),
+  dataset = "Nmin-", abs_map = c("abs-", "map-"))
 
 # tidying 
 (tidy_data <- vertical_to_tidy(joined_vertical, abs_def = "abs", map_def = "map"))

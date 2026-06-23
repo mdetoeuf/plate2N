@@ -5,21 +5,35 @@
 \title{Merging 2 vertical plates into one}
 \usage{
 join_abs_map(
-  abs_tibble,
-  map_tibble,
+  tibble_list = list(),
   dataset = "",
   abs_map = c("abs-", "map-"),
-  coerce_numeric = c(FALSE, FALSE)
+  coerce_numeric = FALSE
 )
 }
 \arguments{
-\item{abs_tibble, map_tibble}{The first and second tibble (will appear on the left and right, respectively). Must have the same structure as \code{tibble_example}.}
+\item{tibble_list}{A list containing all tibbles to be joined (e.g., absorbance
+tibble, mapping tibble, etc.). Can contain one or more tibble}
 
-\item{dataset}{An optional string to be added as a prefix to all column names (from both tibbles), with the exception of the first 2 columns describing well id ("row" and "column"). It is originally meant to record the name of the dataset for later uses.}
+\item{dataset}{An optional string to be added as a prefix to all column names
+(from all tibbles), with the exception of the first 2 columns describing
+well id ("row" and "column"). It is originally meant to record the name of
+the dataset for later uses.}
 
-\item{abs_map}{A string vector to add additional prefixes. The default value is set to c("abs", "map"), so that the "abs" data (corresponding to argument \code{abs_tibble}) will receive the first prefix, and the "map" data (corresponding to argument \code{map_tibble}) will receive the second prefix. Set this to c("", "") to prevent prefix addition.}
+\item{abs_map}{A string vector to add additional prefixes to plate names.
+The default value is set to c("abs", "map"), so that the "abs" data
+(corresponding to the first element of \code{tibble_list}) will receive the first
+prefix, and the "map" data (corresponding to the second element of \code{tibble_list})
+will receive the second prefix. Set this to c("", "") to prevent prefix addition.
+The length of \code{abs_map} must be the same as \code{tibble_list}.}
 
-\item{coerce_numeric}{A logical vector to decide whether the function \code{verticalize_plates()}, called separately for \code{abs_tibble} and \code{map_tibble}, should coerce data to become numeric or not. The default value is set to \code{c(FALSE, FALSE)}, so that eventually all data can be pivotted in a single column (see later steps in the pipeline).}
+\item{coerce_numeric}{A logical vector to decide whether the function \code{verticalize_plates()},
+called separately for each element of \code{tibble_list}, should coerce data to
+become numeric or not. The default value is set to \code{FALSE} and will by default
+be applied to all elements. But a vector of the same length as \code{tibble_list}
+can be given insted. (e.g., `coerce_numeric = c(FALSE, FALSE)).
+WARNING: Eventually all data will be pivotted in a single column, and attributing
+numerics to some tibbles but not others may cause issues in the pivotting step}
 }
 \value{
 A unique verticalized table containing the data from both data sets.
@@ -37,7 +51,7 @@ Still, it offers enough flexibility in its parameters to be adapted to the joini
 \examples{
 skanit_csv <- system.file("extdata", "skanit.csv", package = "plate2N")
 skanit_tibbles <- skanit_to_tibble(skanit_csv)
-join_abs_map(skanit_tibbles$abs_tibble, skanit_tibbles$map_tibble)
+join_abs_map(list(skanit_tibbles$abs_tibble, skanit_tibbles$map_tibble))
 }
 \seealso{
 \code{\link[=verticalize_plates]{verticalize_plates()}}

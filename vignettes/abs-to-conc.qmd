@@ -340,7 +340,7 @@ TDN_meta <- readr::read_csv(
   dplyr::select(dataset, plate_id, std_sp, std_unit, std_conc, date)
 
 
-joined_vertical <- join_abs_map(TDN_abs, TDN_map, dataset = "TDN-")
+joined_vertical <- join_abs_map(list(TDN_abs, TDN_map), dataset = "TDN-")
 
 tidy_TDN <- vertical_to_tidy(joined_vertical, abs_def = "abs", map_def = "map")
 
