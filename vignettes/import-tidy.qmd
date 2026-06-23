@@ -200,7 +200,7 @@ joined_vertical <- join_abs_map(
   dataset = "Nmin-", abs_map = c("abs-", "map-"))
 
 # tidying 
-(tidy_data <- vertical_to_tidy(joined_vertical, abs_def = "abs", map_def = "map"))
+(tidy_data <- vertical_to_tidy(joined_vertical, column_def = c("abs", "map")))
 ```
 
 # 4 - Next steps

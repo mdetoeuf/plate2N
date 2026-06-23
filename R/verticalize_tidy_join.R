@@ -158,7 +158,7 @@ tibble_to_list <- function(tibble) {
 
 
 
-utils::globalVariables(c("row", "column"))
+utils::globalVariables(c("row", "column", "layout_type"))
 
 #' Merging 2 vertical plates into one
 #'
@@ -251,10 +251,9 @@ join_abs_map <- function(
 #' See also [`vertical_plates`] and [`tidy_table`] to understand input and output data structure
 #'
 #' @param vertical_data As generated from either [`verticalize_plates()`] or [`join_abs_map()`].
-#' @param abs_def,map_def Strings defining the 2 types of data to be recovered.
+#' @param column_def Strings defining the types of data layout to be recovered.
 #'     They correspond to the prefixes added to column names in a previous step
-#'     with `join_abs_map()` (default "abs" and "map", respectively). `abs_def`
-#'     and `map_def` also define column names in the output table
+#'     with `join_abs_map()`. It defaults to `c("abs", "map")`.
 #'
 #' @returns A table in a tidy format for downstream analysis
 #' @export
@@ -267,25 +266,26 @@ join_abs_map <- function(
 #' joined_vertical <- join_abs_map(
 #'     list(abs_tibble, map_tibble),
 #'     dataset = "Nmin-", abs_map = c("abs-", "map-"))
-#' (tidy_data <- vertical_to_tidy(joined_vertical, abs_def = "abs", map_def = "map"))
+#' (tidy_data <- vertical_to_tidy(joined_vertical, column_def = c("abs", "map")))
 vertical_to_tidy <- function(
     vertical_data,
-    abs_def = "abs",
-    map_def = "map"
+    column_def = c("abs", "map")
 ) {
+
+
   tidy_data <- vertical_data |>
-    pivot_longer(
-      cols = !any_of(c("row", "column")),
-      names_to = c("dataset", paste(abs_def, map_def, sep = "_"), "plate_id"),
+    tidyr::pivot_longer(
+      cols = !tidyselect::any_of(c("row", "column")),
+      names_to = c("dataset", "layout_type", "plate_id"),
       names_sep = "-",
       values_to = "value"
     ) |>
-    pivot_wider(
-      names_from = paste(abs_def, map_def, sep = "_"),
+    tidyr::pivot_wider(
+      names_from = layout_type,
       values_from = "value"
     ) |>
-    relocate(map, .before = abs_def ) |>
-    mutate(
+    # dplyr::relocate(row, column, dataset, plate_id, any_of(column_def)) |>
+    dplyr::mutate(
       well_id = paste0(row, column),
       unique_well_id = paste0(well_id, "_", plate_id),
       .before = 3

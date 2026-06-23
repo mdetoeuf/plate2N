@@ -342,7 +342,7 @@ TDN_meta <- readr::read_csv(
 
 joined_vertical <- join_abs_map(list(TDN_abs, TDN_map), dataset = "TDN-")
 
-tidy_TDN <- vertical_to_tidy(joined_vertical, abs_def = "abs", map_def = "map")
+tidy_TDN <- vertical_to_tidy(joined_vertical, column_def = c("abs", "map"))
 
 # blank-correct std curves
 raw_meta <- tidy_TDN |> 
