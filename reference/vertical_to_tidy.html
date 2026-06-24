@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,7 +47,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">vertical_to_tidy</span><span class="op">(</span><span class="va">vertical_data</span>, abs_def <span class="op">=</span> <span class="st">"abs"</span>, map_def <span class="op">=</span> <span class="st">"map"</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">vertical_to_tidy</span><span class="op">(</span><span class="va">vertical_data</span>, column_def <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"abs"</span>, <span class="st">"map"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -58,11 +58,10 @@
 <dd><p>As generated from either <code><a href="verticalize_plates.html">verticalize_plates()</a></code> or <code><a href="join_abs_map.html">join_abs_map()</a></code>.</p></dd>
 
 
-<dt id="arg-abs-def-map-def">abs_def, map_def<a class="anchor" aria-label="anchor" href="#arg-abs-def-map-def"></a></dt>
-<dd><p>Strings defining the 2 types of data to be recovered.
+<dt id="arg-column-def">column_def<a class="anchor" aria-label="anchor" href="#arg-column-def"></a></dt>
+<dd><p>Strings defining the types of data layout to be recovered.
 They correspond to the prefixes added to column names in a previous step
-with <code><a href="join_abs_map.html">join_abs_map()</a></code> (default "abs" and "map", respectively). <code>abs_def</code>
-and <code>map_def</code> also define column names in the output table</p></dd>
+with <code><a href="join_abs_map.html">join_abs_map()</a></code>. It defaults to <code>c("abs", "map")</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -77,22 +76,22 @@ and <code>map_def</code> also define column names in the output table</p></dd>
 <span class="r-in"><span><span class="va">map_tibble</span> <span class="op">&lt;-</span> <span class="fu"><a href="csv_to_tibble.html">csv_to_tibble</a></span><span class="op">(</span><span class="va">map_file</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">abs_tibble</span> <span class="op">&lt;-</span> <span class="fu"><a href="txt_to_tibble.html">txt_to_tibble</a></span><span class="op">(</span><span class="va">abs_folder</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">joined_vertical</span> <span class="op">&lt;-</span> <span class="fu"><a href="join_abs_map.html">join_abs_map</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>    <span class="va">abs_tibble</span>, <span class="va">map_tibble</span>,</span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">abs_tibble</span>, <span class="va">map_tibble</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>    dataset <span class="op">=</span> <span class="st">"Nmin-"</span>, abs_map <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"abs-"</span>, <span class="st">"map-"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">(</span><span class="va">tidy_data</span> <span class="op">&lt;-</span> <span class="fu">vertical_to_tidy</span><span class="op">(</span><span class="va">joined_vertical</span>, abs_def <span class="op">=</span> <span class="st">"abs"</span>, map_def <span class="op">=</span> <span class="st">"map"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">(</span><span class="va">tidy_data</span> <span class="op">&lt;-</span> <span class="fu">vertical_to_tidy</span><span class="op">(</span><span class="va">joined_vertical</span>, column_def <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"abs"</span>, <span class="st">"map"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 480 × 8</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    row   column well_id unique_well_id dataset plate_id map      abs  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> A     1      A1      A1_NO3_1F1     Nmin    NO3_1F1  Std      0.092</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> A     1      A1      A1_NO3_1F2     Nmin    NO3_1F2  Std      0.091</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> A     1      A1      A1_NO3_1F3     Nmin    NO3_1F3  Std      0.110</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> A     1      A1      A1_NO3_1F4     Nmin    NO3_1F4  Std      0.092</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> A     1      A1      A1_NO3_1F5     Nmin    NO3_1F5  Std      0.113</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  81_t1_z2 0.114</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  97_t1_z1 0.107</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  89_t1_z3 0.095</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  81_t1_z1 0.118</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  Std_3_t1 0.167</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    row   column well_id unique_well_id dataset plate_id abs   map     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> A     1      A1      A1_NO3_1F1     Nmin    NO3_1F1  0.092 Std     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> A     1      A1      A1_NO3_1F2     Nmin    NO3_1F2  0.091 Std     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> A     1      A1      A1_NO3_1F3     Nmin    NO3_1F3  0.110 Std     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> A     1      A1      A1_NO3_1F4     Nmin    NO3_1F4  0.092 Std     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> A     1      A1      A1_NO3_1F5     Nmin    NO3_1F5  0.113 Std     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  0.114 81_t1_z2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  0.107 97_t1_z1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  0.095 89_t1_z3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  0.118 81_t1_z1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  0.167 Std_3_t1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 470 more rows</span></span>
 </code></pre></div>
     </div>

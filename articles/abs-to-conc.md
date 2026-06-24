@@ -513,18 +513,18 @@ data sets before)
 
 tidy_TDN
 #> # A tibble: 3,072 × 8
-#>    row   column well_id unique_well_id dataset plate_id   map   abs  
+#>    row   column well_id unique_well_id dataset plate_id   abs   map  
 #>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>      <chr> <chr>
-#>  1 A     1      A1      A1_NO3_TDN_01  TDN     NO3_TDN_01 Std   0.095
-#>  2 A     1      A1      A1_NO3_TDN_02  TDN     NO3_TDN_02 Std   0.097
-#>  3 A     1      A1      A1_NO3_TDN_03  TDN     NO3_TDN_03 Std   0.113
-#>  4 A     1      A1      A1_NO3_TDN_04  TDN     NO3_TDN_04 Std   0.114
-#>  5 A     1      A1      A1_NO3_TDN_05  TDN     NO3_TDN_05 Std   0.132
-#>  6 A     1      A1      A1_NO3_TDN_06  TDN     NO3_TDN_06 Std   0.12 
-#>  7 A     1      A1      A1_NO3_TDN_07  TDN     NO3_TDN_07 Std   0.095
-#>  8 A     1      A1      A1_NO3_TDN_08  TDN     NO3_TDN_08 Std   0.09 
-#>  9 A     1      A1      A1_NO3_TDN_09  TDN     NO3_TDN_09 Std   0.14 
-#> 10 A     1      A1      A1_NO3_TDN_10  TDN     NO3_TDN_10 Std   0.143
+#>  1 A     1      A1      A1_NO3_TDN_01  TDN     NO3_TDN_01 0.095 Std  
+#>  2 A     1      A1      A1_NO3_TDN_02  TDN     NO3_TDN_02 0.097 Std  
+#>  3 A     1      A1      A1_NO3_TDN_03  TDN     NO3_TDN_03 0.113 Std  
+#>  4 A     1      A1      A1_NO3_TDN_04  TDN     NO3_TDN_04 0.114 Std  
+#>  5 A     1      A1      A1_NO3_TDN_05  TDN     NO3_TDN_05 0.132 Std  
+#>  6 A     1      A1      A1_NO3_TDN_06  TDN     NO3_TDN_06 0.12  Std  
+#>  7 A     1      A1      A1_NO3_TDN_07  TDN     NO3_TDN_07 0.095 Std  
+#>  8 A     1      A1      A1_NO3_TDN_08  TDN     NO3_TDN_08 0.09  Std  
+#>  9 A     1      A1      A1_NO3_TDN_09  TDN     NO3_TDN_09 0.14  Std  
+#> 10 A     1      A1      A1_NO3_TDN_10  TDN     NO3_TDN_10 0.143 Std  
 #> # ℹ 3,062 more rows
 
 std_corrected_TDN

@@ -13,6 +13,8 @@ library(plate2N)
 
 - Consider making a function of creating the “to_remove” table for
   extractant outliers
+- In the function qc_raw_qbs(), separate condition for export plot and
+  show plot. If we export it, we may not want to plot it as an output…
 
 ## Introduction
 

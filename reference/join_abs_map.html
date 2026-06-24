@@ -13,7 +13,7 @@ so that it provides a 2-in-1 feature of verticalizing plates while joining them.
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,11 +57,10 @@ so that it provides a 2-in-1 feature of verticalizing plates while joining them.
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">join_abs_map</span><span class="op">(</span></span>
-<span>  <span class="va">abs_tibble</span>,</span>
-<span>  <span class="va">map_tibble</span>,</span>
+<span>  tibble_list <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  dataset <span class="op">=</span> <span class="st">""</span>,</span>
 <span>  abs_map <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"abs-"</span>, <span class="st">"map-"</span><span class="op">)</span>,</span>
-<span>  coerce_numeric <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">FALSE</span>, <span class="cn">FALSE</span><span class="op">)</span></span>
+<span>  coerce_numeric <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -69,20 +68,35 @@ so that it provides a 2-in-1 feature of verticalizing plates while joining them.
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-abs-tibble-map-tibble">abs_tibble, map_tibble<a class="anchor" aria-label="anchor" href="#arg-abs-tibble-map-tibble"></a></dt>
-<dd><p>The first and second tibble (will appear on the left and right, respectively). Must have the same structure as <code>tibble_example</code>.</p></dd>
+<dl><dt id="arg-tibble-list">tibble_list<a class="anchor" aria-label="anchor" href="#arg-tibble-list"></a></dt>
+<dd><p>A list containing all tibbles to be joined (e.g., absorbance
+tibble, mapping tibble, etc.). Can contain one or more tibble</p></dd>
 
 
 <dt id="arg-dataset">dataset<a class="anchor" aria-label="anchor" href="#arg-dataset"></a></dt>
-<dd><p>An optional string to be added as a prefix to all column names (from both tibbles), with the exception of the first 2 columns describing well id ("row" and "column"). It is originally meant to record the name of the dataset for later uses.</p></dd>
+<dd><p>An optional string to be added as a prefix to all column names
+(from all tibbles), with the exception of the first 2 columns describing
+well id ("row" and "column"). It is originally meant to record the name of
+the dataset for later uses.</p></dd>
 
 
 <dt id="arg-abs-map">abs_map<a class="anchor" aria-label="anchor" href="#arg-abs-map"></a></dt>
-<dd><p>A string vector to add additional prefixes. The default value is set to c("abs", "map"), so that the "abs" data (corresponding to argument <code>abs_tibble</code>) will receive the first prefix, and the "map" data (corresponding to argument <code>map_tibble</code>) will receive the second prefix. Set this to c("", "") to prevent prefix addition.</p></dd>
+<dd><p>A string vector to add additional prefixes to plate names.
+The default value is set to c("abs", "map"), so that the "abs" data
+(corresponding to the first element of <code>tibble_list</code>) will receive the first
+prefix, and the "map" data (corresponding to the second element of <code>tibble_list</code>)
+will receive the second prefix. Set this to c("", "") to prevent prefix addition.
+The length of <code>abs_map</code> must be the same as <code>tibble_list</code>.</p></dd>
 
 
 <dt id="arg-coerce-numeric">coerce_numeric<a class="anchor" aria-label="anchor" href="#arg-coerce-numeric"></a></dt>
-<dd><p>A logical vector to decide whether the function <code><a href="verticalize_plates.html">verticalize_plates()</a></code>, called separately for <code>abs_tibble</code> and <code>map_tibble</code>, should coerce data to become numeric or not. The default value is set to <code>c(FALSE, FALSE)</code>, so that eventually all data can be pivotted in a single column (see later steps in the pipeline).</p></dd>
+<dd><p>A logical vector to decide whether the function <code><a href="verticalize_plates.html">verticalize_plates()</a></code>,
+called separately for each element of <code>tibble_list</code>, should coerce data to
+become numeric or not. The default value is set to <code>FALSE</code> and will by default
+be applied to all elements. But a vector of the same length as <code>tibble_list</code>
+can be given insted. (e.g., `coerce_numeric = c(FALSE, FALSE)).
+WARNING: Eventually all data will be pivotted in a single column, and attributing
+numerics to some tibbles but not others may cause issues in the pivotting step</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -103,7 +117,7 @@ Still, it offers enough flexibility in its parameters to be adapted to the joini
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">skanit_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"skanit.csv"</span>, package <span class="op">=</span> <span class="st">"plate2N"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">skanit_tibbles</span> <span class="op">&lt;-</span> <span class="fu"><a href="skanit_to_tibble.html">skanit_to_tibble</a></span><span class="op">(</span><span class="va">skanit_csv</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">join_abs_map</span><span class="op">(</span><span class="va">skanit_tibbles</span><span class="op">$</span><span class="va">abs_tibble</span>, <span class="va">skanit_tibbles</span><span class="op">$</span><span class="va">map_tibble</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">join_abs_map</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">skanit_tibbles</span><span class="op">$</span><span class="va">abs_tibble</span>, <span class="va">skanit_tibbles</span><span class="op">$</span><span class="va">map_tibble</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 96 × 22</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    row   column `abs-M12` `abs-M16` `abs-M17` `abs-M18` `abs-M19` `abs-M20`</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    </span>

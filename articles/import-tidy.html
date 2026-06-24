@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -470,8 +470,8 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">joined_vertical</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/join_abs_map.html">join_abs_map</a></span><span class="op">(</span></span>
-<span>  <span class="va">skanit_tibble_abs</span>,</span>
-<span>  <span class="va">skanit_tibble_map</span>,</span>
+<span>  tibble_list <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">skanit_tibble_abs</span>,</span>
+<span>  <span class="va">skanit_tibble_map</span><span class="op">)</span>,</span>
 <span>  dataset <span class="op">=</span> <span class="st">"expe1-"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 96 × 22</span></span>
 <span><span class="co">#&gt;    row   column `expe1-abs-M12` `expe1-abs-M16` `expe1-abs-M17` `expe1-abs-M18`</span></span>
@@ -518,24 +518,24 @@
 <span></span>
 <span><span class="co"># joining both data</span></span>
 <span><span class="va">joined_vertical</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/join_abs_map.html">join_abs_map</a></span><span class="op">(</span></span>
-<span>    <span class="va">abs_tibble</span>, <span class="va">map_tibble</span>,</span>
-<span>    dataset <span class="op">=</span> <span class="st">"Nmin-"</span>, abs_map <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"abs-"</span>, <span class="st">"map-"</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">abs_tibble</span>, <span class="va">map_tibble</span><span class="op">)</span>,</span>
+<span>  dataset <span class="op">=</span> <span class="st">"Nmin-"</span>, abs_map <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"abs-"</span>, <span class="st">"map-"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># tidying </span></span>
-<span><span class="op">(</span><span class="va">tidy_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/vertical_to_tidy.html">vertical_to_tidy</a></span><span class="op">(</span><span class="va">joined_vertical</span>, abs_def <span class="op">=</span> <span class="st">"abs"</span>, map_def <span class="op">=</span> <span class="st">"map"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">(</span><span class="va">tidy_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/vertical_to_tidy.html">vertical_to_tidy</a></span><span class="op">(</span><span class="va">joined_vertical</span>, column_def <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"abs"</span>, <span class="st">"map"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 480 × 8</span></span>
-<span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id map      abs  </span></span>
-<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;</span></span>
-<span><span class="co">#&gt;  1 A     1      A1      A1_NO3_1F1     Nmin    NO3_1F1  Std      0.092</span></span>
-<span><span class="co">#&gt;  2 A     1      A1      A1_NO3_1F2     Nmin    NO3_1F2  Std      0.091</span></span>
-<span><span class="co">#&gt;  3 A     1      A1      A1_NO3_1F3     Nmin    NO3_1F3  Std      0.110</span></span>
-<span><span class="co">#&gt;  4 A     1      A1      A1_NO3_1F4     Nmin    NO3_1F4  Std      0.092</span></span>
-<span><span class="co">#&gt;  5 A     1      A1      A1_NO3_1F5     Nmin    NO3_1F5  Std      0.113</span></span>
-<span><span class="co">#&gt;  6 A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  81_t1_z2 0.114</span></span>
-<span><span class="co">#&gt;  7 A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  97_t1_z1 0.107</span></span>
-<span><span class="co">#&gt;  8 A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  89_t1_z3 0.095</span></span>
-<span><span class="co">#&gt;  9 A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  81_t1_z1 0.118</span></span>
-<span><span class="co">#&gt; 10 A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  Std_3_t1 0.167</span></span>
+<span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id abs   map     </span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt; &lt;chr&gt;   </span></span>
+<span><span class="co">#&gt;  1 A     1      A1      A1_NO3_1F1     Nmin    NO3_1F1  0.092 Std     </span></span>
+<span><span class="co">#&gt;  2 A     1      A1      A1_NO3_1F2     Nmin    NO3_1F2  0.091 Std     </span></span>
+<span><span class="co">#&gt;  3 A     1      A1      A1_NO3_1F3     Nmin    NO3_1F3  0.110 Std     </span></span>
+<span><span class="co">#&gt;  4 A     1      A1      A1_NO3_1F4     Nmin    NO3_1F4  0.092 Std     </span></span>
+<span><span class="co">#&gt;  5 A     1      A1      A1_NO3_1F5     Nmin    NO3_1F5  0.113 Std     </span></span>
+<span><span class="co">#&gt;  6 A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  0.114 81_t1_z2</span></span>
+<span><span class="co">#&gt;  7 A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  0.107 97_t1_z1</span></span>
+<span><span class="co">#&gt;  8 A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  0.095 89_t1_z3</span></span>
+<span><span class="co">#&gt;  9 A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  0.118 81_t1_z1</span></span>
+<span><span class="co">#&gt; 10 A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  0.167 Std_3_t1</span></span>
 <span><span class="co">#&gt; # ℹ 470 more rows</span></span></code></pre></div>
 </div>
 </section><section class="section level2"><h2 id="next-steps">4 - Next steps<a class="anchor" aria-label="anchor" href="#next-steps"></a>
