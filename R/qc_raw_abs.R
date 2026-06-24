@@ -93,7 +93,7 @@ qc_raw_abs <- function(
     dplyr::filter(dplyr::row_number() %in% suspicious_rows) |>
     dplyr::select(dataset, plate_id, well_id, map, abs)
 
-  if (show_plot) {
+  if (show_plot | !is.null(export_plot)) {
     # get number of plots (facets) = nb of N species in data set (for now dataset, still have to work N_sp in the table)
       plot_n_facets <- full |> dplyr::select(tidyselect::any_of(plot_col_facet)) |> unique() |> length()
 
@@ -109,7 +109,7 @@ qc_raw_abs <- function(
       {if (plot_col_facet != "none") ggplot2::facet_wrap(~ .data[[plot_col_facet]], nrow = plot_n_facets) }+
       ggplot2::labs(title = "Distribution of absorbance, all data")
 
-    plot(hist_abs)
+    if (show_plot) {plot(hist_abs)}
 
     if (!is.null(export_plot)) {
       assign(export_plot, hist_abs, envir = .GlobalEnv)
