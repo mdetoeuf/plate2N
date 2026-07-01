@@ -67,6 +67,8 @@
   : Quality Check (QC) of raw absorbance data
 - [`qc_raw_extr()`](https://mdetoeuf.github.io/plate2N/reference/qc_raw_extr.md)
   : Quality check of raw absorbance data for extractant wells
+- [`read_tecan()`](https://mdetoeuf.github.io/plate2N/reference/read_tecan.md)
+  : Import single plate data from a single Tecan-generated file
 - [`reg_join_abs()`](https://mdetoeuf.github.io/plate2N/reference/reg_join_abs.md)
   : Merge Data from Regression Equation on Standard Curve with
   Absorbance Data (samples)
@@ -87,6 +89,8 @@
 - [`suspicious_lm()`](https://mdetoeuf.github.io/plate2N/reference/suspicious_lm.md)
   : Extract Suspicious Rows from Linear Model Data (non-significance,
   Non-normality, heteroscedasticity)
+- [`tecan_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/tecan_to_tibble.md)
+  : Import plate data from a Tecan-generated .xlsx file
 - [`tibble_example`](https://mdetoeuf.github.io/plate2N/reference/tibble_example.md)
   : Example of a tibble format for plate data
 - [`tibble_to_list()`](https://mdetoeuf.github.io/plate2N/reference/tibble_to_list.md)

@@ -40,6 +40,7 @@
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/plot_std.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/qc_raw_abs.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/qc_raw_extr.html</loc></url>
+<url><loc>https://mdetoeuf.github.io/plate2N/reference/read_tecan.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/reg_join_abs.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/remove_wells.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/sample_corrected.html</loc></url>
@@ -49,6 +50,7 @@
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/std_dilution_average.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/suspicious_extr.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/suspicious_lm.html</loc></url>
+<url><loc>https://mdetoeuf.github.io/plate2N/reference/tecan_to_tibble.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/tibble_example.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/tibble_to_list.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/tidy_plates.html</loc></url>
