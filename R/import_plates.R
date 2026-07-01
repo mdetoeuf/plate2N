@@ -19,7 +19,7 @@ verticalized_empty <- empty_plate |>
   # remove empty column
   dplyr::select(!abs)
 
-##########################################################################
+
 
 # store column names
 columns <- readr::read_csv(I("row,1,2,3,4,5,6,7,8,9,10,11,12"), col_names = FALSE,
@@ -153,7 +153,7 @@ csv_to_tibble <- function(
 
 
 utils::globalVariables(c(
-  "row", "X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9", "X10", "X11", "X12"))
+  "row", "X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9", "X10", "X11", "X12", "filepath"))
 #' Import 96-well plate data from Skanit format
 #'
 #' @param skanit_csv The csv exported from Skanit (or generated from the first
@@ -270,4 +270,93 @@ skanit_to_tibble <- function(
     "abs_tibble" = clean_file,
     "map_tibble" = map_file
   ))
+}
+
+
+
+#' Import single plate data from a single Tecan-generated file
+#'
+#' @param file (path to) file to import from
+#' @param extension ".xlsx" is currently the only option, but this might change based on user needs
+#'
+#' @importFrom readxl read_excel
+#' @importFrom stringr str_extract
+#'
+#' @returns A tibble with a single plate
+#'
+#' @export
+#'
+#' @examples
+#' file <- system.file("extdata", "tecan_example/tecan1.xlsx", package = "plate2N")
+#' read_tecan(file)
+read_tecan <- function(
+    file,
+    extension = ".xlsx"
+) {
+
+  # extract plate_id from file name
+  # If file was given as filepath, then extract last part = file
+  if (!is.na(stringr::str_extract(file, "/"))) {
+    plate_id <- file |> stringr::str_extract(pattern = paste0("(.*)(/)(.*)(",extension,")"), group = 3)
+  } else {
+    plate_id <- file
+  }
+
+  # import raw tibble
+  tibble <- readxl::read_excel(file, skip = 30, n_max = 11, col_types = "text")
+  names(tibble) <- names(columns)
+
+  tibble <- columns |> dplyr::bind_rows(tibble)
+  tibble[1,1] <- plate_id
+
+  return(tibble)
+}
+
+
+
+#' Import plate data from a Tecan-generated .xlsx file
+#'
+#' @param folderpath Path to the folder that contains all .xlsx in the "Tecan"
+#'     output format. Make sure that folder contains only plate data as .xlsx files.
+#'     It may contain other file types, but all .xlsx files will be imported, which
+#'     could lead to errors should the files not present the correct structure
+#' @param extension For now has only 1 .xlsx option. Should it be relevant to add
+#'     a csv option, please reach out to the authors.
+#'
+#' @returns The plate data in a tibble format
+#' @export
+#'
+#' @import dplyr stringr
+#'
+#' @examples
+#' filepath <- system.file("extdata", "tecan_example/", package = "plate2N")
+#' tecan_to_tibble(filepath)
+#'
+tecan_to_tibble <- function(
+    folderpath,
+    extension = ".xlsx"
+) {
+
+    # obtain list of plate files in the filepath
+    all_tecan_files <- list.files(
+      paste0(folderpath, "/"),
+      pattern = extension,
+      full.names = FALSE)
+
+    # in a loop: extract each plate and append the list
+    # (1 file --> 1 plate --> 1 element of the list)
+
+    # initiate empty tibble
+    tibble <- columns |> dplyr::filter(row != "row")
+
+# use read_tecan() to append the empty tibble in a loop, 1 iteration per file
+    for (i in 1:length(all_tecan_files)) {
+      file <- all_tecan_files[i]
+      path <- paste0(folderpath, "/", file)
+      tibble_i <- read_tecan(path)
+      tibble <- tibble |> dplyr::bind_rows(tibble_i)
+    }
+
+return(tibble)
+
 }
