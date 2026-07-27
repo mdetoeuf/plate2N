@@ -75,16 +75,17 @@
     <p><strong>TO DO</strong></p>
 <ul>
 <li>Create a function to prepare a csv template to be filled (by hand)</li>
-<li>Create a function to generate a csv from a sample list</li>
+<li>Remove dependency on package roperatory (rephrase the use of %ni%)</li>
 </ul>
 <section class="section level2"><h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
 <p>The goal of <code>plate2N</code> is to facilitate data wrangling and data analysis for raw data that originates from absorbance readings with a 96-well plate reader (spectrophotometry).</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mdetoeuf.github.io/plate2N/">plate2N</a></span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mdetoeuf.github.io/plate2N/">plate2N</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://benwiseman.github.io/roperators/" class="external-link">roperators</a></span><span class="op">)</span></span></code></pre></div>
 </div>
-<p>This particular vignette adresses the first steps of the pipeline: getting from files of raw data in various forms to a tidy data table that can be easily manipulated in downstream steps. The final <code>tidy_table</code> will look something like this:</p>
+<p>This particular vignette adresses the first steps of the pipeline: getting from files of raw data in various forms to a uniform tidy data table that can be easily manipulated in downstream steps. The final <code>tidy_table</code> will look something like this:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tidy_table</span></span>
@@ -103,10 +104,43 @@
 <span><span class="co">#&gt; 10 A     1      A1      M1       A1_M1          expe1   Std0865 0.9254</span></span>
 <span><span class="co">#&gt; # ℹ 950 more rows</span></span></code></pre></div>
 </div>
-<p>In this vignette, we cover three steps:</p>
-<p><strong>1) Data import</strong> from various raw file formats with <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code>, <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code> and <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code>, where data is brought into a shape that is common to all import files, i.e., cleaned from the file format-specific noise, but still unpractical to work with in R. We refer to the output of this first step in an object called “tibble” where data is still in a “plate” format (see hereunder). In this tibble, the first columns, called <code>row</code>, contains the <code>plate_id</code> in the first row, followed by the letters characterising the 8 rows of the plate (from A to H). Throughout the other 12 columns, the rest of the first row contains the plate-column numbers (from 1 to 12). The rest of the table contains the original plate data, which can be numerical (e.g., absorbance data) or characters (e.g., plate mapping)</p>
+<p>Before we dig into the specifics of each individual step, here is a glimpse of the whole pipeline. Once you’ve understood the principle of each indivual step as detailed in the sections below, it only takes 6 lines of code to import, join and tidy 2 datasets that could contain data from an indefinite number of 96-well plates. No worries though if this feels cryptic, we’ll explain it all underneath.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># identifying paths to raw files</span></span>
+<span><span class="va">map_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"csv_map.csv"</span>, package <span class="op">=</span> <span class="st">"plate2N"</span><span class="op">)</span></span>
+<span><span class="va">abs_folder</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"txt_examples/"</span>, package <span class="op">=</span> <span class="st">"plate2N"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># importing both mapping and absorbance data</span></span>
+<span><span class="va">map_tibble</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/csv_to_tibble.html">csv_to_tibble</a></span><span class="op">(</span><span class="va">map_file</span><span class="op">)</span></span>
+<span><span class="va">abs_tibble</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/txt_to_tibble.html">txt_to_tibble</a></span><span class="op">(</span><span class="va">abs_folder</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># verticalizing and joining both data layers</span></span>
+<span><span class="va">joined_vertical</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/join_abs_map.html">join_abs_map</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">abs_tibble</span>, <span class="va">map_tibble</span><span class="op">)</span>,</span>
+<span>  dataset <span class="op">=</span> <span class="st">"Nmin-"</span>, abs_map <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"abs-"</span>, <span class="st">"map-"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># tidying the data</span></span>
+<span><span class="op">(</span><span class="va">tidy_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/vertical_to_tidy.html">vertical_to_tidy</a></span><span class="op">(</span><span class="va">joined_vertical</span>, column_def <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"abs"</span>, <span class="st">"map"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; # A tibble: 480 × 8</span></span>
+<span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id abs   map     </span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt; &lt;chr&gt;   </span></span>
+<span><span class="co">#&gt;  1 A     1      A1      A1_NO3_1F1     Nmin    NO3_1F1  0.092 Std     </span></span>
+<span><span class="co">#&gt;  2 A     1      A1      A1_NO3_1F2     Nmin    NO3_1F2  0.091 Std     </span></span>
+<span><span class="co">#&gt;  3 A     1      A1      A1_NO3_1F3     Nmin    NO3_1F3  0.110 Std     </span></span>
+<span><span class="co">#&gt;  4 A     1      A1      A1_NO3_1F4     Nmin    NO3_1F4  0.092 Std     </span></span>
+<span><span class="co">#&gt;  5 A     1      A1      A1_NO3_1F5     Nmin    NO3_1F5  0.113 Std     </span></span>
+<span><span class="co">#&gt;  6 A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  0.114 81_t1_z2</span></span>
+<span><span class="co">#&gt;  7 A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  0.107 97_t1_z1</span></span>
+<span><span class="co">#&gt;  8 A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  0.095 89_t1_z3</span></span>
+<span><span class="co">#&gt;  9 A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  0.118 81_t1_z1</span></span>
+<span><span class="co">#&gt; 10 A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  0.167 Std_3_t1</span></span>
+<span><span class="co">#&gt; # ℹ 470 more rows</span></span></code></pre></div>
+</div>
+<p>In this vignette, we cover three steps:</p>
+<p><strong>1) Data import</strong> from various raw file formats with <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code>, <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code>, <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code> and <code><a href="../reference/tecan_to_tibble.html">tecan_to_tibble()</a></code> where data is brought into a shape that is common to all import files, i.e., cleaned from the file format-specific noise, but still unpractical to work with in R. We refer to the output of this first step in an object called “tibble” where data is still in a “plate” format (see <code>tibble_example</code> hereunder). In this tibble, the first column, called <code>row</code>, contains the <code>plate_id</code> in the first row, followed by the letters characterising the 8 rows of the plate (from A to H). Throughout the other 12 columns, the rest of the first row contains the plate-column numbers (from 1 to 12) in columns called X1 to X12. The rest of the table contains the original plate data, which can be numerical (e.g., absorbance data) or characters (e.g., plate mapping).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tibble_example</span></span>
 <span><span class="co">#&gt; # A tibble: 36 × 13</span></span>
 <span><span class="co">#&gt;    row          X1    X2    X3    X4    X5    X6    X7    X8    X9    X10    X11</span></span>
@@ -124,10 +158,10 @@
 <span><span class="co">#&gt; # ℹ 26 more rows</span></span>
 <span><span class="co">#&gt; # ℹ 1 more variable: X12 &lt;dbl&gt;</span></span></code></pre></div>
 </div>
-<p><strong>2) Verticalization</strong> of the “tibble” into a verticalized table with <code><a href="../reference/verticalize_plates.html">verticalize_plates()</a></code>. The <code>vertical_plates</code> present the same raw data in a verticalized format, i.e., data from each plate is displayed in a single column where the name of the column is the plate id. The first 2 columns contain the well identifier, stored in the columns <code>row</code> (of the 96-well plate, from A to H), and <code>column</code> (from 1 to 12). This vertical format is a good format to select a subset of plates (e.g., based on experiment, treatment, or anything else that the user stored into column names). See example hereunder:</p>
+<p><strong>2) Verticalization</strong> of the “tibble” into a verticalized table with <code><a href="../reference/verticalize_plates.html">verticalize_plates()</a></code>. The <code>vertical_plates</code> present the same raw data in a verticalized format, i.e., data from each plate is displayed in a single column where the name of the column is the plate id. The first 2 columns contain the well identifier, stored in the columns <code>row</code> (of the 96-well plate, from A to H), and <code>column</code> (from 1 to 12). This vertical format is a good format to select a subset of plates (e.g., based on experiment, treatment, or anything else that the user stored into column names which are the plate ids). See example hereunder:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">vertical_plates</span> ; </span>
+<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">vertical_plates</span> </span>
 <span><span class="co">#&gt; # A tibble: 96 × 6</span></span>
 <span><span class="co">#&gt;    row   column NO3_TDN_01 NO3_TDN_02 NO3_TDN_03 NO3_TDN_04</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;      &lt;chr&gt;      &lt;chr&gt;      &lt;chr&gt;     </span></span>
@@ -142,7 +176,10 @@
 <span><span class="co">#&gt;  9 A     9      0.519      0.589      0.559      0.541     </span></span>
 <span><span class="co">#&gt; 10 A     10     0.543      0.535      0.528      0.544     </span></span>
 <span><span class="co">#&gt; # ℹ 86 more rows</span></span>
-<span><span class="va">vertical_plates</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">row</span><span class="op">:</span><span class="va">column</span>, <span class="fu">tidyselect</span><span class="fu">::</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">ends_with</a></span><span class="op">(</span><span class="st">"04"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Selecting plate ids that end with "04"</span></span>
+<span><span class="va">vertical_plates</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">row</span><span class="op">:</span><span class="va">column</span>, <span class="fu">tidyselect</span><span class="fu">::</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">ends_with</a></span><span class="op">(</span><span class="st">"04"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 96 × 3</span></span>
 <span><span class="co">#&gt;    row   column NO3_TDN_04</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;     </span></span>
@@ -159,20 +196,25 @@
 <span><span class="co">#&gt; # ℹ 86 more rows</span></span></code></pre></div>
 </div>
 <p><strong>3) Tidying</strong> of the verticalized plate into the <code>tidy_table</code> displayed at the beginning of this vignette, a format that is easily usable for downstream data transformations and analyses. This step is done using the <code>tidyr</code> package</p>
-<p>Note: If the need arises to fit this package to other plate formats than 96-well plates, please reach out to the authors.</p>
+<p>Note: If the need arises to fit this package to other plate formats than 96-well plates, please reach out.</p>
 <hr></section><section class="section level2"><h2 id="import">1 - Import<a class="anchor" aria-label="anchor" href="#import"></a>
 </h2>
-<p>All 3 import functions hereunder (<code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code>, <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code> and <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code>) can be used to import files containing both absorbance <strong>and</strong> mapping data. However, in that case, it is recommended to attribute different plate ids to the 2 “plates” that represent the same 96-well plate (e.g., “NO3_plate1_abs” and “NO3_plate1_map”, see also description of <code><a href="../reference/verticalize_plates.html">verticalize_plates()</a></code> in section 2 to see the final output).</p>
+<p>All 4 import functions hereunder (<code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code>, <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code>, <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code> and <code><a href="../reference/tecan_to_tibble.html">tecan_to_tibble()</a></code>) can be used to import files containing both absorbance <strong>and</strong> mapping data. However, in that case, it is recommended to attribute different plate ids to the 2 datasets that represent the same 96-well plate (e.g., “NO3_plate1_abs” and “NO3_plate1_map”, see also description of <code><a href="../reference/verticalize_plates.html">verticalize_plates()</a></code> in section 2 to see the final output).</p>
 <section class="level2"><h3 id="from-a--csv-file">1.1 - From a .csv file<a class="anchor" aria-label="anchor" href="#from-a--csv-file"></a>
 </h3>
 <p>The function <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code> imports plate data from a csv file where data is structured in a specific way (see hereunder). For other csv formats, see sections below about “skanit csv” and “other formats”. The required data structure is strictly the same as in the outputted tibble (see <code>tibble_example</code> hereabove).</p>
-<p>In that sense, the function <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code>constitutes the simplest import option and takes advantage of the <code>readr</code> package (part of the <code>tidyverse</code>), by using either the function <code>read_csv()</code> or <code>read_csv2()</code>, for comma-separated or semi-colon separated values, respectively. Value separators can be modulated by the parameter <code>delim</code>, which defaults with the value <code>","</code> (<code>read_csv()</code>), but accepts <code>";"</code> (<code>read_csv2()</code>).</p>
+<p>In that sense, the function <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code> constitutes the simplest import option and takes advantage of the <code>readr</code> package (part of the <code>tidyverse</code>), by using either the function <code>read_csv()</code> or <code>read_csv2()</code>, for comma-separated or semi-colon separated values, respectively. Value separators can be modulated in <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code> by the parameter <code>delim</code>, which defaults with the value <code>","</code> (<code>read_csv()</code>), but accepts <code>";"</code> (<code>read_csv2()</code>).</p>
 <p>Here is an example of how to call the <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code> function.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># see the function in action</span></span>
+<span><span class="co"># save the file path to an object called example_csv</span></span>
 <span><span class="va">example_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"csv_example.csv"</span>, package <span class="op">=</span> <span class="st">"plate2N"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># import the data</span></span>
 <span><span class="va">preview_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/csv_to_tibble.html">csv_to_tibble</a></span><span class="op">(</span><span class="va">example_csv</span>, delim <span class="op">=</span> <span class="st">","</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># previe the first 20 lines</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">preview_csv</span>, n <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 36 × 13</span></span>
 <span><span class="co">#&gt;    row          X1    X2    X3    X4    X5    X6    X7    X8    X9    X10    X11</span></span>
@@ -202,12 +244,19 @@
 </div>
 </section><section class="level2"><h3 id="from-a-skanit--csv">1.2 - From a skanit .csv<a class="anchor" aria-label="anchor" href="#from-a-skanit--csv"></a>
 </h3>
-<p>A “skanit csv” is a csv where data is also structured in a plate format, but where plates are organized differently within the file, as generated by a software called <em>Skanit</em> that is linked to the plate reader. The raw csv format can be observed in the raw data attached to this package and is displayed hereunder.</p>
-<p><strong>It would make no sense to manually create a csv file in the “skanit csv” format</strong>, and using the function <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code> is only useful for users of the Skanit software. See also <code>?skanit_to_tibble()</code> for more details.</p>
+<p>A “skanit csv” is a csv where data is also structured in a plate format, but where plates are organized differently within the file, as generated by a software called <em>Skanit</em> that is linked to the plate <em>Multiskan FC</em> plate reader. The raw csv format can be observed in the raw data attached to this package and is displayed hereunder.</p>
+<p><strong>It would make no sense to manually create a csv file in the “skanit csv” format</strong>, and using the function <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code> is only useful for users of the <em>Skanit</em> software. See also <code>?skanit_to_tibble()</code> for more details.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">skanit_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"skanit.csv"</span>, package <span class="op">=</span> <span class="st">"plate2N"</span><span class="op">)</span></span>
-<span><span class="va">preview_skanit_raw</span> <span class="op">&lt;-</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">read_csv</a></span><span class="op">(</span><span class="va">skanit_csv</span>, col_names <span class="op">=</span> <span class="cn">FALSE</span>, show_col_types <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="co"># getting file path</span></span>
+<span><span class="va">skanit_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"skanit.csv"</span>, package <span class="op">=</span> <span class="st">"plate2N"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Store raw structure of a skanit-structured csv</span></span>
+<span><span class="va">preview_skanit_raw</span> <span class="op">&lt;-</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">read_csv</a></span><span class="op">(</span></span>
+<span>  <span class="va">skanit_csv</span>, col_names <span class="op">=</span> <span class="cn">FALSE</span>, show_col_types <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Preview the first 40 lines</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">preview_skanit_raw</span>, n <span class="op">=</span> <span class="fl">40</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 255 × 13</span></span>
 <span><span class="co">#&gt;    X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12   X13  </span></span>
@@ -256,10 +305,16 @@
 </div>
 <p>Here is an example of how to call the <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code> function and see its output. Notice the identical structure between <code>skanit$abs_tibble</code> and <code>skanit$map_tibble</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">skanit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/skanit_to_tibble.html">skanit_to_tibble</a></span><span class="op">(</span><span class="va">skanit_csv</span><span class="op">)</span></span>
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="co"># Import skanit csv</span></span>
+<span><span class="va">skanit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/skanit_to_tibble.html">skanit_to_tibble</a></span><span class="op">(</span><span class="va">skanit_csv</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># store absorbance and mapping in 2 separate objects</span></span>
 <span><span class="va">skanit_tibble_abs</span> <span class="op">&lt;-</span> <span class="va">skanit</span><span class="op">$</span><span class="va">abs_tibble</span></span>
 <span><span class="va">skanit_tibble_map</span> <span class="op">&lt;-</span> <span class="va">skanit</span><span class="op">$</span><span class="va">map_tibble</span></span>
+<span></span>
+<span><span class="co"># Preview both absorbance and mapping data</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">skanit_tibble_abs</span>, n <span class="op">=</span> <span class="fl">12</span><span class="op">)</span> ; <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">skanit_tibble_map</span>, n <span class="op">=</span> <span class="fl">12</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 90 × 13</span></span>
 <span><span class="co">#&gt;    row   X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12  </span></span>
@@ -296,26 +351,28 @@
 </div>
 </section><section class="level2"><h3 id="from--txt-files">1.3 - From .TXT files<a class="anchor" aria-label="anchor" href="#from--txt-files"></a>
 </h3>
-<p>As for the function <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code>, <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code> was designed fo import .TXT files structured in a specific way, as generated by the plate reader <em>Multiskan FC</em>. <strong>It would make no sense to manually create a txt file in this format</strong>.</p>
+<p>As for the function <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code>, <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code> was designed fo import .TXT files structured in a specific way, as generated by the plate reader <em>Multiskan FC</em> when data is exported as .txt directly from the machine (without the help of the <em>Skanit</em> software. <strong>It would make no sense to manually create a txt file in this format</strong>.</p>
 <p>The function <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code> has its own specific logic. Indeed, whereas both <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code> and <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code> take a single <strong>file</strong> as input, <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code> takes a <strong>folder</strong> as input, in which an indefinite amount of single .TXT files can be found. It is however important that the folder contains no other .TXT files than the desired data, though it may contain other file types. More details on file requirements can be found under <code>?txt_to_tibble()</code>. Here is an example of folder containing 5 .TXT files.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># path to the folder containing .TXT plate files</span></span>
 <span><span class="op">(</span><span class="va">txt_folder</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"txt_examples"</span>, package <span class="op">=</span> <span class="st">"plate2N"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "/home/runner/work/_temp/Library/plate2N/extdata/txt_examples"</span></span>
 <span></span>
 <span><span class="co">#examine contents of txt_folder </span></span>
 <span><span class="op">(</span><span class="va">files</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">txt_folder</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "NO3_1F1.TXT" "NO3_1F2.TXT" "NO3_1F3.TXT" "NO3_1F4.TXT" "NO3_1F5.TXT"</span></span>
-<span><span class="op">(</span><span class="va">file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">txt_folder</span>, <span class="st">"/"</span>, <span class="va">files</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="co"># follow the file path on your file Finder or Directory, to see an example of file to look up in your computer</span></span>
-<span><span class="co">#&gt; [1] "/home/runner/work/_temp/Library/plate2N/extdata/txt_examples/NO3_1F1.TXT"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "NO3_1F1.TXT" "NO3_1F2.TXT" "NO3_1F3.TXT" "NO3_1F4.TXT" "NO3_1F5.TXT"</span></span></code></pre></div>
 </div>
+<p>You can find on our GitHub repository <a href="https://github.com/mdetoeuf/plate2N/tree/main/inst/extdata/txt_examples" class="external-link">examples of those .TXT</a> files to examine.</p>
 <p>Each .TXT file contains the absorbance data of a single plate. This means that, to create a tibble similar to <code>tibble_example</code>, <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code> iterates through all .TXT files in a given folder (<code>txt_folder</code> in the example above), extracts their plate data, adds the plate_id (file name without .TXT extension) in the upper left corner of each plate data, then combines all plates into a single <code>tibble</code>.</p>
-<p>To examine the aspect of the raw file, go and manually visit the file path displayed hereunder for <code>txt_folder</code> in your computer’s file directory. Alternatively, you can see an example of raw .TXT file on our github repository: <em>https://github.com/mdetoeuf/plate2N/tree/main/inst/extdata/txt_examples</em>.</p>
+<p>To examine the aspect of the raw file, go and visit our GitHub repository with <a href="https://github.com/mdetoeuf/plate2N/tree/main/inst/extdata/txt_examples" class="external-link">examples of those .TXT</a>.</p>
 <p>Here is how to run <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code> from a folder path:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tibble_txt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/txt_to_tibble.html">txt_to_tibble</a></span><span class="op">(</span>filepath <span class="op">=</span> <span class="va">txt_folder</span><span class="op">)</span></span>
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># import from .TXT format</span></span>
+<span><span class="va">tibble_txt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/txt_to_tibble.html">txt_to_tibble</a></span><span class="op">(</span>filepath <span class="op">=</span> <span class="va">txt_folder</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Preview the first 20 lines</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">tibble_txt</span>, n <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 45 × 13</span></span>
 <span><span class="co">#&gt;    row   X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12  </span></span>
@@ -345,33 +402,27 @@
 <p><strong>Note:</strong> Should the need arise to import .TXT files structured in a different way, please reach out, and we can propose an adapted importing step into our function definition.</p>
 </section><section class="level2"><h3 id="from-a-tecan--xlsx">1.4 - From a Tecan .xlsx<a class="anchor" aria-label="anchor" href="#from-a-tecan--xlsx"></a>
 </h3>
-<p>A “Tecan .xlsx” is an Excel file where data is also structured in a plate format, but where plates are organized differently within the file, as generated by the software linked to the “Tecan” plate reader. The raw format can be observed in the raw data attached to this package and is displayed hereunder.</p>
+<p>A “Tecan .xlsx” is an Excel file where data is also structured in a plate format, but where plates are organized differently within the file, as generated by the software linked to the “Tecan” plate reader. An <a href="https://github.com/mdetoeuf/plate2N/tree/main/inst/extdata/tecan_example" class="external-link">example of Tecan files</a> can be downloaded from our GitHub repository. The raw format is displayed hereunder.</p>
 <p><strong>It would make no sense to manually create an .xlsx file in the “Tecan .xlsx” format</strong>, and using the function <code><a href="../reference/tecan_to_tibble.html">tecan_to_tibble()</a></code> is only useful for users of the Tecan plate reader. See also <code>?tecan_to_tibble()</code> for more details.</p>
-<p>The Tecan records absorbance data with a single plate in each file, so that the <code><a href="../reference/tecan_to_tibble.html">tecan_to_tibble()</a></code> function takes as first argument a <code>folderpath</code> rather than a <code>filepath</code>. <code>folderpath</code> should give the path tp the folder containing all Tecan-generated files. The names of the files (without the “.xlsx” extension) will be taken as plate_id</p>
+<p>The Tecan records absorbance data with a single plate in each file, so that the <code><a href="../reference/tecan_to_tibble.html">tecan_to_tibble()</a></code> function takes as first argument a <code>folderpath</code> rather than a <code>filepath</code>, in a logic similar to that of <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code>. <code>folderpath</code> should give the path to the folder containing all Tecan-generated files. The names of the files (without the “.xlsx” extension) will be taken as plate_id</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># path to the folder containing .TXT plate files</span></span>
 <span><span class="op">(</span><span class="va">tecan_folder</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"tecan_example"</span>, package <span class="op">=</span> <span class="st">"plate2N"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "/home/runner/work/_temp/Library/plate2N/extdata/tecan_example"</span></span>
 <span></span>
-<span><span class="co">#examine contents of txt_folder </span></span>
+<span><span class="co">#examine contents of tecan_folder </span></span>
 <span><span class="op">(</span><span class="va">files</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">tecan_folder</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "tecan1.xlsx" "tecan2.xlsx"</span></span></code></pre></div>
 </div>
-<p>You can now follow the file path below on your file Finder or Directory, to see an example of file to look up in your computer<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;you may need to run those commands on your computer, the path may be different&lt;/p&gt;"><sup>1</sup></a></p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="op">(</span><span class="va">file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">tecan_folder</span>, <span class="st">"/"</span>, <span class="va">files</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">)</span> </span>
-<span><span class="co">#&gt; [1] "/home/runner/work/_temp/Library/plate2N/extdata/tecan_example/tecan1.xlsx"</span></span></code></pre></div>
-</div>
 <p>Each .xlsx file contains the absorbance data of a single plate. This means that, to create a tibble similar to <code>tibble_example</code>, <code><a href="../reference/tecan_to_tibble.html">tecan_to_tibble()</a></code> iterates through all .xlsx files in a given folder (<code>tecan_folder</code> in the example above), extracts their plate data, adds the plate_id (file name without .xlsx extension) in the upper left corner of each plate data, then combines all plates into a single <code>tibble</code>.</p>
-<p>To examine the aspect of the raw file, go and manually visit the file path displayed hereunder for <code>tecan_folder</code> in your computer’s file directory. Alternatively, you can see an example of raw .TXT file on our github repository: <em>https://github.com/mdetoeuf/plate2N/tree/main/inst/extdata/tecan_examples</em>.</p>
 <p>Here is how to run <code><a href="../reference/tecan_to_tibble.html">tecan_to_tibble()</a></code> from a folder path:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tibble_tecan</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tecan_to_tibble.html">tecan_to_tibble</a></span><span class="op">(</span>folderpath <span class="op">=</span> <span class="va">tecan_folder</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># import tecan data</span></span>
+<span><span class="va">tibble_tecan</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tecan_to_tibble.html">tecan_to_tibble</a></span><span class="op">(</span>folderpath <span class="op">=</span> <span class="va">tecan_folder</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co">#check it out</span></span>
+<span><span class="co"># check it out</span></span>
 <span><span class="va">tibble_tecan</span></span>
 <span><span class="co">#&gt; # A tibble: 18 × 13</span></span>
 <span><span class="co">#&gt;    row   X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12  </span></span>
@@ -399,21 +450,16 @@
 </section><section class="level2"><h3 id="from-other-formats">1.5 - From other formats<a class="anchor" aria-label="anchor" href="#from-other-formats"></a>
 </h3>
 <p>For data structured in different raw formats, there are 2 options.</p>
-<p><strong>1) With small data sets</strong>, a quick option would be to simply copy-paste raw plate data into a clean csv sheet (outside of R, for example in Excel), adopting the raw structure of <code>tibble_example</code>. You can generate an empty csv template using the function <em>Add here the name of other funtion</em>. Or you can lookup the csv structure of the following file:</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="op">(</span><span class="va">example_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"csv_example.csv"</span>, package <span class="op">=</span> <span class="st">"plate2N"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "/home/runner/work/_temp/Library/plate2N/extdata/csv_example.csv"</span></span></code></pre></div>
-</div>
-<p><strong>2) With bigger data sets</strong>, it may be more efficient to use an import function from the <code>readr</code> package (e.g., <code><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">readr::read_csv()</a></code>, <code><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">readr::read_tsv()</a></code> or <code><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">readr::read_delim()</a></code>), possibly with a selection of columns or rows, then using tools of the <code>dplyr</code> or <code>tidyr</code> packages to bring the resulting tibble into the required format.</p>
+<p><strong>1) With small data sets</strong>, a quick option would be to simply copy-paste raw plate data into a clean csv sheet (outside of R, for example in Excel), adopting the raw structure of <code>tibble_example</code>. You can generate an empty csv template using the function <em>Add here the name of other function</em>. Or you can lookup the csv structure <a href="https://github.com/mdetoeuf/plate2N/blob/main/inst/extdata/csv_example.csv" class="external-link">here</a>.</p>
+<p><strong>2) With bigger data sets</strong>, it may be more efficient to use an import function from the <code>readr</code> package (e.g., <code><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">readr::read_csv()</a></code>, <code><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">readr::read_csv2()</a></code>, <code><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">readr::read_tsv()</a></code> or <code><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">readr::read_delim()</a></code>), possibly with a subset of columns or rows, then using tools of the <code>dplyr</code> or <code>tidyr</code> packages to bring the resulting tibble into the required format.</p>
 </section></section><section class="section level2"><h2 id="verticalized-table">2 - Verticalized table<a class="anchor" aria-label="anchor" href="#verticalized-table"></a>
 </h2>
 <p>Finally, once the <code>tibble</code> has been generated with any of the import options hereabove, we can proceed to the data verticalization.</p>
 <section class="level2"><h3 id="simple-verticalization-of-a-single-tibble">2.1 - Simple verticalization of a single tibble<a class="anchor" aria-label="anchor" href="#simple-verticalization-of-a-single-tibble"></a>
 </h3>
-<p>See also <code>?verticalize_plates()</code> for a detailed overview of function options.</p>
+<p>Here are examples of verticalized plates. Note that the function does the exact same thing each time as the input format is strictly identical. See also <code>?verticalize_plates()</code> for a detailed overview of function options.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># compute vertical plate</span></span>
 <span><span class="co">## from txt</span></span>
 <span><span class="op">(</span><span class="va">vertical_txt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/verticalize_plates.html">verticalize_plates</a></span><span class="op">(</span><span class="va">tibble_txt</span><span class="op">)</span><span class="op">)</span></span>
@@ -516,13 +562,14 @@
 <span><span class="co">#&gt; 12 A     12     0.091   0.090   0.090   0.091   0.092  </span></span>
 <span><span class="co">#&gt; # ℹ 84 more rows</span></span></code></pre></div>
 </div>
-</section><section class="level2"><h3 id="sec-join-abs-map">2.2 - Joined verticalization of 2 related tibbles<a class="anchor" aria-label="anchor" href="#sec-join-abs-map"></a>
+</section><section class="level2"><h3 id="sec-join-abs-map">2.2 - Joined verticalization of 2 or more related tibbles<a class="anchor" aria-label="anchor" href="#sec-join-abs-map"></a>
 </h3>
-<p>In practice, we often import absorbance data with one function (typically <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code> or <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code>) and mapping data from another (typically <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code> or even simply <code><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">readr::read_csv()</a></code>). This means that, in the end, we not only need to verticalize both those datasets, but we also need to merge them in a single data set.</p>
-<p><code><a href="../reference/join_abs_map.html">join_abs_map()</a></code> does just that. It works directly from 2 imported <code>tibble</code>s, uses <code><a href="../reference/verticalize_plates.html">verticalize_plates()</a></code> followed by <code><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">dplyr::left_join()</a></code> with a series of default presets, adding a prefix to column names to incorporate information on dataset and data type (absorbance vs mapping).</p>
+<p>In practice, we often import absorbance data with one function (typically <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code> or <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code>) and mapping data from another (typically <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code> or even simply <code><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">readr::read_csv()</a></code>). This means that, in the end, we need not only to verticalize both those datasets, but we also need to merge them in a single data set, with one column for absorbance date and another for the mapping of the wells (e.g., containing sample ids).</p>
+<p><code><a href="../reference/join_abs_map.html">join_abs_map()</a></code> does just that. It works directly from 2 imported <code>tibble</code>s. In the background, it relies on <code><a href="../reference/verticalize_plates.html">verticalize_plates()</a></code> and <code><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">dplyr::left_join()</a></code> with a series of default presets<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content='&lt;p&gt;Should any need arise for different preset to be given optionally as argument to &lt;code&gt;&lt;a href="../reference/join_abs_map.html"&gt;join_abs_map()&lt;/a&gt;&lt;/code&gt;, please reach out&lt;/p&gt;'><sup>1</sup></a>, adding a prefix to column names to incorporate information on dataset and data type (e.g., absorbance vs mapping).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="op">(</span><span class="va">joined_vertical</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/join_abs_map.html">join_abs_map</a></span><span class="op">(</span></span>
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Example of joined verticalized format with 2 input tibbles (2 "layers" of data)</span></span>
+<span><span class="op">(</span><span class="va">joined_vertical</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/join_abs_map.html">join_abs_map</a></span><span class="op">(</span></span>
 <span>  tibble_list <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">skanit_tibble_abs</span>,</span>
 <span>  <span class="va">skanit_tibble_map</span><span class="op">)</span>,</span>
 <span>  dataset <span class="op">=</span> <span class="st">"expe1-"</span><span class="op">)</span><span class="op">)</span></span>
@@ -547,29 +594,49 @@
 <span><span class="co">#&gt; #   `expe1-map-M20` &lt;chr&gt;, `expe1-map-M21` &lt;chr&gt;, `expe1-map-M22` &lt;chr&gt;,</span></span>
 <span><span class="co">#&gt; #   `expe1-map-M23` &lt;chr&gt;, `expe1-map-M1` &lt;chr&gt;</span></span></code></pre></div>
 </div>
-<p>We recognize the same verticalized structures, but now column names have been added a double prefix, containing “expe1” which was attributed to the argument <code>dataset</code> and either “abs” or “map”, added to the plates corresponding to the first and second argument, respectively.</p>
+<p>We recognize the same verticalized structures, but now column names have been added a double prefix, containing “expe1” which was attributed to the argument <code>dataset</code> and either “abs” or “map”, added by default to the plates corresponding respectively to the first and second elements of the list given to the argument <code>tibble_list</code>.</p>
 <ul>
 <li>Defining a dataset in the column names makes sense especially if several datasets will be joined down the line. The column dataset is needed for several downstream steps, so we recommend to give it some name, even if you only work with data from a single experiment.</li>
-<li>The “abs/map” prefixes can be modulated by adapting the default value of the argument <code>abs_map = c("abs-", "map")</code>
+<li>The “abs/map” prefixes can be modulated by adapting the default value of the argument <code>abs_map = c("abs-", "map-")</code>
 </li>
 </ul>
 <p>Additional info can be found under <code>?join_abs_map()</code>.</p>
 <div>
 <blockquote>
 <p><strong>When there are more than 2 layers for each plate</strong></p>
-<p>We displayed steps to import, for each physical plate, 2 data-plates, containing absorbance and mapping data (columns <code>abs</code> and <code>map</code>, respectively). In some studies, there may be more layers of data for each physical plate. Here are some examples</p>
+<p>We displayed here steps to import, for each physical plate, 2 layers of data, containing absorbance and mapping data (columns <code>abs</code> and <code>map</code>, respectively). In some studies, there may be more layers of data for each physical plate. Here are some examples</p>
 <ul>
 <li><p>Several types of mappings containing categorical data. This is the case when factors are represented in a plate format (ex: one layer contains treatment, another contains dilutions, the nature of a drug added, or drug dosage categories, etc.)</p></li>
 <li><p>Several absorbance readings. For example: absorbance before and after incubation, or even at several time steps to get a time series, or readings at several wavelengths to quantify different compounds, etc.)</p></li>
 </ul>
-<p>In such case, the pipeline still works, but small tweaks need to be made at several steps. See also <a href="#sec-microresp" class="quarto-xref">Section 5</a> for details on implementation</p>
+<p>In such cases, the pipeline still works, but small tweaks need to be made at several steps. See also <a href="#sec-microresp" class="quarto-xref">Section 5</a> for an example of implementation</p>
 </blockquote>
 </div>
 </section></section><section class="section level2"><h2 id="tidy-table">3 - Tidy table<a class="anchor" aria-label="anchor" href="#tidy-table"></a>
 </h2>
-<p>The vertical format is practical for manual/human handling, with an easy-to-handle number of rows (96), and individual plates are easy to select based on plate_id or dataset. For example, here is an easy moment to subset some plates based on dataset, abs/map or even some features that are embedded in plate name (such as N species in our case where plate names contained either “NO3”, “NO2” or “NH4”). This can be done using the <code>dplyr</code> package and its function <code><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">dplyr::select()</a></code>, aided by some helper functions from the <code>tidyselect</code> package, such as <code><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">tidyselect::starts_with()</a></code>, <code><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">tidyselect::contains()</a></code>, etc.</p>
-<p>But this verticalized format is not ideal for bulk computing and transformations, where the might of the <code>tidyverse</code> sits in computations done on columns. So, a typical last step of tidying would be to bring this dataset in a format with a single column for the absorbance data, and another for the mapping data, where each unique well would be represented by a row. Such transformations can be done with the <code>tidyr</code> and “<code>dplyr</code> packages, for example with the successive use of <code><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html" class="external-link">tidyr::pivot_longer()</a></code>and <code><a href="https://tidyr.tidyverse.org/reference/pivot_wider.html" class="external-link">tidyr::pivot_wider()</a></code>.</p>
-<p>To simplify this process, this is exactly what our function <code><a href="../reference/vertical_to_tidy.html">vertical_to_tidy()</a></code> does. Here is an example of the complete pipeline from import to tidy table</p>
+<p>The vertical format is practical for manual/human handling, with an easy-to-handle number of rows (96). For example, now is an easy moment to subset some plates based on dataset, abs/map or even some features that are embedded in plate name (such as N species in our case where plate names contained either “NO3”, “NO2” or “NH4”). This can be done using the <code>dplyr</code> package and its function <code><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">dplyr::select()</a></code>, aided by some helper functions from the <code>tidyselect</code> package, such as <code><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">tidyselect::starts_with()</a></code>, <code><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">tidyselect::contains()</a></code>, etc.</p>
+<p>However, this verticalized format is not ideal for bulk computing and transformations, where the might of the <code>tidyverse</code> sits in computations done on columns. So, a typical last step of tidying would be to bring this dataset in a format that has a single column per data type, namely one column for the absorbance data, and another for the mapping data, where each unique well would be represented by a row. Such transformations can be done with the <code>tidyr</code> and “<code>dplyr</code> packages, for example with the successive use of <code><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html" class="external-link">tidyr::pivot_longer()</a></code>and <code><a href="https://tidyr.tidyverse.org/reference/pivot_wider.html" class="external-link">tidyr::pivot_wider()</a></code>.</p>
+<p>To simplify this process, this is exactly what our function <code><a href="../reference/vertical_to_tidy.html">vertical_to_tidy()</a></code> does.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># tidying </span></span>
+<span><span class="op">(</span><span class="va">tidy_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/vertical_to_tidy.html">vertical_to_tidy</a></span><span class="op">(</span><span class="va">joined_vertical</span>, column_def <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"abs"</span>, <span class="st">"map"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; # A tibble: 960 × 8</span></span>
+<span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id abs    map    </span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;  &lt;chr&gt;  </span></span>
+<span><span class="co">#&gt;  1 A     1      A1      A1_M12         expe1   M12      1.4402 Std0001</span></span>
+<span><span class="co">#&gt;  2 A     1      A1      A1_M16         expe1   M16      1.5789 Std0097</span></span>
+<span><span class="co">#&gt;  3 A     1      A1      A1_M17         expe1   M17      1.5611 Std0193</span></span>
+<span><span class="co">#&gt;  4 A     1      A1      A1_M18         expe1   M18      1.7013 Std0289</span></span>
+<span><span class="co">#&gt;  5 A     1      A1      A1_M19         expe1   M19      1.6865 Std0385</span></span>
+<span><span class="co">#&gt;  6 A     1      A1      A1_M20         expe1   M20      1.7936 Std0481</span></span>
+<span><span class="co">#&gt;  7 A     1      A1      A1_M21         expe1   M21      1.7925 Std0577</span></span>
+<span><span class="co">#&gt;  8 A     1      A1      A1_M22         expe1   M22      1.8274 Std0673</span></span>
+<span><span class="co">#&gt;  9 A     1      A1      A1_M23         expe1   M23      1.9330 Std0769</span></span>
+<span><span class="co">#&gt; 10 A     1      A1      A1_M1          expe1   M1       0.9254 Std0865</span></span>
+<span><span class="co">#&gt; # ℹ 950 more rows</span></span></code></pre></div>
+</div>
+<p>Here is, once more, the complete pipeline from import to tidy table</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># identifying raw files</span></span>
@@ -604,7 +671,7 @@
 </div>
 </section><section class="section level2"><h2 id="sec-microresp">4 - Variation on the import pipeline: MicroResp experiment<a class="anchor" aria-label="anchor" href="#sec-microresp"></a>
 </h2>
-<p>In some studies, there may be more than 2 layers of data for each physical plate (see tip in <a href="#sec-join-abs-map" class="quarto-xref">Section 3.2</a>). Here, we quickly go through the import pipeline with an example of data from a <a href="https://www.hutton.ac.uk/scientific-services/analytical/analytical-services/microresp/" class="external-link">MicroResp</a> experiment. To understand what this means: here plates are incubated for 5h. An absorbance reading is done at t = 0h (<code>t0</code>) and t = 5h (<code>t5</code>). There is also mapping data, containing the info on which substrate has been added in which well. Substrates are, in this experiment: glucose (Glu), water (H2O), oxalic acid (OA), ligning (Lgn), N-acetylglucosamine (NAG), gamma-acetylbutyric acid (gABA), alanine (Ala) and urea (Urea).</p>
+<p>In some studies, there may be more than 2 layers of data for each physical plate (see tip in <a href="#sec-join-abs-map" class="quarto-xref">Section 3.2</a>). Here, we quickly go through the import pipeline with an example of data from a <a href="https://www.hutton.ac.uk/scientific-services/analytical/analytical-services/microresp/" class="external-link">MicroResp</a> experiment. To understand what this means: here plates are incubated for 5h. An absorbance reading is done at t = 0h (<code>t0</code>) and t = 5h (<code>t5</code>). There is also mapping data, containing the info on which substrate has been added in which well. Substrates are, in this experiment: glucose (Glu), water (H2O), oxalic acid (OA), lignin (Lgn), N-acetylglucosamine (NAG), gamma-acetylbutyric acid (gABA), alanine (Ala) and urea (Urea).</p>
 <p>So, the 3 layers of data are referred to as <code>abs_t0</code>, <code>abs_t5</code>, and <code>map</code>.</p>
 <div>
 <blockquote>
@@ -612,8 +679,194 @@
 <p>in theory, any number of data layers are possible, you just need to extend the logic displayed here, with additional elements to some arguments that are vectors (e.g., <code>abs_map = c("abs_t0", "abs_t5", "map")</code> and others that are lists of all data sets (one per layer).</p>
 </blockquote>
 </div>
-<p><u><strong>The rest of this variant pipeline is still under development. Stay tuned</strong></u></p>
-</section><section class="section level2"><h2 id="next-steps">5 - Next steps<a class="anchor" aria-label="anchor" href="#next-steps"></a>
+<section class="level2"><h3 id="import-the-2-layers-of-absorbance-data">4.1 Import the 2 layers of absorbance data<a class="anchor" aria-label="anchor" href="#import-the-2-layers-of-absorbance-data"></a>
+</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Import absorbance data, t0 and t5</span></span>
+<span><span class="va">MR_t0_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"MR_abs_t0.csv"</span>, package <span class="op">=</span> <span class="st">"plate2N"</span><span class="op">)</span></span>
+<span><span class="va">MR_t5_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"MR_abs_t5.csv"</span>, package <span class="op">=</span> <span class="st">"plate2N"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># import from csv file type</span></span>
+<span><span class="va">MR_abs_t0</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/csv_to_tibble.html">csv_to_tibble</a></span><span class="op">(</span><span class="va">MR_t0_csv</span><span class="op">)</span></span>
+<span><span class="va">MR_abs_t5</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/csv_to_tibble.html">csv_to_tibble</a></span><span class="op">(</span><span class="va">MR_t5_csv</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Check them out</span></span>
+<span><span class="va">MR_abs_t0</span>; <span class="va">MR_abs_t5</span></span>
+<span><span class="co">#&gt; # A tibble: 45 × 13</span></span>
+<span><span class="co">#&gt;    row      X1    X2    X3    X4    X5    X6    X7    X8    X9   X10   X11   X12</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt;  1 P01    1     2     3     4     5     6     7     8     9    10    11    12   </span></span>
+<span><span class="co">#&gt;  2 A      0.93  1.15  1.14  1.14  1.15  1.16  1.16  1.17  1.17  1.12  1.14  1.17</span></span>
+<span><span class="co">#&gt;  3 B      1.15  1.16  1.13  1.16  1.16  1.16  1.17  1.16  1.14  1.16  1.16  1.15</span></span>
+<span><span class="co">#&gt;  4 C      1.16  1.15  1.14  1.17  1.15  1.16  1.19  1.19  1.17  1.17  1.18  1.17</span></span>
+<span><span class="co">#&gt;  5 D      1.17  1.16  1.16  1.16  1.16  1.16  1.18  1.17  1.14  1.18  1.17  1.17</span></span>
+<span><span class="co">#&gt;  6 E      1.19  1.16  1.16  1.18  1.17  1.15  1.19  1.1   1.11  1.17  1.16  1.16</span></span>
+<span><span class="co">#&gt;  7 F      1.16  1.17  1.17  1.18  1.19  1.15  1.19  1.13  1.13  1.16  1.14  1.18</span></span>
+<span><span class="co">#&gt;  8 G      1.17  1.15  1.16  1.13  1.19  1.16  1.2   1.08  1.15  1.16  1.15  1.16</span></span>
+<span><span class="co">#&gt;  9 H      1.17  1.16  1.17  1.16  1.19  1.16  1.2   1.11  1.15  1.15  1.16  1.18</span></span>
+<span><span class="co">#&gt; 10 P02    1     2     3     4     5     6     7     8     9    10    11    12   </span></span>
+<span><span class="co">#&gt; # ℹ 35 more rows</span></span>
+<span><span class="co">#&gt; # A tibble: 45 × 13</span></span>
+<span><span class="co">#&gt;    row      X1    X2    X3    X4    X5    X6    X7    X8    X9   X10   X11   X12</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt;  1 P01    1     2     3     4     5     6     7     8     9    10    11    12   </span></span>
+<span><span class="co">#&gt;  2 A      0.67  0.39  0.89  0.91  0.32  0.6   0.77  0.81  0.86  0.67  0.79  0.98</span></span>
+<span><span class="co">#&gt;  3 B      0.9   0.4   0.86  0.92  0.32  0.64  0.81  0.79  0.83  0.77  0.82  0.94</span></span>
+<span><span class="co">#&gt;  4 C      0.92  0.42  0.89  0.93  0.33  0.56  0.81  0.8   0.86  0.78  0.84  0.95</span></span>
+<span><span class="co">#&gt;  5 D      0.92  0.39  0.91  0.91  0.32  0.6   0.81  0.79  0.84  0.81  0.84  0.95</span></span>
+<span><span class="co">#&gt;  6 E      0.94  0.41  0.9   0.95  0.34  0.59  0.8   0.7   0.8   0.79  0.81  0.95</span></span>
+<span><span class="co">#&gt;  7 F      0.92  0.41  0.92  0.94  0.36  0.6   0.82  0.77  0.79  0.78  0.8   0.96</span></span>
+<span><span class="co">#&gt;  8 G      0.93  0.41  0.92  0.89  0.36  0.65  0.83  0.72  0.84  0.76  0.8   0.94</span></span>
+<span><span class="co">#&gt;  9 H      0.93  0.43  0.92  0.94  0.34  0.62  0.83  0.72  0.83  0.74  0.8   0.96</span></span>
+<span><span class="co">#&gt; 10 P02    1     2     3     4     5     6     7     8     9    10    11    12   </span></span>
+<span><span class="co">#&gt; # ℹ 35 more rows</span></span></code></pre></div>
+</div>
+</section><section class="level2"><h3 id="being-creative-with-importing-mappings">4.2 - Being creative with importing mappings<a class="anchor" aria-label="anchor" href="#being-creative-with-importing-mappings"></a>
+</h3>
+<p>In a classical MicroResp experiment, a whole 96-well plate is dedicated to a single sample, though this may vary between experimental design. In this particular case, the mapping did not relate to samples, but to substrates added. And because the template of substrate addition was strictly the same for each plate, with a complete column attributed per substrate, there is a much simpler way to import the mapping data than creating a plate layout csv and importing it. This holds particularly true for an experiment with a large number of plates (we had hundreds). So feel free to be creative in generating layers of data, as best fits your needs.</p>
+<p>Plate mapping is strictly the same for each plate throughout the experiment, so we propose to take advantage of the function <code><a href="../reference/map_plates.html">plate2N::map_plates()</a></code> (see also the <code>prepare-plates</code> <a href="https://mdetoeuf.github.io/plate2N/articles/prepare_plates.html">vignette</a>) to create this mapping data in R.</p>
+<p>First, create a vector with the names of the substrates (in the order of the plate map)</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># vector of substrates</span></span>
+<span><span class="va">MR_columns</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"Std_Glu"</span>, <span class="st">"Std_H2O"</span>, </span>
+<span>  <span class="st">"H2O"</span>, <span class="st">"OA"</span>, <span class="st">"Glu"</span>, <span class="st">"Lgn"</span>, <span class="st">"NAG"</span>, <span class="st">"gABA"</span>, <span class="st">"Ala"</span>, <span class="st">"Urea"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>Then, compute the number of plates required (here, 5 plates) by counting how many cells in the first column of <code>MR_abs_t0</code> do not correspond to one of the 26 <code>LETTERS</code> (= number of plate ids).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># nb of plates</span></span>
+<span><span class="op">(</span><span class="va">nb_plates</span> <span class="op">&lt;-</span> <span class="va">MR_abs_t0</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">row</span> <span class="op"><a href="https://benwiseman.github.io/roperators/reference/logicals.html" class="external-link">%ni%</a></span> <span class="va">LETTERS</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 5</span></span></code></pre></div>
+</div>
+<p>Finally, run the mapping function with</p>
+<ul>
+<li><p>plate_id that pastes “P” with numbers from 01 to the nb of plates</p></li>
+<li><p>“sample list” = repetition of the vector of substrates x the nb of plates</p></li>
+<li><p>no std curves or blank (not needed in MicroResp experiments), and 2 empty columns (1 and 12, typically disregarded in those experiments due to large edge effects)</p></li>
+<li><p>8 wells per “sample” (in this case: not samples but substrates)</p></li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># compute the mapping</span></span>
+<span><span class="va">MR_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/map_plates.html">map_plates</a></span><span class="op">(</span></span>
+<span>  plate_ids <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"P"</span>, <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"%02d"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">01</span><span class="op">:</span><span class="va">nb_plates</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, </span>
+<span>  samples <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">MR_columns</span>, <span class="va">nb_plates</span><span class="op">)</span>,</span>
+<span>  n_samples_per_plate <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  column_curves <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span>, column_blank <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span>, column_empty <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">12</span><span class="op">)</span>,</span>
+<span>  n_wells_samples <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Check it out</span></span>
+<span><span class="va">MR_map</span></span>
+<span><span class="co">#&gt; # A tibble: 45 × 13</span></span>
+<span><span class="co">#&gt;    row   X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12  </span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;</span></span>
+<span><span class="co">#&gt;  1 P01   1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
+<span><span class="co">#&gt;  2 A     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty</span></span>
+<span><span class="co">#&gt;  3 B     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty</span></span>
+<span><span class="co">#&gt;  4 C     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty</span></span>
+<span><span class="co">#&gt;  5 D     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty</span></span>
+<span><span class="co">#&gt;  6 E     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty</span></span>
+<span><span class="co">#&gt;  7 F     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty</span></span>
+<span><span class="co">#&gt;  8 G     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty</span></span>
+<span><span class="co">#&gt;  9 H     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty</span></span>
+<span><span class="co">#&gt; 10 P02   1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
+<span><span class="co">#&gt; # ℹ 35 more rows</span></span></code></pre></div>
+</div>
+<p>Such creative methods are particularly time-saving with large datasets. Here, we have only 5 plates &lt;=&gt; 45 rows in our tibble. But in a 100-plate dataset, this would correspond to 900 rows, quite time-consuming to encode by hand.</p>
+</section><section class="level2"><h3 id="verticalize-and-join-all-3-layers">4.3 - Verticalize and join all 3 layers<a class="anchor" aria-label="anchor" href="#verticalize-and-join-all-3-layers"></a>
+</h3>
+<p>Notice the use of a 3-element (rather than 2-element) list and a 3-element vector for the arguments <code>tibble_list</code> and <code>abs_map</code>, respectively. The logic stays the same as with 2 layers though.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># verticalize and join the 3 layers</span></span>
+<span><span class="va">MR_joined</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/join_abs_map.html">join_abs_map</a></span><span class="op">(</span></span>
+<span>  tibble_list <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span> <span class="va">MR_abs_t0</span>, <span class="va">MR_abs_t5</span>, <span class="va">MR_map</span><span class="op">)</span>, </span>
+<span>  abs_map <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"abs_t0-"</span>, <span class="st">"abs_t5-"</span>, <span class="st">"map-"</span><span class="op">)</span>, </span>
+<span>  coerce_numeric <span class="op">=</span> <span class="cn">FALSE</span>, </span>
+<span>  dataset <span class="op">=</span> <span class="st">"MR-"</span> <span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Check it out</span></span>
+<span><span class="va">MR_joined</span></span>
+<span><span class="co">#&gt; # A tibble: 96 × 17</span></span>
+<span><span class="co">#&gt;    row   column `MR-abs_t0-P01` `MR-abs_t0-P02` `MR-abs_t0-P03` `MR-abs_t0-P04`</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;           &lt;chr&gt;           &lt;chr&gt;           &lt;chr&gt;          </span></span>
+<span><span class="co">#&gt;  1 A     1      0.93            1.23            1.27            1.32           </span></span>
+<span><span class="co">#&gt;  2 A     2      1.15            1.23            1.26            1.25           </span></span>
+<span><span class="co">#&gt;  3 A     3      1.14            1.22            1.25            1.22           </span></span>
+<span><span class="co">#&gt;  4 A     4      1.14            1.22            1.26            1.3            </span></span>
+<span><span class="co">#&gt;  5 A     5      1.15            1.22            1.24            1.28           </span></span>
+<span><span class="co">#&gt;  6 A     6      1.16            1.21            1.23            1.26           </span></span>
+<span><span class="co">#&gt;  7 A     7      1.16            1.23            1.23            1.27           </span></span>
+<span><span class="co">#&gt;  8 A     8      1.17            1.2             1.24            1.24           </span></span>
+<span><span class="co">#&gt;  9 A     9      1.17            1.21            1.25            1.28           </span></span>
+<span><span class="co">#&gt; 10 A     10     1.12            1.21            1.25            1.24           </span></span>
+<span><span class="co">#&gt; # ℹ 86 more rows</span></span>
+<span><span class="co">#&gt; # ℹ 11 more variables: `MR-abs_t0-P05` &lt;chr&gt;, `MR-abs_t5-P01` &lt;chr&gt;,</span></span>
+<span><span class="co">#&gt; #   `MR-abs_t5-P02` &lt;chr&gt;, `MR-abs_t5-P03` &lt;chr&gt;, `MR-abs_t5-P04` &lt;chr&gt;,</span></span>
+<span><span class="co">#&gt; #   `MR-abs_t5-P05` &lt;chr&gt;, `MR-map-P01` &lt;chr&gt;, `MR-map-P02` &lt;chr&gt;,</span></span>
+<span><span class="co">#&gt; #   `MR-map-P03` &lt;chr&gt;, `MR-map-P04` &lt;chr&gt;, `MR-map-P05` &lt;chr&gt;</span></span></code></pre></div>
+</div>
+<p>Notice the names of the columns, that now received 3 options for the layer prefix: <code>abs_t0-</code>, <code>abs_t5-</code> and <code>map-</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Check out column names</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">MR_joined</span><span class="op">)</span></span>
+<span><span class="co">#&gt;  [1] "row"           "column"        "MR-abs_t0-P01" "MR-abs_t0-P02"</span></span>
+<span><span class="co">#&gt;  [5] "MR-abs_t0-P03" "MR-abs_t0-P04" "MR-abs_t0-P05" "MR-abs_t5-P01"</span></span>
+<span><span class="co">#&gt;  [9] "MR-abs_t5-P02" "MR-abs_t5-P03" "MR-abs_t5-P04" "MR-abs_t5-P05"</span></span>
+<span><span class="co">#&gt; [13] "MR-map-P01"    "MR-map-P02"    "MR-map-P03"    "MR-map-P04"   </span></span>
+<span><span class="co">#&gt; [17] "MR-map-P05"</span></span></code></pre></div>
+</div>
+</section><section class="level2"><h3 id="tidy-the-data-3-columns-for-3-layers">4.4 - Tidy the data, 3 columns for 3 layers<a class="anchor" aria-label="anchor" href="#tidy-the-data-3-columns-for-3-layers"></a>
+</h3>
+<p>Tidy the table to reach 1 row per unique well (96 x nb of physical plates), and 3 important columns: <code>abs_t0</code>, <code>abs_t5</code>, <code>map</code>. The syntax for this step is strictly the same as with 2 layers, but we now have to specify the argument <code>column_def</code>` as its default value, containing only <code>c("abs-", "map-")</code> would no longer work.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># From vertical to tidy format with 3 layers</span></span>
+<span><span class="va">tidy_MR</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/vertical_to_tidy.html">vertical_to_tidy</a></span><span class="op">(</span></span>
+<span>  <span class="va">MR_joined</span>, </span>
+<span>  column_def <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"abs_t0"</span>, <span class="st">"abs_t5"</span>, <span class="st">"map"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Check it out</span></span>
+<span><span class="va">tidy_MR</span></span>
+<span><span class="co">#&gt; # A tibble: 480 × 9</span></span>
+<span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id abs_t0 abs_t5 map    </span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;  &lt;chr&gt;  &lt;chr&gt;  </span></span>
+<span><span class="co">#&gt;  1 A     1      A1      A1_P01         MR      P01      0.93   0.67   empty  </span></span>
+<span><span class="co">#&gt;  2 A     1      A1      A1_P02         MR      P02      1.23   1      empty  </span></span>
+<span><span class="co">#&gt;  3 A     1      A1      A1_P03         MR      P03      1.27   1.04   empty  </span></span>
+<span><span class="co">#&gt;  4 A     1      A1      A1_P04         MR      P04      1.32   1.09   empty  </span></span>
+<span><span class="co">#&gt;  5 A     1      A1      A1_P05         MR      P05      1.32   1.13   empty  </span></span>
+<span><span class="co">#&gt;  6 A     2      A2      A2_P01         MR      P01      1.15   0.39   Std_Glu</span></span>
+<span><span class="co">#&gt;  7 A     2      A2      A2_P02         MR      P02      1.23   0.43   Std_Glu</span></span>
+<span><span class="co">#&gt;  8 A     2      A2      A2_P03         MR      P03      1.26   0.47   Std_Glu</span></span>
+<span><span class="co">#&gt;  9 A     2      A2      A2_P04         MR      P04      1.25   0.44   Std_Glu</span></span>
+<span><span class="co">#&gt; 10 A     2      A2      A2_P05         MR      P05      1.25   0.47   Std_Glu</span></span>
+<span><span class="co">#&gt; # ℹ 470 more rows</span></span>
+<span></span>
+<span><span class="co"># If you like to reorder columns to have mapping first, then absorbance</span></span>
+<span><span class="va">tidy_MR</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/relocate.html" class="external-link">relocate</a></span><span class="op">(</span><span class="va">map</span>, .before <span class="op">=</span> <span class="va">abs_t0</span><span class="op">)</span></span>
+<span><span class="co">#&gt; # A tibble: 480 × 9</span></span>
+<span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id map     abs_t0 abs_t5</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;   &lt;chr&gt;  &lt;chr&gt; </span></span>
+<span><span class="co">#&gt;  1 A     1      A1      A1_P01         MR      P01      empty   0.93   0.67  </span></span>
+<span><span class="co">#&gt;  2 A     1      A1      A1_P02         MR      P02      empty   1.23   1     </span></span>
+<span><span class="co">#&gt;  3 A     1      A1      A1_P03         MR      P03      empty   1.27   1.04  </span></span>
+<span><span class="co">#&gt;  4 A     1      A1      A1_P04         MR      P04      empty   1.32   1.09  </span></span>
+<span><span class="co">#&gt;  5 A     1      A1      A1_P05         MR      P05      empty   1.32   1.13  </span></span>
+<span><span class="co">#&gt;  6 A     2      A2      A2_P01         MR      P01      Std_Glu 1.15   0.39  </span></span>
+<span><span class="co">#&gt;  7 A     2      A2      A2_P02         MR      P02      Std_Glu 1.23   0.43  </span></span>
+<span><span class="co">#&gt;  8 A     2      A2      A2_P03         MR      P03      Std_Glu 1.26   0.47  </span></span>
+<span><span class="co">#&gt;  9 A     2      A2      A2_P04         MR      P04      Std_Glu 1.25   0.44  </span></span>
+<span><span class="co">#&gt; 10 A     2      A2      A2_P05         MR      P05      Std_Glu 1.25   0.47  </span></span>
+<span><span class="co">#&gt; # ℹ 470 more rows</span></span></code></pre></div>
+</div>
+</section></section><section class="section level2"><h2 id="next-steps">5 - Next steps<a class="anchor" aria-label="anchor" href="#next-steps"></a>
 </h2>
 <p>Once the data is in this practical and tidy format, we can start data transformation of all sorts, see also vignettes <a href="https://mdetoeuf.github.io/plate2N/articles/handling-outliers.html"><strong>handling-outliers</strong></a><strong>, <a href="https://mdetoeuf.github.io/plate2N/articles/blank-correction.html">blank-correction</a> and <a href="https://mdetoeuf.github.io/plate2N/articles/abs-to-conc.html">abs-to-conc</a> (in that order)</strong> of this <a href="https://mdetoeuf.github.io/plate2N/index.html">package</a>. This is a good place to save the tidy table into an intermediary file, for example, using <code>tidy_data |&gt; readr::write_rds("path/to/my/output/file.rds")</code>.</p>
 </section><section class="section level2"><h2 id="final-note-when-absorbance-and-mapping-data-with-identical-plate-ids-are-imported-from-a-single-source-file-">6 - Final note: when absorbance and mapping data with identical plate ids are imported from a single source file.<a class="anchor" aria-label="anchor" href="#final-note-when-absorbance-and-mapping-data-with-identical-plate-ids-are-imported-from-a-single-source-file-"></a>
@@ -717,7 +970,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

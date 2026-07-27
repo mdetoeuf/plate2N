@@ -3,7 +3,7 @@
 **TO DO**
 
 - Create a function to prepare a csv template to be filled (by hand)
-- Create a function to generate a csv from a sample list
+- Remove dependency on package roperatory (rephrase the use of %ni%)
 
 ## Introduction
 
@@ -14,11 +14,12 @@ plate reader (spectrophotometry).
 ``` r
 
 library(plate2N)
+library(roperators)
 ```
 
 This particular vignette adresses the first steps of the pipeline:
-getting from files of raw data in various forms to a tidy data table
-that can be easily manipulated in downstream steps. The final
+getting from files of raw data in various forms to a uniform tidy data
+table that can be easily manipulated in downstream steps. The final
 `tidy_table` will look something like this:
 
 ``` r
@@ -40,23 +41,65 @@ tidy_table
 #> # ℹ 950 more rows
 ```
 
+Before we dig into the specifics of each individual step, here is a
+glimpse of the whole pipeline. Once you’ve understood the principle of
+each indivual step as detailed in the sections below, it only takes 6
+lines of code to import, join and tidy 2 datasets that could contain
+data from an indefinite number of 96-well plates. No worries though if
+this feels cryptic, we’ll explain it all underneath.
+
+``` r
+
+# identifying paths to raw files
+map_file <- system.file("extdata", "csv_map.csv", package = "plate2N")
+abs_folder <- system.file("extdata", "txt_examples/", package = "plate2N")
+
+# importing both mapping and absorbance data
+map_tibble <- csv_to_tibble(map_file)
+abs_tibble <- txt_to_tibble(abs_folder)
+
+# verticalizing and joining both data layers
+joined_vertical <- join_abs_map(
+  list(abs_tibble, map_tibble),
+  dataset = "Nmin-", abs_map = c("abs-", "map-"))
+
+# tidying the data
+(tidy_data <- vertical_to_tidy(joined_vertical, column_def = c("abs", "map")))
+#> # A tibble: 480 × 8
+#>    row   column well_id unique_well_id dataset plate_id abs   map     
+#>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr> <chr>   
+#>  1 A     1      A1      A1_NO3_1F1     Nmin    NO3_1F1  0.092 Std     
+#>  2 A     1      A1      A1_NO3_1F2     Nmin    NO3_1F2  0.091 Std     
+#>  3 A     1      A1      A1_NO3_1F3     Nmin    NO3_1F3  0.110 Std     
+#>  4 A     1      A1      A1_NO3_1F4     Nmin    NO3_1F4  0.092 Std     
+#>  5 A     1      A1      A1_NO3_1F5     Nmin    NO3_1F5  0.113 Std     
+#>  6 A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  0.114 81_t1_z2
+#>  7 A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  0.107 97_t1_z1
+#>  8 A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  0.095 89_t1_z3
+#>  9 A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  0.118 81_t1_z1
+#> 10 A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  0.167 Std_3_t1
+#> # ℹ 470 more rows
+```
+
 In this vignette, we cover three steps:
 
 **1) Data import** from various raw file formats with
 [`txt_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/txt_to_tibble.md),
-[`csv_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/csv_to_tibble.md)
+[`csv_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/csv_to_tibble.md),
+[`skanit_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/skanit_to_tibble.md)
 and
-[`skanit_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/skanit_to_tibble.md),
+[`tecan_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/tecan_to_tibble.md)
 where data is brought into a shape that is common to all import files,
 i.e., cleaned from the file format-specific noise, but still unpractical
 to work with in R. We refer to the output of this first step in an
 object called “tibble” where data is still in a “plate” format (see
-hereunder). In this tibble, the first columns, called `row`, contains
-the `plate_id` in the first row, followed by the letters characterising
-the 8 rows of the plate (from A to H). Throughout the other 12 columns,
-the rest of the first row contains the plate-column numbers (from 1 to
-12). The rest of the table contains the original plate data, which can
-be numerical (e.g., absorbance data) or characters (e.g., plate mapping)
+`tibble_example` hereunder). In this tibble, the first column, called
+`row`, contains the `plate_id` in the first row, followed by the letters
+characterising the 8 rows of the plate (from A to H). Throughout the
+other 12 columns, the rest of the first row contains the plate-column
+numbers (from 1 to 12) in columns called X1 to X12. The rest of the
+table contains the original plate data, which can be numerical (e.g.,
+absorbance data) or characters (e.g., plate mapping).
 
 ``` r
 
@@ -86,12 +129,12 @@ the name of the column is the plate id. The first 2 columns contain the
 well identifier, stored in the columns `row` (of the 96-well plate, from
 A to H), and `column` (from 1 to 12). This vertical format is a good
 format to select a subset of plates (e.g., based on experiment,
-treatment, or anything else that the user stored into column names). See
-example hereunder:
+treatment, or anything else that the user stored into column names which
+are the plate ids). See example hereunder:
 
 ``` r
 
-vertical_plates ; 
+vertical_plates 
 #> # A tibble: 96 × 6
 #>    row   column NO3_TDN_01 NO3_TDN_02 NO3_TDN_03 NO3_TDN_04
 #>    <chr> <chr>  <chr>      <chr>      <chr>      <chr>     
@@ -106,7 +149,10 @@ vertical_plates ;
 #>  9 A     9      0.519      0.589      0.559      0.541     
 #> 10 A     10     0.543      0.535      0.528      0.544     
 #> # ℹ 86 more rows
-vertical_plates |> dplyr::select(row:column, tidyselect::ends_with("04"))
+
+# Selecting plate ids that end with "04"
+vertical_plates |> 
+  dplyr::select(row:column, tidyselect::ends_with("04"))
 #> # A tibble: 96 × 3
 #>    row   column NO3_TDN_04
 #>    <chr> <chr>  <chr>     
@@ -129,20 +175,21 @@ downstream data transformations and analyses. This step is done using
 the `tidyr` package
 
 Note: If the need arises to fit this package to other plate formats than
-96-well plates, please reach out to the authors.
+96-well plates, please reach out.
 
 ------------------------------------------------------------------------
 
 ## 1 - Import
 
-All 3 import functions hereunder
+All 4 import functions hereunder
 ([`csv_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/csv_to_tibble.md),
-[`skanit_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/skanit_to_tibble.md)
+[`skanit_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/skanit_to_tibble.md),
+[`txt_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/txt_to_tibble.md)
 and
-[`txt_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/txt_to_tibble.md))
+[`tecan_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/tecan_to_tibble.md))
 can be used to import files containing both absorbance **and** mapping
 data. However, in that case, it is recommended to attribute different
-plate ids to the 2 “plates” that represent the same 96-well plate (e.g.,
+plate ids to the 2 datasets that represent the same 96-well plate (e.g.,
 “NO3_plate1_abs” and “NO3_plate1_map”, see also description of
 [`verticalize_plates()`](https://mdetoeuf.github.io/plate2N/reference/verticalize_plates.md)
 in section 2 to see the final output).
@@ -158,13 +205,14 @@ strictly the same as in the outputted tibble (see `tibble_example`
 hereabove).
 
 In that sense, the function
-[`csv_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/csv_to_tibble.md)constitutes
-the simplest import option and takes advantage of the `readr` package
-(part of the `tidyverse`), by using either the function `read_csv()` or
-`read_csv2()`, for comma-separated or semi-colon separated values,
-respectively. Value separators can be modulated by the parameter
-`delim`, which defaults with the value `","` (`read_csv()`), but accepts
-`";"` (`read_csv2()`).
+[`csv_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/csv_to_tibble.md)
+constitutes the simplest import option and takes advantage of the
+`readr` package (part of the `tidyverse`), by using either the function
+`read_csv()` or `read_csv2()`, for comma-separated or semi-colon
+separated values, respectively. Value separators can be modulated in
+[`csv_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/csv_to_tibble.md)
+by the parameter `delim`, which defaults with the value `","`
+(`read_csv()`), but accepts `";"` (`read_csv2()`).
 
 Here is an example of how to call the
 [`csv_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/csv_to_tibble.md)
@@ -173,8 +221,13 @@ function.
 ``` r
 
 # see the function in action
+# save the file path to an object called example_csv
 example_csv <- system.file("extdata", "csv_example.csv", package = "plate2N")
+
+# import the data
 preview_csv <- csv_to_tibble(example_csv, delim = ",")
+
+# previe the first 20 lines
 print(preview_csv, n = 20)
 #> # A tibble: 36 × 13
 #>    row          X1    X2    X3    X4    X5    X6    X7    X8    X9    X10    X11
@@ -207,20 +260,27 @@ print(preview_csv, n = 20)
 
 A “skanit csv” is a csv where data is also structured in a plate format,
 but where plates are organized differently within the file, as generated
-by a software called *Skanit* that is linked to the plate reader. The
-raw csv format can be observed in the raw data attached to this package
-and is displayed hereunder.
+by a software called *Skanit* that is linked to the plate *Multiskan FC*
+plate reader. The raw csv format can be observed in the raw data
+attached to this package and is displayed hereunder.
 
 **It would make no sense to manually create a csv file in the “skanit
 csv” format**, and using the function
 [`skanit_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/skanit_to_tibble.md)
-is only useful for users of the Skanit software. See also
+is only useful for users of the *Skanit* software. See also
 `?skanit_to_tibble()` for more details.
 
 ``` r
 
+
+# getting file path
 skanit_csv <- system.file("extdata", "skanit.csv", package = "plate2N")
-preview_skanit_raw <- readr::read_csv(skanit_csv, col_names = FALSE, show_col_types = FALSE)
+
+# Store raw structure of a skanit-structured csv
+preview_skanit_raw <- readr::read_csv(
+  skanit_csv, col_names = FALSE, show_col_types = FALSE)
+
+# Preview the first 40 lines
 print(preview_skanit_raw, n = 40)
 #> # A tibble: 255 × 13
 #>    X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12   X13  
@@ -275,9 +335,15 @@ function and see its output. Notice the identical structure between
 
 ``` r
 
+
+# Import skanit csv
 skanit <- skanit_to_tibble(skanit_csv)
+
+# store absorbance and mapping in 2 separate objects
 skanit_tibble_abs <- skanit$abs_tibble
 skanit_tibble_map <- skanit$map_tibble
+
+# Preview both absorbance and mapping data
 print(skanit_tibble_abs, n = 12) ; print(skanit_tibble_map, n = 12)
 #> # A tibble: 90 × 13
 #>    row   X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12  
@@ -319,8 +385,10 @@ As for the function
 [`skanit_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/skanit_to_tibble.md),
 [`txt_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/txt_to_tibble.md)
 was designed fo import .TXT files structured in a specific way, as
-generated by the plate reader *Multiskan FC*. **It would make no sense
-to manually create a txt file in this format**.
+generated by the plate reader *Multiskan FC* when data is exported as
+.txt directly from the machine (without the help of the *Skanit*
+software. **It would make no sense to manually create a txt file in this
+format**.
 
 The function
 [`txt_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/txt_to_tibble.md)
@@ -346,9 +414,11 @@ files.
 #examine contents of txt_folder 
 (files <- list.files(txt_folder))
 #> [1] "NO3_1F1.TXT" "NO3_1F2.TXT" "NO3_1F3.TXT" "NO3_1F4.TXT" "NO3_1F5.TXT"
-(file <- paste0(txt_folder, "/", files[1])) # follow the file path on your file Finder or Directory, to see an example of file to look up in your computer
-#> [1] "/home/runner/work/_temp/Library/plate2N/extdata/txt_examples/NO3_1F1.TXT"
 ```
+
+You can find on our GitHub repository [examples of those
+.TXT](https://github.com/mdetoeuf/plate2N/tree/main/inst/extdata/txt_examples)
+files to examine.
 
 Each .TXT file contains the absorbance data of a single plate. This
 means that, to create a tibble similar to `tibble_example`,
@@ -358,11 +428,9 @@ example above), extracts their plate data, adds the plate_id (file name
 without .TXT extension) in the upper left corner of each plate data,
 then combines all plates into a single `tibble`.
 
-To examine the aspect of the raw file, go and manually visit the file
-path displayed hereunder for `txt_folder` in your computer’s file
-directory. Alternatively, you can see an example of raw .TXT file on our
-github repository:
-*https://github.com/mdetoeuf/plate2N/tree/main/inst/extdata/txt_examples*.
+To examine the aspect of the raw file, go and visit our GitHub
+repository with [examples of those
+.TXT](https://github.com/mdetoeuf/plate2N/tree/main/inst/extdata/txt_examples).
 
 Here is how to run
 [`txt_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/txt_to_tibble.md)
@@ -370,7 +438,10 @@ from a folder path:
 
 ``` r
 
+# import from .TXT format
 tibble_txt <- txt_to_tibble(filepath = txt_folder)
+
+# Preview the first 20 lines
 print(tibble_txt, n = 20)
 #> # A tibble: 45 × 13
 #>    row   X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12  
@@ -407,8 +478,10 @@ step into our function definition.
 A “Tecan .xlsx” is an Excel file where data is also structured in a
 plate format, but where plates are organized differently within the
 file, as generated by the software linked to the “Tecan” plate reader.
-The raw format can be observed in the raw data attached to this package
-and is displayed hereunder.
+An [example of Tecan
+files](https://github.com/mdetoeuf/plate2N/tree/main/inst/extdata/tecan_example)
+can be downloaded from our GitHub repository. The raw format is
+displayed hereunder.
 
 **It would make no sense to manually create an .xlsx file in the “Tecan
 .xlsx” format**, and using the function
@@ -420,8 +493,10 @@ The Tecan records absorbance data with a single plate in each file, so
 that the
 [`tecan_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/tecan_to_tibble.md)
 function takes as first argument a `folderpath` rather than a
-`filepath`. `folderpath` should give the path tp the folder containing
-all Tecan-generated files. The names of the files (without the “.xlsx”
+`filepath`, in a logic similar to that of
+[`txt_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/txt_to_tibble.md).
+`folderpath` should give the path to the folder containing all
+Tecan-generated files. The names of the files (without the “.xlsx”
 extension) will be taken as plate_id
 
 ``` r
@@ -430,18 +505,9 @@ extension) will be taken as plate_id
 (tecan_folder <- system.file("extdata", "tecan_example", package = "plate2N"))
 #> [1] "/home/runner/work/_temp/Library/plate2N/extdata/tecan_example"
 
-#examine contents of txt_folder 
+#examine contents of tecan_folder 
 (files <- list.files(tecan_folder))
 #> [1] "tecan1.xlsx" "tecan2.xlsx"
-```
-
-You can now follow the file path below on your file Finder or Directory,
-to see an example of file to look up in your computer[^1]
-
-``` r
-
-(file <- paste0(tecan_folder, "/", files[1])) 
-#> [1] "/home/runner/work/_temp/Library/plate2N/extdata/tecan_example/tecan1.xlsx"
 ```
 
 Each .xlsx file contains the absorbance data of a single plate. This
@@ -452,21 +518,16 @@ the example above), extracts their plate data, adds the plate_id (file
 name without .xlsx extension) in the upper left corner of each plate
 data, then combines all plates into a single `tibble`.
 
-To examine the aspect of the raw file, go and manually visit the file
-path displayed hereunder for `tecan_folder` in your computer’s file
-directory. Alternatively, you can see an example of raw .TXT file on our
-github repository:
-*https://github.com/mdetoeuf/plate2N/tree/main/inst/extdata/tecan_examples*.
-
 Here is how to run
 [`tecan_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/tecan_to_tibble.md)
 from a folder path:
 
 ``` r
 
+# import tecan data
 tibble_tecan <- tecan_to_tibble(folderpath = tecan_folder)
 
-#check it out
+# check it out
 tibble_tecan
 #> # A tibble: 18 × 13
 #>    row   X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12  
@@ -508,22 +569,17 @@ For data structured in different raw formats, there are 2 options.
 copy-paste raw plate data into a clean csv sheet (outside of R, for
 example in Excel), adopting the raw structure of `tibble_example`. You
 can generate an empty csv template using the function *Add here the name
-of other funtion*. Or you can lookup the csv structure of the following
-file:
-
-``` r
-
-(example_csv <- system.file("extdata", "csv_example.csv", package = "plate2N"))
-#> [1] "/home/runner/work/_temp/Library/plate2N/extdata/csv_example.csv"
-```
+of other function*. Or you can lookup the csv structure
+[here](https://github.com/mdetoeuf/plate2N/blob/main/inst/extdata/csv_example.csv).
 
 **2) With bigger data sets**, it may be more efficient to use an import
 function from the `readr` package (e.g.,
 [`readr::read_csv()`](https://readr.tidyverse.org/reference/read_delim.html),
+[`readr::read_csv2()`](https://readr.tidyverse.org/reference/read_delim.html),
 [`readr::read_tsv()`](https://readr.tidyverse.org/reference/read_delim.html)
 or
 [`readr::read_delim()`](https://readr.tidyverse.org/reference/read_delim.html)),
-possibly with a selection of columns or rows, then using tools of the
+possibly with a subset of columns or rows, then using tools of the
 `dplyr` or `tidyr` packages to bring the resulting tibble into the
 required format.
 
@@ -534,8 +590,10 @@ options hereabove, we can proceed to the data verticalization.
 
 ### 2.1 - Simple verticalization of a single tibble
 
-See also `?verticalize_plates()` for a detailed overview of function
-options.
+Here are examples of verticalized plates. Note that the function does
+the exact same thing each time as the input format is strictly
+identical. See also `?verticalize_plates()` for a detailed overview of
+function options.
 
 ``` r
 
@@ -642,7 +700,7 @@ print(tibble_txt, n = 12) ; print(vertical_txt, n = 12)
 #> # ℹ 84 more rows
 ```
 
-### 2.2 - Joined verticalization of 2 related tibbles
+### 2.2 - Joined verticalization of 2 or more related tibbles
 
 In practice, we often import absorbance data with one function
 (typically
@@ -653,20 +711,24 @@ and mapping data from another (typically
 [`csv_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/csv_to_tibble.md)
 or even simply
 [`readr::read_csv()`](https://readr.tidyverse.org/reference/read_delim.html)).
-This means that, in the end, we not only need to verticalize both those
-datasets, but we also need to merge them in a single data set.
+This means that, in the end, we need not only to verticalize both those
+datasets, but we also need to merge them in a single data set, with one
+column for absorbance date and another for the mapping of the wells
+(e.g., containing sample ids).
 
 [`join_abs_map()`](https://mdetoeuf.github.io/plate2N/reference/join_abs_map.md)
-does just that. It works directly from 2 imported `tibble`s, uses
+does just that. It works directly from 2 imported `tibble`s. In the
+background, it relies on
 [`verticalize_plates()`](https://mdetoeuf.github.io/plate2N/reference/verticalize_plates.md)
-followed by
+and
 [`dplyr::left_join()`](https://dplyr.tidyverse.org/reference/mutate-joins.html)
-with a series of default presets, adding a prefix to column names to
-incorporate information on dataset and data type (absorbance vs
+with a series of default presets[^1], adding a prefix to column names to
+incorporate information on dataset and data type (e.g., absorbance vs
 mapping).
 
 ``` r
 
+# Example of joined verticalized format with 2 input tibbles (2 "layers" of data)
 (joined_vertical <- join_abs_map(
   tibble_list = list(skanit_tibble_abs,
   skanit_tibble_map),
@@ -695,24 +757,25 @@ mapping).
 
 We recognize the same verticalized structures, but now column names have
 been added a double prefix, containing “expe1” which was attributed to
-the argument `dataset` and either “abs” or “map”, added to the plates
-corresponding to the first and second argument, respectively.
+the argument `dataset` and either “abs” or “map”, added by default to
+the plates corresponding respectively to the first and second elements
+of the list given to the argument `tibble_list`.
 
 - Defining a dataset in the column names makes sense especially if
   several datasets will be joined down the line. The column dataset is
   needed for several downstream steps, so we recommend to give it some
   name, even if you only work with data from a single experiment.
 - The “abs/map” prefixes can be modulated by adapting the default value
-  of the argument `abs_map = c("abs-", "map")`
+  of the argument `abs_map = c("abs-", "map-")`
 
 Additional info can be found under `?join_abs_map()`.
 
 > **When there are more than 2 layers for each plate**
 >
-> We displayed steps to import, for each physical plate, 2 data-plates,
-> containing absorbance and mapping data (columns `abs` and `map`,
-> respectively). In some studies, there may be more layers of data for
-> each physical plate. Here are some examples
+> We displayed here steps to import, for each physical plate, 2 layers
+> of data, containing absorbance and mapping data (columns `abs` and
+> `map`, respectively). In some studies, there may be more layers of
+> data for each physical plate. Here are some examples
 >
 > - Several types of mappings containing categorical data. This is the
 >   case when factors are represented in a plate format (ex: one layer
@@ -724,15 +787,14 @@ Additional info can be found under `?join_abs_map()`.
 >   series, or readings at several wavelengths to quantify different
 >   compounds, etc.)
 >
-> In such case, the pipeline still works, but small tweaks need to be
-> made at several steps. See also [Section 5](#sec-microresp) for
-> details on implementation
+> In such cases, the pipeline still works, but small tweaks need to be
+> made at several steps. See also [Section 5](#sec-microresp) for an
+> example of implementation
 
 ## 3 - Tidy table
 
 The vertical format is practical for manual/human handling, with an
-easy-to-handle number of rows (96), and individual plates are easy to
-select based on plate_id or dataset. For example, here is an easy moment
+easy-to-handle number of rows (96). For example, now is an easy moment
 to subset some plates based on dataset, abs/map or even some features
 that are embedded in plate name (such as N species in our case where
 plate names contained either “NO3”, “NO2” or “NH4”). This can be done
@@ -743,20 +805,42 @@ aided by some helper functions from the `tidyselect` package, such as
 [`tidyselect::contains()`](https://tidyselect.r-lib.org/reference/starts_with.html),
 etc.
 
-But this verticalized format is not ideal for bulk computing and
+However, this verticalized format is not ideal for bulk computing and
 transformations, where the might of the `tidyverse` sits in computations
 done on columns. So, a typical last step of tidying would be to bring
-this dataset in a format with a single column for the absorbance data,
-and another for the mapping data, where each unique well would be
-represented by a row. Such transformations can be done with the `tidyr`
-and “`dplyr` packages, for example with the successive use of
+this dataset in a format that has a single column per data type, namely
+one column for the absorbance data, and another for the mapping data,
+where each unique well would be represented by a row. Such
+transformations can be done with the `tidyr` and “`dplyr` packages, for
+example with the successive use of
 [`tidyr::pivot_longer()`](https://tidyr.tidyverse.org/reference/pivot_longer.html)and
 [`tidyr::pivot_wider()`](https://tidyr.tidyverse.org/reference/pivot_wider.html).
 
 To simplify this process, this is exactly what our function
 [`vertical_to_tidy()`](https://mdetoeuf.github.io/plate2N/reference/vertical_to_tidy.md)
-does. Here is an example of the complete pipeline from import to tidy
-table
+does.
+
+``` r
+
+# tidying 
+(tidy_data <- vertical_to_tidy(joined_vertical, column_def = c("abs", "map")))
+#> # A tibble: 960 × 8
+#>    row   column well_id unique_well_id dataset plate_id abs    map    
+#>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr>  <chr>  
+#>  1 A     1      A1      A1_M12         expe1   M12      1.4402 Std0001
+#>  2 A     1      A1      A1_M16         expe1   M16      1.5789 Std0097
+#>  3 A     1      A1      A1_M17         expe1   M17      1.5611 Std0193
+#>  4 A     1      A1      A1_M18         expe1   M18      1.7013 Std0289
+#>  5 A     1      A1      A1_M19         expe1   M19      1.6865 Std0385
+#>  6 A     1      A1      A1_M20         expe1   M20      1.7936 Std0481
+#>  7 A     1      A1      A1_M21         expe1   M21      1.7925 Std0577
+#>  8 A     1      A1      A1_M22         expe1   M22      1.8274 Std0673
+#>  9 A     1      A1      A1_M23         expe1   M23      1.9330 Std0769
+#> 10 A     1      A1      A1_M1          expe1   M1       0.9254 Std0865
+#> # ℹ 950 more rows
+```
+
+Here is, once more, the complete pipeline from import to tidy table
 
 ``` r
 
@@ -801,7 +885,7 @@ experiment. To understand what this means: here plates are incubated for
 5h. An absorbance reading is done at t = 0h (`t0`) and t = 5h (`t5`).
 There is also mapping data, containing the info on which substrate has
 been added in which well. Substrates are, in this experiment: glucose
-(Glu), water (H2O), oxalic acid (OA), ligning (Lgn), N-acetylglucosamine
+(Glu), water (H2O), oxalic acid (OA), lignin (Lgn), N-acetylglucosamine
 (NAG), gamma-acetylbutyric acid (gABA), alanine (Ala) and urea (Urea).
 
 So, the 3 layers of data are referred to as `abs_t0`, `abs_t5`, and
@@ -815,8 +899,240 @@ So, the 3 layers of data are referred to as `abs_t0`, `abs_t5`, and
 > `abs_map = c("abs_t0", "abs_t5", "map")` and others that are lists of
 > all data sets (one per layer).
 
-***The rest of this variant pipeline is still under development. Stay
-tuned***
+### 4.1 Import the 2 layers of absorbance data
+
+``` r
+
+# Import absorbance data, t0 and t5
+MR_t0_csv <- system.file("extdata", "MR_abs_t0.csv", package = "plate2N")
+MR_t5_csv <- system.file("extdata", "MR_abs_t5.csv", package = "plate2N")
+
+# import from csv file type
+MR_abs_t0 <- csv_to_tibble(MR_t0_csv)
+MR_abs_t5 <- csv_to_tibble(MR_t5_csv)
+
+# Check them out
+MR_abs_t0; MR_abs_t5
+#> # A tibble: 45 × 13
+#>    row      X1    X2    X3    X4    X5    X6    X7    X8    X9   X10   X11   X12
+#>    <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+#>  1 P01    1     2     3     4     5     6     7     8     9    10    11    12   
+#>  2 A      0.93  1.15  1.14  1.14  1.15  1.16  1.16  1.17  1.17  1.12  1.14  1.17
+#>  3 B      1.15  1.16  1.13  1.16  1.16  1.16  1.17  1.16  1.14  1.16  1.16  1.15
+#>  4 C      1.16  1.15  1.14  1.17  1.15  1.16  1.19  1.19  1.17  1.17  1.18  1.17
+#>  5 D      1.17  1.16  1.16  1.16  1.16  1.16  1.18  1.17  1.14  1.18  1.17  1.17
+#>  6 E      1.19  1.16  1.16  1.18  1.17  1.15  1.19  1.1   1.11  1.17  1.16  1.16
+#>  7 F      1.16  1.17  1.17  1.18  1.19  1.15  1.19  1.13  1.13  1.16  1.14  1.18
+#>  8 G      1.17  1.15  1.16  1.13  1.19  1.16  1.2   1.08  1.15  1.16  1.15  1.16
+#>  9 H      1.17  1.16  1.17  1.16  1.19  1.16  1.2   1.11  1.15  1.15  1.16  1.18
+#> 10 P02    1     2     3     4     5     6     7     8     9    10    11    12   
+#> # ℹ 35 more rows
+#> # A tibble: 45 × 13
+#>    row      X1    X2    X3    X4    X5    X6    X7    X8    X9   X10   X11   X12
+#>    <chr> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+#>  1 P01    1     2     3     4     5     6     7     8     9    10    11    12   
+#>  2 A      0.67  0.39  0.89  0.91  0.32  0.6   0.77  0.81  0.86  0.67  0.79  0.98
+#>  3 B      0.9   0.4   0.86  0.92  0.32  0.64  0.81  0.79  0.83  0.77  0.82  0.94
+#>  4 C      0.92  0.42  0.89  0.93  0.33  0.56  0.81  0.8   0.86  0.78  0.84  0.95
+#>  5 D      0.92  0.39  0.91  0.91  0.32  0.6   0.81  0.79  0.84  0.81  0.84  0.95
+#>  6 E      0.94  0.41  0.9   0.95  0.34  0.59  0.8   0.7   0.8   0.79  0.81  0.95
+#>  7 F      0.92  0.41  0.92  0.94  0.36  0.6   0.82  0.77  0.79  0.78  0.8   0.96
+#>  8 G      0.93  0.41  0.92  0.89  0.36  0.65  0.83  0.72  0.84  0.76  0.8   0.94
+#>  9 H      0.93  0.43  0.92  0.94  0.34  0.62  0.83  0.72  0.83  0.74  0.8   0.96
+#> 10 P02    1     2     3     4     5     6     7     8     9    10    11    12   
+#> # ℹ 35 more rows
+```
+
+### 4.2 - Being creative with importing mappings
+
+In a classical MicroResp experiment, a whole 96-well plate is dedicated
+to a single sample, though this may vary between experimental design. In
+this particular case, the mapping did not relate to samples, but to
+substrates added. And because the template of substrate addition was
+strictly the same for each plate, with a complete column attributed per
+substrate, there is a much simpler way to import the mapping data than
+creating a plate layout csv and importing it. This holds particularly
+true for an experiment with a large number of plates (we had hundreds).
+So feel free to be creative in generating layers of data, as best fits
+your needs.
+
+Plate mapping is strictly the same for each plate throughout the
+experiment, so we propose to take advantage of the function
+[`plate2N::map_plates()`](https://mdetoeuf.github.io/plate2N/reference/map_plates.md)
+(see also the `prepare-plates`
+[vignette](https://mdetoeuf.github.io/plate2N/articles/prepare_plates.html))
+to create this mapping data in R.
+
+First, create a vector with the names of the substrates (in the order of
+the plate map)
+
+``` r
+
+# vector of substrates
+MR_columns <- c(
+  "Std_Glu", "Std_H2O", 
+  "H2O", "OA", "Glu", "Lgn", "NAG", "gABA", "Ala", "Urea")
+```
+
+Then, compute the number of plates required (here, 5 plates) by counting
+how many cells in the first column of `MR_abs_t0` do not correspond to
+one of the 26 `LETTERS` (= number of plate ids).
+
+``` r
+
+# nb of plates
+(nb_plates <- MR_abs_t0 |> 
+  dplyr::filter(row %ni% LETTERS) |> 
+  nrow())
+#> [1] 5
+```
+
+Finally, run the mapping function with
+
+- plate_id that pastes “P” with numbers from 01 to the nb of plates
+
+- “sample list” = repetition of the vector of substrates x the nb of
+  plates
+
+- no std curves or blank (not needed in MicroResp experiments), and 2
+  empty columns (1 and 12, typically disregarded in those experiments
+  due to large edge effects)
+
+- 8 wells per “sample” (in this case: not samples but substrates)
+
+``` r
+
+# compute the mapping
+MR_map <- map_plates(
+  plate_ids = paste0("P", sprintf("%02d", seq(01:nb_plates))), 
+  samples = rep(MR_columns, nb_plates),
+  n_samples_per_plate = 10,
+  column_curves = c(), column_blank = c(), column_empty = c(1,12),
+  n_wells_samples = 8)
+
+# Check it out
+MR_map
+#> # A tibble: 45 × 13
+#>    row   X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12  
+#>    <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr>
+#>  1 P01   1     2     3     4     5     6     7     8     9     10    11    12   
+#>  2 A     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty
+#>  3 B     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty
+#>  4 C     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty
+#>  5 D     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty
+#>  6 E     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty
+#>  7 F     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty
+#>  8 G     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty
+#>  9 H     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty
+#> 10 P02   1     2     3     4     5     6     7     8     9     10    11    12   
+#> # ℹ 35 more rows
+```
+
+Such creative methods are particularly time-saving with large datasets.
+Here, we have only 5 plates \<=\> 45 rows in our tibble. But in a
+100-plate dataset, this would correspond to 900 rows, quite
+time-consuming to encode by hand.
+
+### 4.3 - Verticalize and join all 3 layers
+
+Notice the use of a 3-element (rather than 2-element) list and a
+3-element vector for the arguments `tibble_list` and `abs_map`,
+respectively. The logic stays the same as with 2 layers though.
+
+``` r
+
+# verticalize and join the 3 layers
+MR_joined <- join_abs_map(
+  tibble_list = list( MR_abs_t0, MR_abs_t5, MR_map), 
+  abs_map = c("abs_t0-", "abs_t5-", "map-"), 
+  coerce_numeric = FALSE, 
+  dataset = "MR-" )
+
+# Check it out
+MR_joined
+#> # A tibble: 96 × 17
+#>    row   column `MR-abs_t0-P01` `MR-abs_t0-P02` `MR-abs_t0-P03` `MR-abs_t0-P04`
+#>    <chr> <chr>  <chr>           <chr>           <chr>           <chr>          
+#>  1 A     1      0.93            1.23            1.27            1.32           
+#>  2 A     2      1.15            1.23            1.26            1.25           
+#>  3 A     3      1.14            1.22            1.25            1.22           
+#>  4 A     4      1.14            1.22            1.26            1.3            
+#>  5 A     5      1.15            1.22            1.24            1.28           
+#>  6 A     6      1.16            1.21            1.23            1.26           
+#>  7 A     7      1.16            1.23            1.23            1.27           
+#>  8 A     8      1.17            1.2             1.24            1.24           
+#>  9 A     9      1.17            1.21            1.25            1.28           
+#> 10 A     10     1.12            1.21            1.25            1.24           
+#> # ℹ 86 more rows
+#> # ℹ 11 more variables: `MR-abs_t0-P05` <chr>, `MR-abs_t5-P01` <chr>,
+#> #   `MR-abs_t5-P02` <chr>, `MR-abs_t5-P03` <chr>, `MR-abs_t5-P04` <chr>,
+#> #   `MR-abs_t5-P05` <chr>, `MR-map-P01` <chr>, `MR-map-P02` <chr>,
+#> #   `MR-map-P03` <chr>, `MR-map-P04` <chr>, `MR-map-P05` <chr>
+```
+
+Notice the names of the columns, that now received 3 options for the
+layer prefix: `abs_t0-`, `abs_t5-` and `map-`.
+
+``` r
+
+# Check out column names
+names(MR_joined)
+#>  [1] "row"           "column"        "MR-abs_t0-P01" "MR-abs_t0-P02"
+#>  [5] "MR-abs_t0-P03" "MR-abs_t0-P04" "MR-abs_t0-P05" "MR-abs_t5-P01"
+#>  [9] "MR-abs_t5-P02" "MR-abs_t5-P03" "MR-abs_t5-P04" "MR-abs_t5-P05"
+#> [13] "MR-map-P01"    "MR-map-P02"    "MR-map-P03"    "MR-map-P04"   
+#> [17] "MR-map-P05"
+```
+
+### 4.4 - Tidy the data, 3 columns for 3 layers
+
+Tidy the table to reach 1 row per unique well (96 x nb of physical
+plates), and 3 important columns: `abs_t0`, `abs_t5`, `map`. The syntax
+for this step is strictly the same as with 2 layers, but we now have to
+specify the argument `column_def`\` as its default value, containing
+only `c("abs-", "map-")` would no longer work.
+
+``` r
+
+# From vertical to tidy format with 3 layers
+tidy_MR <- vertical_to_tidy(
+  MR_joined, 
+  column_def = c("abs_t0", "abs_t5", "map"))
+
+# Check it out
+tidy_MR
+#> # A tibble: 480 × 9
+#>    row   column well_id unique_well_id dataset plate_id abs_t0 abs_t5 map    
+#>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr>  <chr>  <chr>  
+#>  1 A     1      A1      A1_P01         MR      P01      0.93   0.67   empty  
+#>  2 A     1      A1      A1_P02         MR      P02      1.23   1      empty  
+#>  3 A     1      A1      A1_P03         MR      P03      1.27   1.04   empty  
+#>  4 A     1      A1      A1_P04         MR      P04      1.32   1.09   empty  
+#>  5 A     1      A1      A1_P05         MR      P05      1.32   1.13   empty  
+#>  6 A     2      A2      A2_P01         MR      P01      1.15   0.39   Std_Glu
+#>  7 A     2      A2      A2_P02         MR      P02      1.23   0.43   Std_Glu
+#>  8 A     2      A2      A2_P03         MR      P03      1.26   0.47   Std_Glu
+#>  9 A     2      A2      A2_P04         MR      P04      1.25   0.44   Std_Glu
+#> 10 A     2      A2      A2_P05         MR      P05      1.25   0.47   Std_Glu
+#> # ℹ 470 more rows
+
+# If you like to reorder columns to have mapping first, then absorbance
+tidy_MR |> dplyr::relocate(map, .before = abs_t0)
+#> # A tibble: 480 × 9
+#>    row   column well_id unique_well_id dataset plate_id map     abs_t0 abs_t5
+#>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr>   <chr>  <chr> 
+#>  1 A     1      A1      A1_P01         MR      P01      empty   0.93   0.67  
+#>  2 A     1      A1      A1_P02         MR      P02      empty   1.23   1     
+#>  3 A     1      A1      A1_P03         MR      P03      empty   1.27   1.04  
+#>  4 A     1      A1      A1_P04         MR      P04      empty   1.32   1.09  
+#>  5 A     1      A1      A1_P05         MR      P05      empty   1.32   1.13  
+#>  6 A     2      A2      A2_P01         MR      P01      Std_Glu 1.15   0.39  
+#>  7 A     2      A2      A2_P02         MR      P02      Std_Glu 1.23   0.43  
+#>  8 A     2      A2      A2_P03         MR      P03      Std_Glu 1.26   0.47  
+#>  9 A     2      A2      A2_P04         MR      P04      Std_Glu 1.25   0.44  
+#> 10 A     2      A2      A2_P05         MR      P05      Std_Glu 1.25   0.47  
+#> # ℹ 470 more rows
+```
 
 ## 5 - Next steps
 
@@ -871,5 +1187,7 @@ file**. This can be done in several ways.
   (try this on the verticalized plate:
   `dplyr::select(my_vertical_plate, tidyselect::starts_with("abs"))`).
 
-[^1]: you may need to run those commands on your computer, the path may
-    be different
+[^1]: Should any need arise for different preset to be given optionally
+    as argument to
+    [`join_abs_map()`](https://mdetoeuf.github.io/plate2N/reference/join_abs_map.md),
+    please reach out
