@@ -15,17 +15,20 @@ A tibble with 1 row per plate, and an indefinite number of columns
 metadata
 }
 \description{
-Must-have columns are those detailed here.
-}
-\details{
-Additional recommended columns are those recording detail on extractant.
+metadata is an example data set of the package plate2N. Must-have columns are
+those detailed here. Additional recommanded columns are those recording detail on extractant.
 This is information that can easily get lost, and is especially relevant when
 there are variations within a lab (ex., K2SO4 vs KCl, or extractant concentration, ...).
-Here, we propose to record extractant species (K2SO4), extractant unit (M) and extractant concentration (0.5).
-
-More experimental parameters could be relevant as well (e.g., dilution, incubation time,
+Here, we propose to record extractant species (K2SO4), extractant concentration (0.5) and unit (M).
+}
+\details{
+More experimental parameters could be relevant as well, anything that is valid
+on a per-plate basis (e.g., dilution, incubation time,
 sampling time, researcher, machine used, wavelength,...)
 
 Recording date and time can help to distinguish batch-effects
+
+You can create your own metadata as a csv and import it using a family of
+import functions from the readr package (e.g., \code{readr::read_csv()} or \code{readr::read_csv2()}).
 }
 \keyword{datasets}
