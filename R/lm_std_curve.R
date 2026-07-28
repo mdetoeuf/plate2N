@@ -87,12 +87,14 @@ lm_std_curve <- function(
               Only `model = "linear"` and `model = "poly"` are accepted.
               See also `?lm_std_curve()`')
 
+  # split data in a list - split according to groups
+  splitted_data <- dplyr::group_split(full_data)
   #i = 9
   for (i in 1:dplyr::n_groups(full_data)) {
     #for (i in 1:10) {
 
     # curve data, regardless of model
-    curve <- dplyr::group_split(full_data)[[i]]
+    curve <- splitted_data[[i]]
     dataset <- curve$dataset[1]
     plate_id <- curve |>
       dplyr::select(plate_id) |> magrittr::extract2(1) |> unique()
@@ -457,7 +459,7 @@ density_lm_param <- function(
     ggplot2::xlab(xlab) +
     ggplot2::labs(
       title = title, subtitle = subtitle,
-      colour = "Standard species", fill = "Standard species"
+      colour = "Standard\nspecies", fill = "Standard\nspecies"
     )
 
   # extract max y of the curve
