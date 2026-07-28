@@ -25,8 +25,11 @@ This vignette is still under development, bugs are to be expected
 
 # TO DO
 
-- Consider making a function of creating the "to_remove" table for extractant outliers
+- Consider making a function of creating the "to_remove" table for extractant outliers (section 3.3.3, @sec-multiple-extr)
 - In the function qc_raw_qbs(), separate condition for export plot and show plot. If we export it, we may not want to plot it as an output...
+- **Briefly describe steps of the pipeline at the end of the introduction**
+- allow other digit and separator delimitors in extract_curve –\> make it a parameter
+- the last paragraph of 3.3.3 is confusing –\> change the raw data so that we can remove this bit and re-run the coefficient of variation as we should
 
 # Introduction
 
@@ -34,13 +37,41 @@ This vignette shows the basic functions that allow the correction of raw absorba
 
 This pipeline is adapted to the case where the standard curve solutions were prepared with a different blank than the samples. Because of that, there are 2 parallel pipelines to perform the blank-correction (first on standard curves data, then on samples data), then data from standard curves and from samples are merged again.
 
-In theory, the "samples" pipeline should be adaptable to the case where all wells used the same blank (including those containing standard curve solutions), though this has yet to be tested, and bugs may occur. Feel free to contact the authors to suggest improvements.
+In theory, the "samples" pipeline should be adaptable to the case where all wells used the same blank (including those containing standard curve solutions), though this has yet to be tested, and bugs may occur. Feel free to reach out to suggest improvements or signal bugs.
 
-To avoid confusion between "blank of the standard curve" and "blank of the samples", the sample-blank is referred to as "extractant" or `extr` throughout this vignette, to refer to the solution that was used to extract N-compounds from soil samples and now serves as blank. The standard blank is referred to as `std_blank`.
+To avoid confusion between "blank of the standard curve" and "blank of the samples", the sample-blank is referred to as "extractant" or `extr` throughout this vignette, to refer to the solution that was used to extract (N-)compounds from soil samples and now serves as blank. The standard blank is referred to as `std_blank`.
+
+::: callout-note
+## What this pipeline does
+
+- Blank correction of standard curve
+
+  - extracting standard curve data and their blank
+
+  - if several curves per plate:
+
+    - identifying and remove outliers
+
+    - compute the per-plate mean of blanks without outliers
+
+  - correct the rest of standard curve data by subtracting the mean of its blank
+
+- Blank correction of samples
+
+  - extracting extractant (= sample-blank) data
+
+  - identifying and removing outliers
+
+  - compute the per-plate mean of blanks without outliers
+
+  - correct samples raw data by subtracting the mean of its blank (extractant)
+
+**Particularly useful is the automated identification of possible outliers, so that users only need to assess and take outlier-removal decisions for those "suspicious" curves or extractant data**
+:::
 
 # 1 - Getting raw absorbance data
 
-The vignette `import-tidy` shows how to import and tidy absorbance data. The vignette `handling-outliers` shows how to run some preliminary quality checks and possibly remove some first outliers. To access those vignettes, run the following commands
+The vignette `import-tidy` shows how to import and tidy absorbance data. The vignette `handling-outliers` shows how to run some preliminary quality checks with the function `qc_raw_abs()` and explains in detail the process of removing outliers once they are identified, which will be needed thoughout this pipeline. To access those vignettes, run the following commands
 
 `vignette("import-tidy", package = "plate2N")`
 
@@ -52,17 +83,30 @@ Tidy data as imported according to `import-tidy` should look something like this
 tidy_plates
 ```
 
-For quality checking of the standard curve, we will require some metadata for each 96-well plate containing at least the concentrations of the dilutions of the standard curve.
+For quality checking of the standard curve, we will require some metadata for each 96-well plate containing
+
+- at least the concentrations of the dilutions of the standard curve
+
+- anything else that is valid on a per-plate basis (`metadata` has one row per plate) and would be useful in your downstream analysis
+
+`metadata` is an example data set that is part of this package (run `?metadata` to see its documentation).
 
 ```{r}
 (meta <- metadata |> dplyr::select(dataset, plate_id, std_sp, std_unit, std_conc))
 ```
 
-We now join (raw) plate data and metadata (meta). Note that there has to be a correspondence in the columns `dataset` and `plate_id` between the raw absorbance data and the metadata.
+We now join (raw) plate data and metadata (`meta`). Note that there has to be a correspondence in the columns `dataset` and `plate_id` between the raw absorbance data and the metadata.
 
 ```{r}
+# Checking out tidy_plates again and noticing the columns dataset and plate_id
+tidy_plates
+
+# joining tidy_plates with meta
 (raw_meta <- tidy_plates |> 
   dplyr::left_join(meta, by = dplyr::join_by(dataset, plate_id)))
+
+# Notice the combined structure of both tables
+str(raw_meta)
 ```
 
 # 2 - Blank-correction of standard curves
@@ -75,32 +119,39 @@ To fit in one row per plate, the concentrations for standard curve are, so far, 
 raw_meta |> dplyr::select(plate_id, std_conc) |> head(n = 3)
 ```
 
-But in truth, only one of those concentration values corresponds to each value of well of the standard curve.
+But in truth, only one of those concentration values corresponds to each value within wells of the standard curve.
 
 Note that concentration values are separated by a `-` and digits are marked by a `.`, which is important in the function call to `extract_curve()`. Also, concentration values MUST be in ascending order in the metadata file. See also `?metadata` and `?extract_curve()`
 
+`extract_curve()` "pulls" the curve concentration data to have only one concentration value per row (under the column `std_conc`), and adds corresponding "row" data in the order defined by the argument `pipetting_direction`.
+
 ```{r}
 (curve_concentration <- extract_curve(meta, pipetting_direction = "top_down"))
+length(unique(raw_meta$plate_id))
 ```
 
-Notice now that each row only contains a single value under the column `std_conc`
+Notice that `curve_concentration` now has `r nrow(curve_concentration)` rows = nb of plates (`r length(unique(meta$plate_id))`) x nb of elements in each standard curve (8).
 
 ::: callout-tip
 ## Too many rows?
 
-A common mistake is to run `extract_curve()` on `raw_meta` instead of `meta`. But `meta` has one row per plate, whereas `raw_meta` has one row per well, so that calling `extract_curve(raw_meta)` would result on a table that is much too long (\~96 times too long). If you run into issues later, this might be the source.
+A common mistake is to run `extract_curve()` on `raw_meta` instead of `meta`. But `meta` has one row per plate, whereas `raw_meta` has one row per well, so that calling `extract_curve(raw_meta)` would result in a table that is much too long (\~96 times too long). If you run into issues later, this might be the source.
 :::
 
-We now have curve concentrations corresponding to the `dataset`, `plate_id` and `row` of a plate, which we can use for all downstream steps. This goes under the assumption that standard curves are pipetted vertically in a complete column of the 96-well plate. Check `?extract_curve()` for more details.
+We now have curve concentrations corresponding to the `dataset`, `plate_id` and `row` of each plate stored inside `curve_concentration`, which we can use for all downstream steps. This goes under the assumption that standard curves are pipetted vertically in a complete column of the 96-well plate. Check `?extract_curve()` for more details. Should other standard curve layouts be required, please reach out.
 
 ## 2.2 - Extract Standard data
 
-Here, we get a subset of the table `raw_meta`, keeping only absorbance reads of the wells of the standard curve (defined by the value `Std` in the column `map`), from which we remove the "old" column `std_conc` (with all dilutions of the curve), and replace it by the "new" column `std_conc` (only 1 dilution per row).
+Here, we extract a subset of the table `raw_meta`, keeping only absorbance reads from the standard curve (defined by the value `Std` in the column `map`), from which we remove the "old" column `std_conc` (with all dilutions of the curve), and replace it by the "new" column `std_conc` as created in `curve_concentration` (only 1 dilution level per row).
 
 ```{r}
+# Preparing standard curve data
 std_data <- raw_meta |> 
+  # extract standard curve data
   extract_std_data(std_def = "Std") |> 
+  # remove "old" std_conc column
   dplyr::select(!std_conc) |> 
+  # adding the "new" std_conc column by joining the data with curve_concentration
   dplyr::left_join(curve_concentration, by = dplyr::join_by(row, dataset, plate_id))
 
 # Check it out (rearranging rows and columns for better readibility)
@@ -109,15 +160,21 @@ std_data |>
   dplyr::relocate(well_id, dataset, plate_id, map, abs, std_conc, std_unit)
 ```
 
-## 2.3 - Compute per-plate average of std_blank
+The correspondence between absorbance and concentration of each standard well is now made, which will allow plotting, outlier removal, and, later, computing the regression equation.
 
-`extract_std_blanc()` returns a list with several elements concerning standard blanks
+## 2.3 - Extract blank data from standard curve data
+
+`extract_std_blanc()` returns a list with 3 elements concerning standard blanks only (notice that `std_blank$all` has 8x less rows than `std_data` as it only contains the blank of the standard curve, i.e., one well per column)
 
 ```{r}
+# extract blank data from std_data
 std_blank <- std_data |> 
   extract_std_blank(
     std_def = "Std",
     pipetting_direction = "top_down")
+
+# check number of rows
+nrow(std_data) ; nrow(std_blank$all)
 ```
 
 - `std_blank$all` fetches all wells that are expected to contain the standard blank, i.e., all standard data from plate-row A (`pipetting_direction = "top_down"`) or H (`pipetting_direction = "bottom_up"`)
@@ -126,9 +183,9 @@ std_blank <- std_data |>
   std_blank$all
 ```
 
-- `std_blank$untrusted` identifies expected blank wells that do not correspond to the lowest absorbance value of their standard curve[^1]. This item and may be empty
+- `std_blank$untrusted` identifies expected blank wells that do not correspond to the lowest absorbance value of their standard curve[^1]. This item may be empty
 
-[^1]: This quality check was added because, in case of top_down pipetting, A1 often will contain the standard blank, but it is also often the first well to be filled during pipetting. With automated pipettes, a small ejection of liquid has to occur before dispensing the first dose of solution. Failure to intentionally eject will result in the first well receiving the "ejection" dose, which is not the correct volume. This can end up in various responses in terms of absorbance, depending on which reagent has been wrongly pipetted.
+[^1]: This quality check was added because, in case of top_down pipetting, A1 often will contain the standard blank, but it is also often the first well to be filled during pipetting. With automated pipettes, a small ejection of liquid has to occur before dispensing the first dose of solution. Failure to intentionally eject will result in the first well receiving the "ejection" dose, which is not the correct volume. This is not trivial because with big data sets containing hundreds of plates, it is not unlikely that this human error happens a coupls of times. This can end up in various responses in terms of absorbance, depending on which reagent has been wrongly pipetted.
 
 ```{r}
   std_blank$untrusted
@@ -145,13 +202,17 @@ std_blank <- std_data |>
 ::: callout-note
 ## Check out untrusted standard blanks
 
-The computation of per-plate standard curve blank average should made on trusted blank wells only. It is therefore important to check curves containing "untrusted" blank wells and decide whether to keep them or not
+The computation of per-plate standard curve blank average should be made on trusted blank wells only. It is therefore important to check curves containing "untrusted" blank wells and decide whether to keep them or not
 :::
 
-The function `plot_std()` allows the visualization of (a subset of) curves.
+The function `plot_std()` allows the visualization of (a subset of) curves. With small datasets (as here, with only 5 plates), we could run it on all plates. With bigger datasets however, it comes in quite handy to plot only the automated subset of curves that really need a check on their blank data.
+
+Notice the argument `through_origin = FALSE` (default is true), which removes the default constraint on the smooth curve to go through the origin (which does not make sense before we have blank-corrected data).
+
+Notice also that `plot_std()` is based on the ggplot grammar of graphics. This means that you can easily add additional ggplot-based layers like we do in the following chunk.
 
 ```{r}
-# Select subset of std_data to be plotted because curves are in "untrusted"
+# Select subset of std_data to be plotted because their blanks are "untrusted"
 to_plot <- std_data |> 
   dplyr::filter(
     unique_curve_id %in% std_blank$untrusted$unique_curve_id) 
@@ -159,7 +220,9 @@ to_plot <- std_data |>
 # look at "suspicious" curves
 to_plot |> 
   plot_std(through_origin = FALSE) +
+  # ggplot layer: facetting per plate (adds the plate_id title and would group curves per plate)
   ggplot2::facet_wrap(~plate_id, scales = "free") +
+  # remove legend (because there is only one colour in this case)
   ggplot2::theme(legend.position = "none")
 ```
 
@@ -167,18 +230,21 @@ If the absorbance in well A is very obviously wrong (like here), then remove tho
 
 - either by keeping `std_blank$trusted` as is (all "untrusted" wells should indeed be removed)
 
-- or by using `remove_wells()` on `std_blank$all` and to generate a better-adapted list of "trusted" standard blank wells.
+- or by using `remove_wells()` on `std_blank$all` to generate a better-adapted list of "trusted" standard blank wells (when you decide that some of the "untrusted" wells should be trusted).
 
-Either way, blank averages will then be computed on trusted wells only (see hereunder). Of course, this only works if there were several standard curves on problematic plates, otherwise you will be removing the only `std_blank` of the plate[^2]. Here are 2 examples of how to compute average blanks.
+Either way, blank averages will then be computed on (really) trusted wells only. Of course, this only works if there were several standard curves on problematic plates, otherwise you will be removing the only `std_blank` of the plate[^2]. Here are 2 examples of how to compute average blanks, along the 2 options mentioned above. Both use the function `std_blank_average()` to compute the blank average.
 
 [^2]: In such cases, you must consider your options. If the inter-plate variability of `std_blank` is sufficiently small, taking an across-dataset or an across-batch mean might do the trick.
 
 ```{r}
 # Option 1 - We keep std_blank$trusted
 std_blank_avg_1 <- std_blank_average(std_blank$trusted)
+
+# Check it out (don't be scared of the "NA" values: you cannot compute a standard deviation on 1 value)
+std_blank_avg_1
 ```
 
-For the second option, we decide to reject only one of the wells from `std_blank$untrusted`: let's say the first one, for plate NO3_1F3 (which is obviously wrong in this case).
+For the second option, we could decide to reject only one of the blank wells from `std_blank$untrusted`: let's say the first one, for plate NO3_1F3.
 
 ```{r}
 # Option 2 - We create a table of wells to remove
@@ -190,13 +256,11 @@ std_blank_clean <- std_blank$all |> remove_wells(to_remove)
 # compute per-plate blank average from that new trusted table
 std_blank_avg_2 <- std_blank_average(std_blank_clean)
 
+# Check it out
+std_blank_avg_2
 ```
 
-Let's compare both options and see that, indeed, plate NO3_1F5 now received 2 wells to compute the average from (no NA values)
-
-```{r}
-std_blank_avg_1 ; std_blank_avg_2
-```
+Notice that in `std_blank_avg_2`, plate NO3_1F5 now received 2 wells to compute the average from (no NA values under standard deviation and coefficient of variation)
 
 We proposed the 2nd option for the sake of the example, but we will move on with the first option from here on, as the decision to keep the untrusted well for plate NO3_1F3 was obviously misled.
 
@@ -207,7 +271,7 @@ std_blank_avg <- std_blank_avg_1
 ::: callout-note
 ## Outlier check of the whole curve comes later
 
-In this pipeline, we search for and remove outliers prior to critical aggregation steps that will not be trustworthy otherwise (see also vignette `handling-outliers`. With this logic in mind, the outlier removal of other wells[^3] in the standard curve will be done later on, before computing the regression between absorbance and concentration. This is shown in the next vignette, `abs-to-conc`.
+Throughout this pipeline, we search for and remove outliers prior to critical aggregation steps that will not be trustworthy otherwise (see also vignette `handling-outliers`). With this logic in mind, the outlier removal of other wells[^3] of the standard curve will be done later on, before computing the regression between absorbance and concentration. This is shown in the next vignette, `abs-to-conc`.
 :::
 
 [^3]: I.e., wells in the rows "B" to "H" (top-down pipetting) or "A" to "G" (bottom-up pipetting)
@@ -216,9 +280,9 @@ In this pipeline, we search for and remove outliers prior to critical aggregatio
 
 Once we are confident in our `std_blank`s, we can use the `std_blank_avg` to blank-correct the raw absorbance values for the whole standard curves. This is done with the function `blank_correct_abs()`, which will also be used to correct sample absorbance data in the next section.
 
-`blank_correct_abs()` takes 3 main arguments:
+`blank_correct_abs()` is a function that works for standard data and for sample data (@sec-sample-blank), so it's arguments are named in a way that fits both cases. It takes 3 main arguments:
 
-- `raw_wells_data` takes the standard curves data. It should be ungrouped and contain only non-blank data (i.e., in the case of "top_down" pipetting, rows B to H)
+- `raw_wells_data` contains the data of the standard curves. It should be ungrouped within the call to `blank_correct_abs()` and contain only non-blank data (i.e., in the case of "top_down" pipetting, rows B to H)
 
 - `per_plate_avg_blank` takes blank averages (e.g., `std_blank_avg`)
 
@@ -227,18 +291,17 @@ Once we are confident in our `std_blank`s, we can use the `std_blank_avg` to bla
 You can ignore the message `Joining with by = join_by(...)`, which just depends on the additional columns you may have in your data tables
 
 ```{r}
-# prepare the first argument
+# prepare the first argument: ungroup and remove blank data (here: row A)
 raw_wells_data <- std_data |>
       dplyr::ungroup() |>
       dplyr::filter_out(row == "A")
 
 # check it out
-head(raw_wells_data)
+raw_wells_data
 
 # blank-correct standard curve data
 std_corrected <-
   blank_correct_abs(
-    # ungroup std data, remove rows with the blanks (here: row A)
     raw_wells_data = raw_wells_data,
     per_plate_avg_blank = std_blank_avg,
     map_to_exclude = ""
@@ -252,51 +315,57 @@ std_corrected
 
 Notice that the `abs` column has been removed to avoid mistaking it for corrected absorbance. Instead, it has been replaced by `abs_corrected`.
 
-# 3 - Blank-correction of samples
+# 3 - Blank-correction of samples {#sec-sample-blank}
 
 ## 3.1 - Extract extractant data (sample blank)
 
-In a real world, `raw_meta` will have probably undergone some cleaning steps (e.g., outlier removal, see `handling-outliers`). In this example dataset, there are always 8 wells attributed to the sample blank (or extractant), which is found because its mapping (column "map" in `raw_meta`) contains the string "extr", as can be seen here:
+In a real world, `raw_meta` may have undergone some cleaning steps (e.g., outlier removal, see `handling-outliers`). In this example dataset, there are always 8 wells attributed to the sample blank (or extractant). Extractant wells are taken from `raw_meta`, where they are found because their mapping (column "map" in `raw_meta`) contains the string "extr", as can be seen here:
 
 ```{r}
 # look at extractant data
 raw_meta |> dplyr::filter(map == "extr")
 ```
 
-This filtering is also what `extract_extractant()` does in the background, which is the first step of `extractant_average()` (see below).
+This filtering is also what `extract_extractant()` does in the background, which is the first step taken by the function `extractant_average()` (see below).
 
 ```{r}
-extr_data <- extract_extractant(raw_meta)
-
-# Check it out
-extr_data
+(extr_data <- extract_extractant(raw_meta))
 ```
 
 ## 3.2 - Compute per-plate average of extractant
 
-This string "extr" is the default of the argument `extr_def` of `extractant_average()` and can be adapted to reflect your mapping. Like `extract_std_blank(..)$average`, `extractant_average()` computes the average, standard deviation and coefficient of variation (%) of the blanks.
+The string "extr" is the default of the argument `extr_def` within `extractant_average()` and can be adapted to reflect your mapping. Like `std_blank_average()`, `extractant_average()` computes the per-plate average, standard deviation and coefficient of variation (%) of the blanks.
 
 ```{r}
 (extr_avg <- extractant_average(raw_meta, extr_def = "extr")) 
 ```
 
-::: callout-tip
+::: {#tip-multiple_extr .callout-tip}
 ## More than 1 extractant per plate?
 
-`extractant_average()` should also work when there are several extractants per plate, but the argument `extr_def` must be given a vector with extractant (e.g., `extr_def = c("extr_1", "extr_2")`. See also `?extractant_average()` for examples.
+`extractant_average()` also works when there are several extractants per plate, but the argument `extr_def` must be given a vector defining extractants (e.g., `extr_def = c("extr_1", "extr_2")`. Note that it complicates a bit the process down the line because you will need to attribute an extractant to each sample based on something more than just plate identifier. See also `?extractant_average()` for examples and @sec-multiple-extr
 :::
 
 ## 3.3 - Quality check of extractant and outlier removal
 
-### 3.3.1 - One extractant per plate
+### 3.3.1 - Identifying suspicious extractant wells
 
-`plot_blank_var_distrib()` plots a distribution of this coefficient of variation throughout the data set (which becomes relevant in big data sets).
+To show in detail all features of the function calls below, we go through the simple case of when there is only 1 extractant per plate. For cases with 2 or more extractants per plate, see @sec-multiple-extr
+
+`plot_blank_var_distrib()` plots a distribution of the coefficient of variation throughout the data set, which can be used as a criterion to identify "suspicious" wells (which becomes relevant in big data sets). Here, we have artificially generated "very wrong" wells for the purpose of the illustration. Note that whereas a threshold of 5% of coefficient of variation is reasonable in simple absorbance-based datasets with 8 replicates (8 wells for the extractant), you may need to adapt your noise-tolerance level for more noise-prone experiments or with fewer replicates.
+
+Notice, once more, that `plot_blank_var_distrib()` relies on the ggplot grammar of graphics, and you can easily add additional ggplot-based layers.
 
 ```{r}
-plot_blank_var_distrib(extr_avg)
+plot_blank_var_distrib(extr_avg) +
+  # (optional) add threshold line + label
+  ggplot2::geom_vline(xintercept = 5, colour = "red", linetype = 2) +
+  ggplot2::annotate(
+    geom = "label", x = 6, y = 1.5,  hjust = 0.2,
+    label = "threshold of 5%", colour = "red")
 ```
 
-In big data sets, there is bound to be some plate where one or two wells went wrong in the lab, and seeing that there are some plates with much higher variation can be a sign that you need to investigate to remove outliers (like here, with a maximum coefficient of variation of almost 60%). You can take advantage of `dplyr::arrange(desc())` that sorts rows by decreasing values of its argument, to quickly identify suspicious plates (consider removing the call to `desc()` if you have negative values for the coefficients of variation).
+In large data sets, there is bound to be some plate where one or two wells went wrong in the lab, and seeing that there are some plates with much higher variation can be a sign that you need to investigate to remove outliers (like here, with a maximum coefficient of variation of almost 60%). You can take advantage of `dplyr::arrange(desc())` that sorts rows by decreasing values of its argument, to quickly identify suspicious plates (consider removing the call to `desc()` if you have negative values for the coefficients of variation).
 
 ```{r}
 extr_avg |> 
@@ -305,7 +374,7 @@ extr_avg |>
 
 Here, we see that the suspicious plates are `NO3_1F2` and `NO3_1F4`. This is easy with a small dataset. For larger data sets, `qc_raw_extr()` performs a quality check of raw absorbance data for extractant wells. It returns a vector containing the "suspicious" `plate_id`s of plates exceeding a user-defined threshold. Note that we work from `raw_meta` because in this pipeline, there has not been any prior outlier removal, but of course, we should work with the "cleanest" data that we have.
 
-A `max_coeff` threshold of 5% is reasonable to segregate "acceptable" coefficients if, like here, you have 8 wells per plate for the extractant.
+A `max_coeff` threshold of 5% is reasonable to segregate "acceptable" coefficients of variation if, like here, you have 8 wells per plate for the extractant.
 
 ```{r}
 threshold <- 5
@@ -320,7 +389,7 @@ We get a warning message (to suppress it, opt for `suppress_warning = TRUE`). Th
 suspicious_extr_per_plate
 ```
 
-Should all plates have a coefficient of variation for the absorbance of the extractant below the threshold, `qc_raw_extr()` returns a happy message, instead of a warning, which can also be suppressed, using `suppress_message = TRUE`.
+Should all plates have a coefficient of variation for the absorbance of the extractant below the threshold, `qc_raw_extr()` sends a happy message, instead of a warning, which can also be suppressed, using `suppress_message = TRUE`. Note that in case there are no suspicious extractant wells, the function does not "return" anything, meaning that if you write `suspicious_extr_per_plate <- raw_meta |> qc_raw_extr(suppress_warning = FALSE, max_coeff = 60)` and try to check out the content of `suspicious_extr_per_plate`, you will only get `NULL`.
 
 ```{r}
 # run it with a very unreasonably high threshold
@@ -328,7 +397,7 @@ raw_meta |>
   qc_raw_extr(suppress_warning = FALSE, max_coeff = 60)
 ```
 
-To obtain the full extractant data corresponding to our `suspicious plate_ids`, we can use `suspicious_extr()`.
+To obtain the full extractant data corresponding to our `suspicious plate_ids`, we can use `suspicious_extr()`. Make sure to use the same threshold.
 
 ```{r}
 (suspicious_extr <- suspicious_extr(
@@ -337,16 +406,21 @@ To obtain the full extractant data corresponding to our `suspicious plate_ids`, 
   max_coeff = threshold))
 ```
 
-Finally, we can use `boxplot_outlier_extr()` to plot extractant plates containing suspicious wells, so that we can decide whether or not to remove some outlier wells. To do so, we can, once more, take advantage of `remove_wells()`, see also above, `?remove_wells()` and the vignette `handling-outliers`. Should there be too many plates for a proper visualization, split `suspicious_extr` in subsets.
+Finally, we can use `boxplot_outlier_extr()` to plot extractant plates containing suspicious wells, so that we can decide whether or not to remove some outlier wells, and which ones. Should there be too many plates for a proper visualization, split `suspicious_extr` in subsets.
 
 ```{r}
 # plot outliers
-suspicious_extr |> boxplot_outlier_extr(max_coeff = threshold) + ggplot2::facet_wrap(~map)
+suspicious_extr |> 
+  boxplot_outlier_extr(max_coeff = threshold) 
 ```
 
 ### 3.3.2 - Outlier removal steps
 
-He have here 2 very obvious outliers: wells D8 and C8 in plate 1 (NO3_1F2) and well F8 in plate 2 (NO3_1F4), which we want to remove. The plot given by `boxplot_outlier_extr()` gives all necessary information to do so. First, we create a small tibble that will serve to construct the tibble of wells to remove: first get dataset and plate_ids from `suspicious_extr`, then add a column "plate_order" that will help checking which plate is which (compared to the plot, useful when several plates are plotted).
+To remove outlier wells, we can then, once more, take advantage of `remove_wells()` (see also above, `?remove_wells()` and the vignette `handling-outliers`).
+
+He have here 3 obvious outliers: wells D8 and C8 in plate 1 (NO3_1F2) and well F8 in plate 2 (NO3_1F4), which we want to remove. The plot given by `boxplot_outlier_extr()` displays all necessary information to do so.
+
+in the next chunk, we create a small tibble that will serve to construct the tibble of wells to remove: first get all unique combinations of dataset and plate_ids from `suspicious_extr`, then add a column "plate_order" that will help checking which plate is which (compared to the plot, useful when several plates are plotted).
 
 ```{r}
 # Construct tibble to remove
@@ -355,7 +429,7 @@ He have here 2 very obvious outliers: wells D8 and C8 in plate 1 (NO3_1F2) and w
     dplyr::select(dataset, plate_id) |> 
     unique()) 
 
-# save numbers for plate order in the plot
+# save numbers for plate order as in the plot
 (plate_ids <- plate_ids |> 
   dplyr::mutate(plate_order = seq(1, nrow(plate_ids))))
 ```
@@ -387,7 +461,9 @@ plate_without_outliers <- c(9)
 well_ids <- c("C8", "D8", "F8") # only fill in well_ids that need to be removed, in the order of the plates
 ```
 
-Then we finish constructing the tibble of wells to be removed.
+Note that we did not consider the case of having 3 outliers to remove in a single plate. We considered that this situation will be rare enough that it does not justify having a per default step. However, you can easily remove single wells (the 3rd outlier of a plate) by adding an additional row manually to `to_remove`, or just add an additional step of `remove_wells()` with a one-line tibble.
+
+Now, we finish constructing the tibble of wells to be removed.
 
 **TODO: consider making a function out of this**
 
@@ -423,7 +499,7 @@ Check out that indeed, 3 rows have been removed:
 nrow(extr_data) ; nrow(to_remove); nrow(extr_data_clean)
 ```
 
-Finally, we re-run the average on cleaned extractant data
+Finally, we re-run the average, this time on cleaned, outlier-free, extractant data
 
 ```{r}
 extr_avg_clean <- extractant_average(
@@ -436,12 +512,19 @@ Check that the highest coefficients of variation are now indeed satisfactory (be
 extr_avg_clean |> dplyr::arrange(dplyr::desc(blank_coeff_var_percent)) |> head()
 ```
 
-### 3.3.3 - 2 or more extractants per plate
+### 3.3.3 - When there are 2 or more extractants per plate {#sec-multiple-extr}
 
-The steps are the same as with one extractant, but the syntax changes slightly. Let's take the example data set `dbl_extr_plate`:
+The steps are the same as with one extractant, but the syntax changes slightly. Let's take the example data set `dbl_extr_plate`. Note that the structure is very similar to what we are used to with `tidy_plates`, but we now have an additional column, called `extr_id`, that contains the correspondence of which sample needs to be blank-corrected from which extractant. Of course, standard curve data have "none" under that column.
 
 ```{r}
+# check out the example data set
 dbl_extr_plate
+
+# compare to tidy_plates
+tidy_plates
+
+# Check out mapping for extr_data
+dbl_extr_plate |> dplyr::filter(map %in% c("extr_1", "extr_2"))
 ```
 
 Here is, in brief, how to adapt the same steps as described above:
@@ -468,14 +551,12 @@ plot_blank_var_distrib(extr_avg_dbl)
 
 # plot outliers
 suspicious_extr_dbl |> boxplot_outlier_extr(max_coeff = 5) 
-
-
 ```
 
 Now, adapting the outlier removal steps
 
 ::: callout-tip
-## Even with facetting, read each plate once
+## Even with several panels, read each plate only once
 
 When determining outliers to remove, still read plates only once. Indeed, even if each plate receives up to 2 boxplots, any well within a boxplot will be unique, as both boxplots come from the data of the same plate. Therefore, inputting outlier removal follows strictly the same steps as above
 :::
@@ -529,7 +610,9 @@ extr_avg_clean_dbl <- extractant_average(
   extractant_data = extr_data_clean_dbl, extr_def = c("extr_1", "extr_2")) 
 ```
 
-Here we do not re-check that the coefficient of variation is under the threshold because: the data under "extr_2" were artificially changed, but their absorbance readings are actually those of samples, therefore the distribution of values was not really presenting the sort of outliers that was expected. But it would be good to run it in real life
+Here we do not re-check that the coefficient of variation is under the threshold because: the data under "extr_2" were artificially changed, but their absorbance readings are really those of samples, therefore the distribution of values was not really presenting the sort of outliers that was expected. But it would be good to run it in real life
+
+**TO DO: the last paragraph is confusing –\> change the raw data so that we can remove this bit and re-run the coefficient of variation as we should**
 
 ## 3.4 - Blank-correction of sample absorbance
 
@@ -557,7 +640,7 @@ sample_corrected_dbl <-
     map_to_exclude = c("empty","Std","extr_1", "extr_2")) 
 ```
 
-Let's have a look at the output and notice the absence of the value `1` in the column `column` (no data for standard curve[^4]), and of the value `extr` in the column `map` (though it was present in `raw_meta` and still can be found under `extr_id`).
+Let's have a look at the output and notice the absence of the value `1` in the column `column` (no data for standard curve[^4]), and of the value `extr` in the column `map` (though it was present in `raw_meta` and still can be found under `extr_id` in the case of 2 extractants per plate, which we kept in case the info is relevant for downstream analysis.
 
 [^4]: In case the blanks are the same for sample wells and standard curve wells, this blank-correction should also be applied on Standard curve data. In this case, remove `"Std"` from the call to `map_to_exclude`.
 
@@ -570,6 +653,9 @@ raw_meta |> dplyr::select(map) |> dplyr::arrange(dplyr::desc(map))
 
 # "extr" no longer in "sample_corrected
 sample_corrected |> dplyr::select(map) |> dplyr::arrange(dplyr::desc(map))
+
+# check out column extr-id
+sample_corrected_dbl
 ```
 
 # 4 - Epilogue
