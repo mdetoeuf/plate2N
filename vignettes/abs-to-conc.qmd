@@ -20,10 +20,6 @@ library(patchwork)
 
 # TODO
 
-- Integrate polynomial modelling, take it from personal pipeline
-
-- write out last sections: 2.6, 3 and 4
-
 - Consider creating a function for the multiple-curve QC (+ explain idea why it is relevant to look at it)
 
 - For conversion: explain well difference btw mg N-sp/L and mg N/L, and how it relates to molar masses
