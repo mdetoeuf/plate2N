@@ -9,7 +9,6 @@ plate reader (spectrophotometry).
 ``` r
 
 library(plate2N)
-library(roperators)
 ```
 
 This particular vignette adresses the first steps of the pipeline:

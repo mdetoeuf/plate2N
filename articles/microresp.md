@@ -3,7 +3,6 @@
 ``` r
 
 library(plate2N)
-library(roperators)
 ```
 
 ## 1 - Introduction
