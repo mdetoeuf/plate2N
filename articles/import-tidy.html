@@ -102,6 +102,8 @@
 <span><span class="co">#&gt; 10 A     1      A1      M1       A1_M1          expe1   Std0865 0.9254</span></span>
 <span><span class="co">#&gt; # ℹ 950 more rows</span></span></code></pre></div>
 </div>
+<section class="level2"><h3 id="the-whole-game">The Whole Game<a class="anchor" aria-label="anchor" href="#the-whole-game"></a>
+</h3>
 <p>Before we dig into the specifics of each individual step, here is a glimpse of the whole pipeline. Once you’ve understood the principle of each indivual step as detailed in the sections below, it only takes 6 lines of code to import, join and tidy 2 datasets that could contain data from an indefinite number of 96-well plates. No worries though if this feels cryptic, we’ll explain it all underneath.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
@@ -135,8 +137,47 @@
 <span><span class="co">#&gt; 10 A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  0.167 Std_3_t1</span></span>
 <span><span class="co">#&gt; # ℹ 470 more rows</span></span></code></pre></div>
 </div>
+</section><section class="level2"><h3 id="the-cheat-sheet">The Cheat Sheet<a class="anchor" aria-label="anchor" href="#the-cheat-sheet"></a>
+</h3>
+<table class="table caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead><tr class="header">
+<th>Step</th>
+<th>Function</th>
+<th>Purpose</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Import</td>
+<td>
+<code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code>, <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code>, <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code>, <code><a href="../reference/tecan_to_tibble.html">tecan_to_tibble()</a></code>
+</td>
+<td>Read raw plate-format files (csv/txt/skanit/Tecan) into a common tibble structure</td>
+</tr>
+<tr class="even">
+<td>Verticalize only</td>
+<td><code><a href="../reference/verticalize_plates.html">verticalize_plates()</a></code></td>
+<td>Reshape a single plate-format tibble into one column for the plate (use this alone if your data is already vertical/mapped and only needs one layer verticalized)</td>
+</tr>
+<tr class="odd">
+<td>Verticalize + join</td>
+<td><code><a href="../reference/join_abs_map.html">join_abs_map()</a></code></td>
+<td>Reshape plate-format tibbles into 96 rows and merge layers (e.g., absorbance &amp; mapping) data, to get one column per plate and per layer</td>
+</tr>
+<tr class="even">
+<td>Tidy</td>
+<td><code><a href="../reference/vertical_to_tidy.html">vertical_to_tidy()</a></code></td>
+<td>Reshape into one row per well and one single column per layout, ready for downstream analysis</td>
+</tr>
+</tbody>
+</table></section><section class="level2"><h3 id="overview-of-import-tidy">Overview of import-tidy<a class="anchor" aria-label="anchor" href="#overview-of-import-tidy"></a>
+</h3>
 <p>In this vignette, we cover three steps:</p>
-<p><strong>1) Data import</strong> from various raw file formats with <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code>, <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code>, <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code> and <code><a href="../reference/tecan_to_tibble.html">tecan_to_tibble()</a></code> where data is brought into a shape that is common to all import files, i.e., cleaned from the file format-specific noise, but still unpractical to work with in R. We refer to the output of this first step in an object called “tibble” where data is still in a “plate” format (see <code>tibble_example</code> hereunder). In this tibble, the first column, called <code>row</code>, contains the <code>plate_id</code> in the first row, followed by the letters characterising the 8 rows of the plate (from A to H). Throughout the other 12 columns, the rest of the first row contains the plate-column numbers (from 1 to 12) in columns called X1 to X12. The rest of the table contains the original plate data, which can be numerical (e.g., absorbance data) or characters (e.g., plate mapping).</p>
+<p><strong>1) Data import</strong> from various raw file formats with <strong><code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code></strong>, <strong><code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code></strong>, <strong><code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code></strong> and <strong><code><a href="../reference/tecan_to_tibble.html">tecan_to_tibble()</a></code></strong> where data is brought into a shape that is common to all import files, i.e., cleaned from the file format-specific noise, but still unpractical to work with in R. We refer to the output of this first step in an object called “tibble” where data is still in a “plate” format (see <code>tibble_example</code> hereunder). In this tibble, the first column, called <code>row</code>, contains the <code>plate_id</code> in the first row, followed by the letters characterising the 8 rows of the plate (from A to H). Throughout the other 12 columns, the rest of the first row contains the plate-column numbers (from 1 to 12) in columns called X1 to X12. The rest of the table contains the original plate data, which can be numerical (e.g., absorbance data) or characters (e.g., plate mapping).</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tibble_example</span></span>
@@ -156,7 +197,7 @@
 <span><span class="co">#&gt; # ℹ 26 more rows</span></span>
 <span><span class="co">#&gt; # ℹ 1 more variable: X12 &lt;dbl&gt;</span></span></code></pre></div>
 </div>
-<p><strong>2) Verticalization</strong> of the “tibble” into a verticalized table with <code><a href="../reference/verticalize_plates.html">verticalize_plates()</a></code>. The <code>vertical_plates</code> present the same raw data in a verticalized format, i.e., data from each plate is displayed in a single column where the name of the column is the plate id. The first 2 columns contain the well identifier, stored in the columns <code>row</code> (of the 96-well plate, from A to H), and <code>column</code> (from 1 to 12). This vertical format is a good format to select a subset of plates (e.g., based on experiment, treatment, or anything else that the user stored into column names which are the plate ids). See example hereunder:</p>
+<p><strong>2) Verticalization</strong> of the “tibble” into a verticalized table with <strong><code><a href="../reference/verticalize_plates.html">verticalize_plates()</a></code></strong>. The <code>vertical_plates</code> present the same raw data in a verticalized format, i.e., data from each plate is displayed in a single column where the name of the column is the plate id. The first 2 columns contain the well identifier, stored in the columns <code>row</code> (of the 96-well plate, from A to H), and <code>column</code> (from 1 to 12). This vertical format is a good format to select a subset of plates (e.g., based on experiment, treatment, or anything else that the user stored into column names which are the plate ids). See example hereunder:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">vertical_plates</span> </span>
@@ -195,7 +236,7 @@
 </div>
 <p><strong>3) Tidying</strong> of the verticalized plate into the <code>tidy_table</code> displayed at the beginning of this vignette, a format that is easily usable for downstream data transformations and analyses. This step is done using the <code>tidyr</code> package</p>
 <p>Note: If the need arises to fit this package to other plate formats than 96-well plates, please reach out.</p>
-<hr></section><section class="section level2"><h2 id="import">1 - Import<a class="anchor" aria-label="anchor" href="#import"></a>
+<hr></section></section><section class="section level2"><h2 id="import">1 - Import<a class="anchor" aria-label="anchor" href="#import"></a>
 </h2>
 <p>All 4 import functions hereunder (<code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code>, <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code>, <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code> and <code><a href="../reference/tecan_to_tibble.html">tecan_to_tibble()</a></code>) can be used to import files containing both absorbance <strong>and</strong> mapping data. However, in that case, it is recommended to attribute different plate ids to the 2 datasets that represent the same 96-well plate (e.g., “NO3_plate1_abs” and “NO3_plate1_map”, see also description of <code><a href="../reference/verticalize_plates.html">verticalize_plates()</a></code> in section 2 to see the final output).</p>
 <section class="level2"><h3 id="from-a--csv-file">1.1 - From a .csv file<a class="anchor" aria-label="anchor" href="#from-a--csv-file"></a>
@@ -455,7 +496,7 @@
 <p>Finally, once the <code>tibble</code> has been generated with any of the import options hereabove, we can proceed to the data verticalization.</p>
 <section class="level2"><h3 id="simple-verticalization-of-a-single-tibble">2.1 - Simple verticalization of a single tibble<a class="anchor" aria-label="anchor" href="#simple-verticalization-of-a-single-tibble"></a>
 </h3>
-<p>Here are examples of verticalized plates. Note that the function does the exact same thing each time as the input format is strictly identical. See also <code>?verticalize_plates()</code> for a detailed overview of function options.</p>
+<p>Here are examples of verticalized plates. Note that the function does the exact same thing each time as the input format is strictly identical. See also <code>?verticalize_plates()</code> for a detailed overview of function options. Note that <code><a href="../reference/verticalize_plates.html">verticalize_plates()</a></code> only verticalizes — it doesn’t join. If you need to combine a verticalized layer with another dataset (e.g., mapping data that’s already in a vertical shape), you’ll need a join from <code>dplyr</code> (e.g., <code><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">dplyr::left_join()</a></code>) afterward.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># compute vertical plate</span></span>
@@ -563,7 +604,7 @@
 </section><section class="level2"><h3 id="sec-join-abs-map">2.2 - Joined verticalization of 2 or more related tibbles<a class="anchor" aria-label="anchor" href="#sec-join-abs-map"></a>
 </h3>
 <p>In practice, we often import absorbance data with one function (typically <code><a href="../reference/skanit_to_tibble.html">skanit_to_tibble()</a></code> or <code><a href="../reference/txt_to_tibble.html">txt_to_tibble()</a></code>) and mapping data from another (typically <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code> or even simply <code><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">readr::read_csv()</a></code>). This means that, in the end, we need not only to verticalize both those datasets, but we also need to merge them in a single data set, with one column for absorbance date and another for the mapping of the wells (e.g., containing sample ids).</p>
-<p><code><a href="../reference/join_abs_map.html">join_abs_map()</a></code> does just that. It works directly from 2 imported <code>tibble</code>s. In the background, it relies on <code><a href="../reference/verticalize_plates.html">verticalize_plates()</a></code> and <code><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">dplyr::left_join()</a></code> with a series of default presets<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content='&lt;p&gt;Should any need arise for different preset to be given optionally as argument to &lt;code&gt;&lt;a href="../reference/join_abs_map.html"&gt;join_abs_map()&lt;/a&gt;&lt;/code&gt;, please reach out&lt;/p&gt;'><sup>1</sup></a>, adding a prefix to column names to incorporate information on dataset and data type (e.g., absorbance vs mapping).</p>
+<p><strong><code><a href="../reference/join_abs_map.html">join_abs_map()</a></code></strong> does just that. It works directly from 2 imported <code>tibble</code>s. In the background, it relies on <code><a href="../reference/verticalize_plates.html">verticalize_plates()</a></code> and <code><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">dplyr::left_join()</a></code> with a series of default presets<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content='&lt;p&gt;Should any need arise for different preset to be given optionally as argument to &lt;code&gt;&lt;a href="../reference/join_abs_map.html"&gt;join_abs_map()&lt;/a&gt;&lt;/code&gt;, please reach out&lt;/p&gt;'><sup>1</sup></a>, adding a prefix to column names to incorporate information on dataset and data type (e.g., absorbance vs mapping).</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Example of joined verticalized format with 2 input tibbles (2 "layers" of data)</span></span>
@@ -614,7 +655,7 @@
 </h2>
 <p>The vertical format is practical for manual/human handling, with an easy-to-handle number of rows (96). For example, now is an easy moment to subset some plates based on dataset, abs/map or even some features that are embedded in plate name (such as N species in our case where plate names contained either “NO3”, “NO2” or “NH4”). This can be done using the <code>dplyr</code> package and its function <code><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">dplyr::select()</a></code>, aided by some helper functions from the <code>tidyselect</code> package, such as <code><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">tidyselect::starts_with()</a></code>, <code><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">tidyselect::contains()</a></code>, etc.</p>
 <p>However, this verticalized format is not ideal for bulk computing and transformations, where the might of the <code>tidyverse</code> sits in computations done on columns. So, a typical last step of tidying would be to bring this dataset in a format that has a single column per data type, namely one column for the absorbance data, and another for the mapping data, where each unique well would be represented by a row. Such transformations can be done with the <code>tidyr</code> and “<code>dplyr</code> packages, for example with the successive use of <code><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html" class="external-link">tidyr::pivot_longer()</a></code>and <code><a href="https://tidyr.tidyverse.org/reference/pivot_wider.html" class="external-link">tidyr::pivot_wider()</a></code>.</p>
-<p>To simplify this process, this is exactly what our function <code><a href="../reference/vertical_to_tidy.html">vertical_to_tidy()</a></code> does.</p>
+<p>To simplify this process, this is exactly what our function <strong><code><a href="../reference/vertical_to_tidy.html">vertical_to_tidy()</a></code></strong> does.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># tidying </span></span>

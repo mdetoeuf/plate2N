@@ -36,6 +36,8 @@ tidy_table
 #> # ℹ 950 more rows
 ```
 
+### The Whole Game
+
 Before we dig into the specifics of each individual step, here is a
 glimpse of the whole pipeline. Once you’ve understood the principle of
 each indivual step as detailed in the sections below, it only takes 6
@@ -76,14 +78,25 @@ joined_vertical <- join_abs_map(
 #> # ℹ 470 more rows
 ```
 
+### The Cheat Sheet
+
+| Step | Function | Purpose |
+|----|----|----|
+| Import | [`csv_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/csv_to_tibble.md), [`txt_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/txt_to_tibble.md), [`skanit_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/skanit_to_tibble.md), [`tecan_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/tecan_to_tibble.md) | Read raw plate-format files (csv/txt/skanit/Tecan) into a common tibble structure |
+| Verticalize only | [`verticalize_plates()`](https://mdetoeuf.github.io/plate2N/reference/verticalize_plates.md) | Reshape a single plate-format tibble into one column for the plate (use this alone if your data is already vertical/mapped and only needs one layer verticalized) |
+| Verticalize + join | [`join_abs_map()`](https://mdetoeuf.github.io/plate2N/reference/join_abs_map.md) | Reshape plate-format tibbles into 96 rows and merge layers (e.g., absorbance & mapping) data, to get one column per plate and per layer |
+| Tidy | [`vertical_to_tidy()`](https://mdetoeuf.github.io/plate2N/reference/vertical_to_tidy.md) | Reshape into one row per well and one single column per layout, ready for downstream analysis |
+
+### Overview of import-tidy
+
 In this vignette, we cover three steps:
 
 **1) Data import** from various raw file formats with
-[`txt_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/txt_to_tibble.md),
-[`csv_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/csv_to_tibble.md),
-[`skanit_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/skanit_to_tibble.md)
+**[`txt_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/txt_to_tibble.md)**,
+**[`csv_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/csv_to_tibble.md)**,
+**[`skanit_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/skanit_to_tibble.md)**
 and
-[`tecan_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/tecan_to_tibble.md)
+**[`tecan_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/tecan_to_tibble.md)**
 where data is brought into a shape that is common to all import files,
 i.e., cleaned from the file format-specific noise, but still unpractical
 to work with in R. We refer to the output of this first step in an
@@ -117,7 +130,7 @@ tibble_example
 ```
 
 **2) Verticalization** of the “tibble” into a verticalized table with
-[`verticalize_plates()`](https://mdetoeuf.github.io/plate2N/reference/verticalize_plates.md).
+**[`verticalize_plates()`](https://mdetoeuf.github.io/plate2N/reference/verticalize_plates.md)**.
 The `vertical_plates` present the same raw data in a verticalized
 format, i.e., data from each plate is displayed in a single column where
 the name of the column is the plate id. The first 2 columns contain the
@@ -588,7 +601,13 @@ options hereabove, we can proceed to the data verticalization.
 Here are examples of verticalized plates. Note that the function does
 the exact same thing each time as the input format is strictly
 identical. See also `?verticalize_plates()` for a detailed overview of
-function options.
+function options. Note that
+[`verticalize_plates()`](https://mdetoeuf.github.io/plate2N/reference/verticalize_plates.md)
+only verticalizes — it doesn’t join. If you need to combine a
+verticalized layer with another dataset (e.g., mapping data that’s
+already in a vertical shape), you’ll need a join from `dplyr` (e.g.,
+[`dplyr::left_join()`](https://dplyr.tidyverse.org/reference/mutate-joins.html))
+afterward.
 
 ``` r
 
@@ -711,7 +730,7 @@ datasets, but we also need to merge them in a single data set, with one
 column for absorbance date and another for the mapping of the wells
 (e.g., containing sample ids).
 
-[`join_abs_map()`](https://mdetoeuf.github.io/plate2N/reference/join_abs_map.md)
+**[`join_abs_map()`](https://mdetoeuf.github.io/plate2N/reference/join_abs_map.md)**
 does just that. It works directly from 2 imported `tibble`s. In the
 background, it relies on
 [`verticalize_plates()`](https://mdetoeuf.github.io/plate2N/reference/verticalize_plates.md)
@@ -813,7 +832,7 @@ example with the successive use of
 [`tidyr::pivot_wider()`](https://tidyr.tidyverse.org/reference/pivot_wider.html).
 
 To simplify this process, this is exactly what our function
-[`vertical_to_tidy()`](https://mdetoeuf.github.io/plate2N/reference/vertical_to_tidy.md)
+**[`vertical_to_tidy()`](https://mdetoeuf.github.io/plate2N/reference/vertical_to_tidy.md)**
 does.
 
 ``` r
