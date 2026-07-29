@@ -14,6 +14,27 @@ editor_options:
 
 # Introduction
 
+## Where this vignette fits
+
+Before diving in, here's how `import-tidy` fits into the full `plate2N` pipeline — click any step to jump to its vignette.
+
+```{mermaid}
+ flowchart TD
+   A[Import &amp; tidy] --> B[Handle outliers]
+   B --> C1[Blank correction: std curve]
+   B --> C2[Blank correction: samples]
+   C1 --> D[Regression &amp; concentration]
+   C2 --> D
+   A -.-> M[MicroResp variant]
+
+   click A "articles/import-tidy.html" "import-tidy"
+   click B "articles/handling-outliers.html" "handling-outliers"
+   click C1 "articles/blank-correction.html" "blank-correction"
+   click C2 "articles/blank-correction.html" "blank-correction"
+   click D "articles/abs-to-conc.html" "abs-to-conc"
+   click M "articles/microresp.html" "microresp"
+```
+
 The goal of `plate2N` is to facilitate data wrangling and data analysis for raw data that originates from absorbance readings with a 96-well plate reader (spectrophotometry).
 
 ```{r}
@@ -52,7 +73,7 @@ joined_vertical <- join_abs_map(
 ## The Cheat Sheet
 
 | Step | Function | Purpose |
-|----|----|----|
+|------------------------|------------------------|------------------------|
 | Import | `csv_to_tibble()`, `txt_to_tibble()`, `skanit_to_tibble()`, `tecan_to_tibble()` | Read raw plate-format files (csv/txt/skanit/Tecan) into a common tibble structure |
 | Verticalize only | `verticalize_plates()` | Reshape a single plate-format tibble into one column for the plate (use this alone if your data is already vertical/mapped and only needs one layer verticalized) |
 | Verticalize + join | `join_abs_map()` | Reshape plate-format tibbles into 96 rows and merge layers (e.g., absorbance & mapping) data, to get one column per plate and per layer |
