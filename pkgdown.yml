@@ -6,9 +6,10 @@ articles:
   blank-correction: blank-correction.html
   handling-outliers: handling-outliers.html
   import-tidy: import-tidy.html
+  microresp: microresp.html
   prepare_plates: prepare_plates.html
   translate-abs: translate-abs.html
-last_built: 2026-07-29T07:33Z
+last_built: 2026-07-29T08:58Z
 urls:
   reference: https://mdetoeuf.github.io/plate2N/reference
   article: https://mdetoeuf.github.io/plate2N/articles

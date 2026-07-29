@@ -43,6 +43,7 @@
     <li><h6 class="dropdown-header" data-toc-skip>Other</h6></li>
     <li><a class="dropdown-item" href="../articles/prepare_plates.html">prepare_plates</a></li>
     <li><a class="dropdown-item" href="../articles/translate-abs.html">translate-abs</a></li>
+    <li><a class="dropdown-item" href="../articles/microresp.html">microresp</a></li>
   </ul>
 </li>
       </ul>
@@ -74,12 +75,7 @@
 
 
 
-    <p><strong>TO DO</strong></p>
-<ul>
-<li>Create a function to prepare a csv template to be filled (by hand)</li>
-<li>Remove dependency on package roperatory (rephrase the use of %ni%)</li>
-</ul>
-<section class="section level2"><h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
+    <section class="section level2"><h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
 <p>The goal of <code>plate2N</code> is to facilitate data wrangling and data analysis for raw data that originates from absorbance readings with a 96-well plate reader (spectrophotometry).</p>
 <div class="cell">
@@ -611,7 +607,7 @@
 <li><p>Several types of mappings containing categorical data. This is the case when factors are represented in a plate format (ex: one layer contains treatment, another contains dilutions, the nature of a drug added, or drug dosage categories, etc.)</p></li>
 <li><p>Several absorbance readings. For example: absorbance before and after incubation, or even at several time steps to get a time series, or readings at several wavelengths to quantify different compounds, etc.)</p></li>
 </ul>
-<p>In such cases, the pipeline still works, but small tweaks need to be made at several steps. See also <a href="#sec-microresp" class="quarto-xref">Section 5</a> for an example of implementation</p>
+<p>In such cases, the pipeline still works, but small tweaks need to be made at several steps. See also the <a href="https://mdetoeuf.github.io/plate2N/articles/microresp.html">microresp vignette</a> for an example of implementation</p>
 </blockquote>
 </div>
 </section></section><section class="section level2"><h2 id="tidy-table">3 - Tidy table<a class="anchor" aria-label="anchor" href="#tidy-table"></a>
@@ -671,204 +667,10 @@
 <span><span class="co">#&gt; 10 A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  0.167 Std_3_t1</span></span>
 <span><span class="co">#&gt; # ℹ 470 more rows</span></span></code></pre></div>
 </div>
-</section><section class="section level2"><h2 id="sec-microresp">4 - Variation on the import pipeline: MicroResp experiment<a class="anchor" aria-label="anchor" href="#sec-microresp"></a>
+</section><section class="section level2"><h2 id="variation-on-the-import-pipeline-more-than-2-data-layers-per-plate">4 - Variation on the import pipeline: more than 2 data layers per plate<a class="anchor" aria-label="anchor" href="#variation-on-the-import-pipeline-more-than-2-data-layers-per-plate"></a>
 </h2>
-<p>In some studies, there may be more than 2 layers of data for each physical plate (see tip in <a href="#sec-join-abs-map" class="quarto-xref">Section 3.2</a>). Here, we quickly go through the import pipeline with an example of data from a <a href="https://www.hutton.ac.uk/scientific-services/analytical/analytical-services/microresp/" class="external-link">MicroResp</a> experiment. To understand what this means: here plates are incubated for 5h. An absorbance reading is done at t = 0h (<code>t0</code>) and t = 5h (<code>t5</code>). There is also mapping data, containing the info on which substrate has been added in which well. Substrates are, in this experiment: glucose (Glu), water (H2O), oxalic acid (OA), lignin (Lgn), N-acetylglucosamine (NAG), gamma-acetylbutyric acid (gABA), alanine (Ala) and urea (Urea).</p>
-<p>So, the 3 layers of data are referred to as <code>abs_t0</code>, <code>abs_t5</code>, and <code>map</code>.</p>
-<div>
-<blockquote>
-<p><strong>More layers of data are possible</strong></p>
-<p>in theory, any number of data layers are possible, you just need to extend the logic displayed here, with additional elements to some arguments that are vectors (e.g., <code>abs_map = c("abs_t0", "abs_t5", "map")</code> and others that are lists of all data sets (one per layer).</p>
-</blockquote>
-</div>
-<section class="level2"><h3 id="import-the-2-layers-of-absorbance-data">4.1 Import the 2 layers of absorbance data<a class="anchor" aria-label="anchor" href="#import-the-2-layers-of-absorbance-data"></a>
-</h3>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Import absorbance data, t0 and t5</span></span>
-<span><span class="va">MR_t0_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"MR_abs_t0.csv"</span>, package <span class="op">=</span> <span class="st">"plate2N"</span><span class="op">)</span></span>
-<span><span class="va">MR_t5_csv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"MR_abs_t5.csv"</span>, package <span class="op">=</span> <span class="st">"plate2N"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># import from csv file type</span></span>
-<span><span class="va">MR_abs_t0</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/csv_to_tibble.html">csv_to_tibble</a></span><span class="op">(</span><span class="va">MR_t0_csv</span><span class="op">)</span></span>
-<span><span class="va">MR_abs_t5</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/csv_to_tibble.html">csv_to_tibble</a></span><span class="op">(</span><span class="va">MR_t5_csv</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Check them out</span></span>
-<span><span class="va">MR_abs_t0</span>; <span class="va">MR_abs_t5</span></span>
-<span><span class="co">#&gt; # A tibble: 45 × 13</span></span>
-<span><span class="co">#&gt;    row      X1    X2    X3    X4    X5    X6    X7    X8    X9   X10   X11   X12</span></span>
-<span><span class="co">#&gt;    &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt;  1 P01    1     2     3     4     5     6     7     8     9    10    11    12   </span></span>
-<span><span class="co">#&gt;  2 A      0.93  1.15  1.14  1.14  1.15  1.16  1.16  1.17  1.17  1.12  1.14  1.17</span></span>
-<span><span class="co">#&gt;  3 B      1.15  1.16  1.13  1.16  1.16  1.16  1.17  1.16  1.14  1.16  1.16  1.15</span></span>
-<span><span class="co">#&gt;  4 C      1.16  1.15  1.14  1.17  1.15  1.16  1.19  1.19  1.17  1.17  1.18  1.17</span></span>
-<span><span class="co">#&gt;  5 D      1.17  1.16  1.16  1.16  1.16  1.16  1.18  1.17  1.14  1.18  1.17  1.17</span></span>
-<span><span class="co">#&gt;  6 E      1.19  1.16  1.16  1.18  1.17  1.15  1.19  1.1   1.11  1.17  1.16  1.16</span></span>
-<span><span class="co">#&gt;  7 F      1.16  1.17  1.17  1.18  1.19  1.15  1.19  1.13  1.13  1.16  1.14  1.18</span></span>
-<span><span class="co">#&gt;  8 G      1.17  1.15  1.16  1.13  1.19  1.16  1.2   1.08  1.15  1.16  1.15  1.16</span></span>
-<span><span class="co">#&gt;  9 H      1.17  1.16  1.17  1.16  1.19  1.16  1.2   1.11  1.15  1.15  1.16  1.18</span></span>
-<span><span class="co">#&gt; 10 P02    1     2     3     4     5     6     7     8     9    10    11    12   </span></span>
-<span><span class="co">#&gt; # ℹ 35 more rows</span></span>
-<span><span class="co">#&gt; # A tibble: 45 × 13</span></span>
-<span><span class="co">#&gt;    row      X1    X2    X3    X4    X5    X6    X7    X8    X9   X10   X11   X12</span></span>
-<span><span class="co">#&gt;    &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt;  1 P01    1     2     3     4     5     6     7     8     9    10    11    12   </span></span>
-<span><span class="co">#&gt;  2 A      0.67  0.39  0.89  0.91  0.32  0.6   0.77  0.81  0.86  0.67  0.79  0.98</span></span>
-<span><span class="co">#&gt;  3 B      0.9   0.4   0.86  0.92  0.32  0.64  0.81  0.79  0.83  0.77  0.82  0.94</span></span>
-<span><span class="co">#&gt;  4 C      0.92  0.42  0.89  0.93  0.33  0.56  0.81  0.8   0.86  0.78  0.84  0.95</span></span>
-<span><span class="co">#&gt;  5 D      0.92  0.39  0.91  0.91  0.32  0.6   0.81  0.79  0.84  0.81  0.84  0.95</span></span>
-<span><span class="co">#&gt;  6 E      0.94  0.41  0.9   0.95  0.34  0.59  0.8   0.7   0.8   0.79  0.81  0.95</span></span>
-<span><span class="co">#&gt;  7 F      0.92  0.41  0.92  0.94  0.36  0.6   0.82  0.77  0.79  0.78  0.8   0.96</span></span>
-<span><span class="co">#&gt;  8 G      0.93  0.41  0.92  0.89  0.36  0.65  0.83  0.72  0.84  0.76  0.8   0.94</span></span>
-<span><span class="co">#&gt;  9 H      0.93  0.43  0.92  0.94  0.34  0.62  0.83  0.72  0.83  0.74  0.8   0.96</span></span>
-<span><span class="co">#&gt; 10 P02    1     2     3     4     5     6     7     8     9    10    11    12   </span></span>
-<span><span class="co">#&gt; # ℹ 35 more rows</span></span></code></pre></div>
-</div>
-</section><section class="level2"><h3 id="being-creative-with-importing-mappings">4.2 - Being creative with importing mappings<a class="anchor" aria-label="anchor" href="#being-creative-with-importing-mappings"></a>
-</h3>
-<p>In a classical MicroResp experiment, a whole 96-well plate is dedicated to a single sample, though this may vary between experimental design. In this particular case, the mapping did not relate to samples, but to substrates added. And because the template of substrate addition was strictly the same for each plate, with a complete column attributed per substrate, there is a much simpler way to import the mapping data than creating a plate layout csv and importing it. This holds particularly true for an experiment with a large number of plates (we had hundreds). So feel free to be creative in generating layers of data, as best fits your needs.</p>
-<p>Plate mapping is strictly the same for each plate throughout the experiment, so we propose to take advantage of the function <code><a href="../reference/map_plates.html">plate2N::map_plates()</a></code> (see also the <code>prepare-plates</code> <a href="https://mdetoeuf.github.io/plate2N/articles/prepare_plates.html">vignette</a>) to create this mapping data in R.</p>
-<p>First, create a vector with the names of the substrates (in the order of the plate map)</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># vector of substrates</span></span>
-<span><span class="va">MR_columns</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  <span class="st">"Std_Glu"</span>, <span class="st">"Std_H2O"</span>, </span>
-<span>  <span class="st">"H2O"</span>, <span class="st">"OA"</span>, <span class="st">"Glu"</span>, <span class="st">"Lgn"</span>, <span class="st">"NAG"</span>, <span class="st">"gABA"</span>, <span class="st">"Ala"</span>, <span class="st">"Urea"</span><span class="op">)</span></span></code></pre></div>
-</div>
-<p>Then, compute the number of plates required (here, 5 plates) by counting how many cells in the first column of <code>MR_abs_t0</code> do not correspond to one of the 26 <code>LETTERS</code> (= number of plate ids).</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># nb of plates</span></span>
-<span><span class="op">(</span><span class="va">nb_plates</span> <span class="op">&lt;-</span> <span class="va">MR_abs_t0</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">row</span> <span class="op"><a href="https://benwiseman.github.io/roperators/reference/logicals.html" class="external-link">%ni%</a></span> <span class="va">LETTERS</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 5</span></span></code></pre></div>
-</div>
-<p>Finally, run the mapping function with</p>
-<ul>
-<li><p>plate_id that pastes “P” with numbers from 01 to the nb of plates</p></li>
-<li><p>“sample list” = repetition of the vector of substrates x the nb of plates</p></li>
-<li><p>no std curves or blank (not needed in MicroResp experiments), and 2 empty columns (1 and 12, typically disregarded in those experiments due to large edge effects)</p></li>
-<li><p>8 wells per “sample” (in this case: not samples but substrates)</p></li>
-</ul>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># compute the mapping</span></span>
-<span><span class="va">MR_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/map_plates.html">map_plates</a></span><span class="op">(</span></span>
-<span>  plate_ids <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"P"</span>, <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"%02d"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">01</span><span class="op">:</span><span class="va">nb_plates</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, </span>
-<span>  samples <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">MR_columns</span>, <span class="va">nb_plates</span><span class="op">)</span>,</span>
-<span>  n_samples_per_plate <span class="op">=</span> <span class="fl">10</span>,</span>
-<span>  column_curves <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span>, column_blank <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span>, column_empty <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">12</span><span class="op">)</span>,</span>
-<span>  n_wells_samples <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Check it out</span></span>
-<span><span class="va">MR_map</span></span>
-<span><span class="co">#&gt; # A tibble: 45 × 13</span></span>
-<span><span class="co">#&gt;    row   X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12  </span></span>
-<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;</span></span>
-<span><span class="co">#&gt;  1 P01   1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
-<span><span class="co">#&gt;  2 A     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty</span></span>
-<span><span class="co">#&gt;  3 B     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty</span></span>
-<span><span class="co">#&gt;  4 C     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty</span></span>
-<span><span class="co">#&gt;  5 D     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty</span></span>
-<span><span class="co">#&gt;  6 E     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty</span></span>
-<span><span class="co">#&gt;  7 F     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty</span></span>
-<span><span class="co">#&gt;  8 G     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty</span></span>
-<span><span class="co">#&gt;  9 H     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty</span></span>
-<span><span class="co">#&gt; 10 P02   1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
-<span><span class="co">#&gt; # ℹ 35 more rows</span></span></code></pre></div>
-</div>
-<p>Such creative methods are particularly time-saving with large datasets. Here, we have only 5 plates &lt;=&gt; 45 rows in our tibble. But in a 100-plate dataset, this would correspond to 900 rows, quite time-consuming to encode by hand.</p>
-</section><section class="level2"><h3 id="verticalize-and-join-all-3-layers">4.3 - Verticalize and join all 3 layers<a class="anchor" aria-label="anchor" href="#verticalize-and-join-all-3-layers"></a>
-</h3>
-<p>Notice the use of a 3-element (rather than 2-element) list and a 3-element vector for the arguments <code>tibble_list</code> and <code>abs_map</code>, respectively. The logic stays the same as with 2 layers though.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># verticalize and join the 3 layers</span></span>
-<span><span class="va">MR_joined</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/join_abs_map.html">join_abs_map</a></span><span class="op">(</span></span>
-<span>  tibble_list <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span> <span class="va">MR_abs_t0</span>, <span class="va">MR_abs_t5</span>, <span class="va">MR_map</span><span class="op">)</span>, </span>
-<span>  abs_map <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"abs_t0-"</span>, <span class="st">"abs_t5-"</span>, <span class="st">"map-"</span><span class="op">)</span>, </span>
-<span>  coerce_numeric <span class="op">=</span> <span class="cn">FALSE</span>, </span>
-<span>  dataset <span class="op">=</span> <span class="st">"MR-"</span> <span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Check it out</span></span>
-<span><span class="va">MR_joined</span></span>
-<span><span class="co">#&gt; # A tibble: 96 × 17</span></span>
-<span><span class="co">#&gt;    row   column `MR-abs_t0-P01` `MR-abs_t0-P02` `MR-abs_t0-P03` `MR-abs_t0-P04`</span></span>
-<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;           &lt;chr&gt;           &lt;chr&gt;           &lt;chr&gt;          </span></span>
-<span><span class="co">#&gt;  1 A     1      0.93            1.23            1.27            1.32           </span></span>
-<span><span class="co">#&gt;  2 A     2      1.15            1.23            1.26            1.25           </span></span>
-<span><span class="co">#&gt;  3 A     3      1.14            1.22            1.25            1.22           </span></span>
-<span><span class="co">#&gt;  4 A     4      1.14            1.22            1.26            1.3            </span></span>
-<span><span class="co">#&gt;  5 A     5      1.15            1.22            1.24            1.28           </span></span>
-<span><span class="co">#&gt;  6 A     6      1.16            1.21            1.23            1.26           </span></span>
-<span><span class="co">#&gt;  7 A     7      1.16            1.23            1.23            1.27           </span></span>
-<span><span class="co">#&gt;  8 A     8      1.17            1.2             1.24            1.24           </span></span>
-<span><span class="co">#&gt;  9 A     9      1.17            1.21            1.25            1.28           </span></span>
-<span><span class="co">#&gt; 10 A     10     1.12            1.21            1.25            1.24           </span></span>
-<span><span class="co">#&gt; # ℹ 86 more rows</span></span>
-<span><span class="co">#&gt; # ℹ 11 more variables: `MR-abs_t0-P05` &lt;chr&gt;, `MR-abs_t5-P01` &lt;chr&gt;,</span></span>
-<span><span class="co">#&gt; #   `MR-abs_t5-P02` &lt;chr&gt;, `MR-abs_t5-P03` &lt;chr&gt;, `MR-abs_t5-P04` &lt;chr&gt;,</span></span>
-<span><span class="co">#&gt; #   `MR-abs_t5-P05` &lt;chr&gt;, `MR-map-P01` &lt;chr&gt;, `MR-map-P02` &lt;chr&gt;,</span></span>
-<span><span class="co">#&gt; #   `MR-map-P03` &lt;chr&gt;, `MR-map-P04` &lt;chr&gt;, `MR-map-P05` &lt;chr&gt;</span></span></code></pre></div>
-</div>
-<p>Notice the names of the columns, that now received 3 options for the layer prefix: <code>abs_t0-</code>, <code>abs_t5-</code> and <code>map-</code>.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Check out column names</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">MR_joined</span><span class="op">)</span></span>
-<span><span class="co">#&gt;  [1] "row"           "column"        "MR-abs_t0-P01" "MR-abs_t0-P02"</span></span>
-<span><span class="co">#&gt;  [5] "MR-abs_t0-P03" "MR-abs_t0-P04" "MR-abs_t0-P05" "MR-abs_t5-P01"</span></span>
-<span><span class="co">#&gt;  [9] "MR-abs_t5-P02" "MR-abs_t5-P03" "MR-abs_t5-P04" "MR-abs_t5-P05"</span></span>
-<span><span class="co">#&gt; [13] "MR-map-P01"    "MR-map-P02"    "MR-map-P03"    "MR-map-P04"   </span></span>
-<span><span class="co">#&gt; [17] "MR-map-P05"</span></span></code></pre></div>
-</div>
-</section><section class="level2"><h3 id="tidy-the-data-3-columns-for-3-layers">4.4 - Tidy the data, 3 columns for 3 layers<a class="anchor" aria-label="anchor" href="#tidy-the-data-3-columns-for-3-layers"></a>
-</h3>
-<p>Tidy the table to reach 1 row per unique well (96 x nb of physical plates), and 3 important columns: <code>abs_t0</code>, <code>abs_t5</code>, <code>map</code>. The syntax for this step is strictly the same as with 2 layers, but we now have to specify the argument <code>column_def</code>` as its default value, containing only <code>c("abs-", "map-")</code> would no longer work.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># From vertical to tidy format with 3 layers</span></span>
-<span><span class="va">tidy_MR</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/vertical_to_tidy.html">vertical_to_tidy</a></span><span class="op">(</span></span>
-<span>  <span class="va">MR_joined</span>, </span>
-<span>  column_def <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"abs_t0"</span>, <span class="st">"abs_t5"</span>, <span class="st">"map"</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Check it out</span></span>
-<span><span class="va">tidy_MR</span></span>
-<span><span class="co">#&gt; # A tibble: 480 × 9</span></span>
-<span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id abs_t0 abs_t5 map    </span></span>
-<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;  &lt;chr&gt;  &lt;chr&gt;  </span></span>
-<span><span class="co">#&gt;  1 A     1      A1      A1_P01         MR      P01      0.93   0.67   empty  </span></span>
-<span><span class="co">#&gt;  2 A     1      A1      A1_P02         MR      P02      1.23   1      empty  </span></span>
-<span><span class="co">#&gt;  3 A     1      A1      A1_P03         MR      P03      1.27   1.04   empty  </span></span>
-<span><span class="co">#&gt;  4 A     1      A1      A1_P04         MR      P04      1.32   1.09   empty  </span></span>
-<span><span class="co">#&gt;  5 A     1      A1      A1_P05         MR      P05      1.32   1.13   empty  </span></span>
-<span><span class="co">#&gt;  6 A     2      A2      A2_P01         MR      P01      1.15   0.39   Std_Glu</span></span>
-<span><span class="co">#&gt;  7 A     2      A2      A2_P02         MR      P02      1.23   0.43   Std_Glu</span></span>
-<span><span class="co">#&gt;  8 A     2      A2      A2_P03         MR      P03      1.26   0.47   Std_Glu</span></span>
-<span><span class="co">#&gt;  9 A     2      A2      A2_P04         MR      P04      1.25   0.44   Std_Glu</span></span>
-<span><span class="co">#&gt; 10 A     2      A2      A2_P05         MR      P05      1.25   0.47   Std_Glu</span></span>
-<span><span class="co">#&gt; # ℹ 470 more rows</span></span>
-<span></span>
-<span><span class="co"># If you like to reorder columns to have mapping first, then absorbance</span></span>
-<span><span class="va">tidy_MR</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/relocate.html" class="external-link">relocate</a></span><span class="op">(</span><span class="va">map</span>, .before <span class="op">=</span> <span class="va">abs_t0</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 480 × 9</span></span>
-<span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id map     abs_t0 abs_t5</span></span>
-<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;   &lt;chr&gt;  &lt;chr&gt; </span></span>
-<span><span class="co">#&gt;  1 A     1      A1      A1_P01         MR      P01      empty   0.93   0.67  </span></span>
-<span><span class="co">#&gt;  2 A     1      A1      A1_P02         MR      P02      empty   1.23   1     </span></span>
-<span><span class="co">#&gt;  3 A     1      A1      A1_P03         MR      P03      empty   1.27   1.04  </span></span>
-<span><span class="co">#&gt;  4 A     1      A1      A1_P04         MR      P04      empty   1.32   1.09  </span></span>
-<span><span class="co">#&gt;  5 A     1      A1      A1_P05         MR      P05      empty   1.32   1.13  </span></span>
-<span><span class="co">#&gt;  6 A     2      A2      A2_P01         MR      P01      Std_Glu 1.15   0.39  </span></span>
-<span><span class="co">#&gt;  7 A     2      A2      A2_P02         MR      P02      Std_Glu 1.23   0.43  </span></span>
-<span><span class="co">#&gt;  8 A     2      A2      A2_P03         MR      P03      Std_Glu 1.26   0.47  </span></span>
-<span><span class="co">#&gt;  9 A     2      A2      A2_P04         MR      P04      Std_Glu 1.25   0.44  </span></span>
-<span><span class="co">#&gt; 10 A     2      A2      A2_P05         MR      P05      Std_Glu 1.25   0.47  </span></span>
-<span><span class="co">#&gt; # ℹ 470 more rows</span></span></code></pre></div>
-</div>
-</section></section><section class="section level2"><h2 id="next-steps">5 - Next steps<a class="anchor" aria-label="anchor" href="#next-steps"></a>
+<p>In some studies, there may be more than 2 layers of data for each physical plate (see tip above). This case is covered separately, with a full worked example, in the import section of the <a href="https://mdetoeuf.github.io/plate2N/articles/microresp.html">microresp vignette</a>.</p>
+</section><section class="section level2"><h2 id="next-steps">5 - Next steps<a class="anchor" aria-label="anchor" href="#next-steps"></a>
 </h2>
 <p>Once the data is in this practical and tidy format, we can start data transformation of all sorts, see also vignettes <a href="https://mdetoeuf.github.io/plate2N/articles/handling-outliers.html"><strong>handling-outliers</strong></a><strong>, <a href="https://mdetoeuf.github.io/plate2N/articles/blank-correction.html">blank-correction</a> and <a href="https://mdetoeuf.github.io/plate2N/articles/abs-to-conc.html">abs-to-conc</a> (in that order)</strong> of this <a href="https://mdetoeuf.github.io/plate2N/index.html">package</a>. This is a good place to save the tidy table into an intermediary file, for example, using <code>tidy_data |&gt; readr::write_rds("path/to/my/output/file.rds")</code>.</p>
 </section><section class="section level2"><h2 id="final-note-when-absorbance-and-mapping-data-with-identical-plate-ids-are-imported-from-a-single-source-file-">6 - Final note: when absorbance and mapping data with identical plate ids are imported from a single source file.<a class="anchor" aria-label="anchor" href="#final-note-when-absorbance-and-mapping-data-with-identical-plate-ids-are-imported-from-a-single-source-file-"></a>

@@ -43,6 +43,7 @@
     <li><h6 class="dropdown-header" data-toc-skip>Other</h6></li>
     <li><a class="dropdown-item" href="../articles/prepare_plates.html">prepare_plates</a></li>
     <li><a class="dropdown-item" href="../articles/translate-abs.html">translate-abs</a></li>
+    <li><a class="dropdown-item" href="../articles/microresp.html">microresp</a></li>
   </ul>
 </li>
       </ul>
@@ -93,20 +94,20 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">LETTERS</span>, size <span class="op">=</span> <span class="fl">15</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;  [1] "U" "Z" "Y" "K" "A" "N" "D" "E" "T" "S" "H" "J" "G" "P" "W"</span></span>
+<span><span class="co">#&gt;  [1] "I" "E" "V" "R" "G" "T" "W" "H" "P" "A" "C" "X" "B" "O" "L"</span></span>
 <span><span class="fu"><a href="../reference/map_1_plate.html">map_1_plate</a></span><span class="op">(</span>plate_id <span class="op">=</span> <span class="st">"test_plate"</span>, samples <span class="op">=</span> <span class="va">samples</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 9 × 13</span></span>
 <span><span class="co">#&gt;   row    X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12  </span></span>
 <span><span class="co">#&gt;   &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;</span></span>
 <span><span class="co">#&gt; 1 test_… 1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
-<span><span class="co">#&gt; 2 A      Std   U     Y     A     D     T     H     extr  G     W     empty Std  </span></span>
-<span><span class="co">#&gt; 3 B      Std   U     Y     A     D     T     H     extr  G     W     empty Std  </span></span>
-<span><span class="co">#&gt; 4 C      Std   U     Y     A     D     T     H     extr  G     W     empty Std  </span></span>
-<span><span class="co">#&gt; 5 D      Std   U     Y     A     D     T     H     extr  G     W     empty Std  </span></span>
-<span><span class="co">#&gt; 6 E      Std   Z     K     N     E     S     J     extr  P     empty empty Std  </span></span>
-<span><span class="co">#&gt; 7 F      Std   Z     K     N     E     S     J     extr  P     empty empty Std  </span></span>
-<span><span class="co">#&gt; 8 G      Std   Z     K     N     E     S     J     extr  P     empty empty Std  </span></span>
-<span><span class="co">#&gt; 9 H      Std   Z     K     N     E     S     J     extr  P     empty empty Std</span></span></code></pre></div>
+<span><span class="co">#&gt; 2 A      Std   I     V     G     W     P     C     extr  B     L     empty Std  </span></span>
+<span><span class="co">#&gt; 3 B      Std   I     V     G     W     P     C     extr  B     L     empty Std  </span></span>
+<span><span class="co">#&gt; 4 C      Std   I     V     G     W     P     C     extr  B     L     empty Std  </span></span>
+<span><span class="co">#&gt; 5 D      Std   I     V     G     W     P     C     extr  B     L     empty Std  </span></span>
+<span><span class="co">#&gt; 6 E      Std   E     R     T     H     A     X     extr  O     empty empty Std  </span></span>
+<span><span class="co">#&gt; 7 F      Std   E     R     T     H     A     X     extr  O     empty empty Std  </span></span>
+<span><span class="co">#&gt; 8 G      Std   E     R     T     H     A     X     extr  O     empty empty Std  </span></span>
+<span><span class="co">#&gt; 9 H      Std   E     R     T     H     A     X     extr  O     empty empty Std</span></span></code></pre></div>
 </div>
 <p>Usually, more than one plate needs to be prepared. Let’s say we need to prepare 5 plates, and we have a list of 5 x 14 samples (we want exactly 14 samples in each plate). <code><a href="../reference/map_plates.html">map_plates()</a></code> builds on <code><a href="../reference/map_1_plate.html">map_1_plate()</a></code> to map several plates.</p>
 <div class="cell">
