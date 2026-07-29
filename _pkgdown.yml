@@ -2,3 +2,17 @@ url: https://mdetoeuf.github.io/plate2N/
 template:
   bootstrap: 5
 
+articles:
+- title: Get started
+  navbar: ~
+  contents:
+  - import-tidy
+  - handling-outliers
+  - blank-correction
+  - abs-to-conc
+
+- title: Other
+  navbar: Other
+  contents:
+  - prepare_plates
+  - translate-abs
