@@ -67,7 +67,7 @@ Then, compute the number of plates required (here, 5 plates) by counting how man
 ```{r}
 # nb of plates
 (nb_plates <- MR_abs_t0 |> 
-  dplyr::filter(row %ni% LETTERS) |> 
+  dplyr::filter(!(row %in% LETTERS)) |> 
   nrow())
 ```
 

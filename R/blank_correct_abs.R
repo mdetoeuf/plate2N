@@ -53,11 +53,11 @@ blank_correct_abs <- function(
   to_correct <-
     raw_wells_data |>
     # filter out irrelevant wells
-    dplyr::filter(map %ni% map_to_exclude) |>
+    dplyr::filter(!(map %in% map_to_exclude)) |>
     dplyr::mutate(abs = as.numeric(abs))
 
   # add "extr_id" column if missing (case when there is only 1 extractant)
-  if ("extr_id" %ni% names(to_correct)) {
+  if (!("extr_id" %in% names(to_correct))) {
     to_correct <- to_correct |> dplyr::mutate(extr_id = rep(extr_def))
   }
 

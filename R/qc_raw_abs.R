@@ -53,7 +53,7 @@ qc_raw_abs <- function(
   # remove empty wells (marked as "empty" --> keep only "full" wells)
   # and remove NAs
   full <- data |>
-    dplyr::filter(map %ni% empty_wells, !is.na(abs))
+    dplyr::filter(!(map %in% empty_wells), !is.na(abs))
 
   # initiate data frame that will contain suspicious well ids
   # i = 1

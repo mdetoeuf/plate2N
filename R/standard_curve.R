@@ -370,7 +370,6 @@ utils::globalVariables(c("std_def", "abs_corrected"))
 #' @param std_blank If NULL (default), it will be extracted/computed from `data`, using `extract_std_blank()`.
 #'
 #' @import dplyr
-#' @importFrom roperators %ni%
 #'
 #' @returns A tibble with blank-corrected absorbance values for standard curves.
 #'     It has less rows than the input `data` because
@@ -417,7 +416,6 @@ correct_std_blank <- function(
     dplyr::mutate(abs = as.numeric(abs)) |>
     # keep only data that is not from blank wells
     dplyr::filter(
-      # unique_well_id %ni% std_blank_untrusted$unique_well_id,
       row != pipette_to_row(pipetting_direction)
     ) |>
     dplyr::right_join(std_blank_average, by = dplyr::join_by(dataset, plate_id)) |>

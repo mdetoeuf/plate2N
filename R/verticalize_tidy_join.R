@@ -49,7 +49,7 @@ verticalize_plates <- function(
   plates <- tibble |>
     # exclude rows where 1st column contains single capital letters
     # effectively keeping only header rows for each plate (containing plate_id and column nb (1 to 12))
-    dplyr::filter(row %ni% LETTERS) |>
+    dplyr::filter(!(row %in% LETTERS)) |>
     # keep only 1st column --> create a tibble (1 column) with plate_ids
     dplyr::select(plate_id = row)
 
@@ -124,7 +124,7 @@ tibble_to_list <- function(tibble) {
   # to get to the plate_ids
   plates <- tibble |>
     # exclude rows where 1st column contains single capital letters
-    dplyr::filter(row %ni% LETTERS) |>
+    dplyr::filter(!(row %in% LETTERS)) |>
     # keep only 1st column --> create a tibble (1 column) with plate_ids
     dplyr::select(plate_id = row)
 
