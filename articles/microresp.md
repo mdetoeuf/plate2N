@@ -118,7 +118,7 @@ one of the 26 `LETTERS` (= number of plate ids).
 
 # nb of plates
 (nb_plates <- MR_abs_t0 |> 
-  dplyr::filter(row %ni% LETTERS) |> 
+  dplyr::filter(!(row %in% LETTERS)) |> 
   nrow())
 #> [1] 5
 ```
