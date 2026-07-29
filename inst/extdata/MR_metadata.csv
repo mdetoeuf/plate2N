@@ -1,0 +1,6 @@
+plate_nb,run_id,sample_id,plate_id,lab_id,detection_plate_id,expe,cra_trial,sd_c,soil,crop_diversity,bloc,sampling_time,zone,date,sample_name,soil_dm_content_percent,soil_well_g,std_soil_dm_content_percent,std_soil_well_g
+P01,R1,t2_102_z1,P01,MdT,M25,Field,SyCBio,SdC2,Auto,IC,B3,t2,z1,12/09/2024,Field_t2_B3_Auto_IC_IC_z1,83.32,0.43,88.59,0.43
+P02,R1,t2_103_z3,P02,MdT,M26,Field,SyCBio,SdC2,Auto,SC,B2,t2,z3,12/09/2024,Field_t2_B2_Auto_SC_W_z3,83.78,0.43,88.59,0.43
+P03,R1,t2_86_z2,P03,MdT,M27,Field,SyCBio,SdC3,ABC,IC,B3,t2,z2,12/09/2024,Field_t2_B3_ABC_IC_IC_z2,82.73,0.41,88.59,0.42
+P04,R1,t2_101_z3,P04,MdT,M28,Field,SyCBio,SdC2,Auto,SC,B4,t2,z3,12/09/2024,Field_t2_B4_Auto_SC_W_z3,83.98,0.43,88.59,0.42
+P05,R1,t2_84_z1,P05,MdT,M29,Field,SyCBio,SdC3,ABC,IC,B4,t2,z1,12/09/2024,Field_t2_B4_ABC_IC_IC_z1,83.1,0.42,88.59,0.41
