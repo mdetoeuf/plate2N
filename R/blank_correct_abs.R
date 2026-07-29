@@ -18,7 +18,6 @@ utils::globalVariables(c("map", "abs", "blank_avg", "abs_corrected"))
 #'     filter out those rows from `raw_wells_data` before the function call.
 #'
 #' @import dplyr
-#' @importFrom roperators %ni%
 #'
 #' @returns A tibble with the blank-corrected absorbance. It has the same structure
 #'     as `raw_wells_data`, but the `abs` column has been removed, and column

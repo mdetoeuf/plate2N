@@ -32,7 +32,6 @@ Imports:
     patchwork,
     readr,
     readxl,
-    roperators,
     stringr,
     tibble,
     tidyr,

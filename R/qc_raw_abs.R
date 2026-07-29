@@ -24,7 +24,6 @@ utils::globalVariables(c("map", "abs", "dataset", "plate_id", "well_id"))
 #'     the string will name the object (e.g., `export_plot = "abs_distrib"` will save an object called `abs_distrib`)
 #'
 #' @import dplyr ggplot2 tidyselect
-#' @importFrom roperators %ni%
 #'
 #' @returns A table with 5 columns.
 #'     The first 3 (dataset, plate_id, well_id) allow the unique identification of suspicious wells

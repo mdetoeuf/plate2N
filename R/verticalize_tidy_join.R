@@ -22,7 +22,6 @@ utils::globalVariables(c("row", "column", "X1", "X12"))
 #' @param prefix Defaults as an empty string. A `prefix` can be added to all column names, which can be useful to join tables from distinct datasets
 #'
 #' @import dplyr tidyr tidyselect
-#' @importFrom roperators %ni%
 #'
 #' @returns A tidy tibble (verticalized plate data), with 1 column per plate
 #' @seealso [skanit_to_tibble()], [csv_to_tibble()], [txt_to_tibble()] that can generate the input needed
@@ -108,7 +107,6 @@ utils::globalVariables("row")
 #' @param tibble The tibble containing all plate data. See output from examples under ?csv_import for a glimpse of the required tibble structure and column names
 #'
 #' @import tidyselect
-#' @importFrom roperators %ni%
 #'
 #' @returns A list where each element contains the data of a single plate, and the name of each element is the plate identifier (plate name). This list format is the same as the output from txt_import()
 #' @export

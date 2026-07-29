@@ -19,7 +19,6 @@ The goal of `plate2N` is to facilitate data wrangling and data analysis for raw 
 ```{r}
 #| label: setup
 library(plate2N)
-library(roperators)
 ```
 
 This particular vignette adresses the first steps of the pipeline: getting from files of raw data in various forms to a uniform tidy data table that can be easily manipulated in downstream steps. The final `tidy_table` will look something like this:
