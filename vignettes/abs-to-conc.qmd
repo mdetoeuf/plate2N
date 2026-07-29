@@ -75,7 +75,9 @@ In this pipeline, we show how to implement a linear model and a polynomial model
 
 For dosage of mineral N pools, a polynomial model can be necessary, for example, when concentrations (and absorbance values) are high. The best red flag for the inappropriateness of the linear model is when the fit of the curve does not seem to suit the plotting of the experimental points.
 
-For new pipelines, always check out the standard curves graphically to ensure a good fit
+For new pipelines, always check out the standard curves graphically to ensure a good fit.
+
+Curvature at high absorbance can come from more than one source — for example, the color-forming reagent becoming limiting at high concentrations, or stray light, an optical artifact of the plate reader itself that affects any sufficiently high absorbance reading regardless of chemistry. Switching to a polynomial model is a reasonable empirical fix either way, but it's worth understanding roughly why your curve bends before doing so, since the two causes have different implications — for example, whether readings above your calibrated range can be trusted, or whether diluting samples is a better fix than adding model complexity.
 :::
 
 ```{r}
@@ -473,6 +475,12 @@ We finally have our computed concentration for each well, expressed in mg N per 
 # 4 - Polynomial model {#sec-polynomial}
 
 In this section, we cover the sames steps as in the previous 2 sections, but implementing a polynomial, rather than linear, model. This was necessary, for example, when dosing total dissolved nitrogen, i.e., dosing nitrate after a total oxidation of all N-compounds to nitrate. For this experiment, standard curve concentrations have been increased ten-fold. This resulted in highly concentrated solutions generating absorbance values above 3. It appears that a polynomial model is more appropriate in this case, as can be seen in the next chunks (example of a single curve).
+
+::: callout-note
+## Does a polynomial model change blank correction?
+
+No. Blank correction (see the `blank-correction` vignette) was already carried out using simple subtraction, and that remains valid here even though the model in this section is polynomial. The blank is measured at (or near) zero concentration, before either of the mechanisms mentioned in [Tips for choosing the model](#sec-choice) becomes relevant — so blank subtraction and curve shape are answering two separate questions. Nothing about using a polynomial model here requires revisiting the earlier blank-correction step.
+:::
 
 ::: callout-warning
 ## Only polynomial model - specific steps are reviewed in detail
