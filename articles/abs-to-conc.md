@@ -18,6 +18,15 @@ library(patchwork)
 - For conversion: explain well difference btw mg N-sp/L and mg N/L, and
   how it relates to molar masses
 
+- Consider using ggplot to build the residuals plots, evtl. make it a
+  function (or even make a function of the whole comparison plotting
+  process (4 plots given from the data of one curve)
+
+- in epilogue: **add examples of downstream steps: correct dilutions,
+  per sample average and outlier removal, conversion to ppm, etc.**
+
+- **make a function out of the concentration inference step**
+
 > **Work in progress**
 >
 > This vignette is still under development, bugs are to be expected
@@ -26,9 +35,8 @@ library(patchwork)
 
 In this vignette, we cover the steps from blank-corrected absorbance to
 concentration in nitrogen \[mg N / L\], although this can easily be used
-for dosing other molecules, as long as the Beer-Lambert equation is
-respected (the relationship between absorbance and concentration is
-linear)[^1].
+for dosing other molecules[^1], as long as the the relationship between
+absorbance and concentration is linear or polynomial.
 
 > **Prerequisites**
 >
@@ -44,8 +52,7 @@ linear)[^1].
 
 ## 1 - Get blank-corrected data
 
-Little reminder how how the blank-corrected data looks like (see
-prerequisites)
+Here is what the blank-corrected data looks like (see prerequisites)
 
 ``` r
 
@@ -94,19 +101,223 @@ std_corrected
 #> #   blank_coeff_var_percent <dbl>
 ```
 
-## 2 - Compute linear model on Standard Curves
+## 2 - Tips for choosing the model
 
 > **Choose your model wisely**
 >
-> We cover later a script to implement a polynomial model rather than a
-> linear model. For dosage of mineral N pools, such a model can be
-> necessary, for example, when concentrations (and absorbance values)
-> are high. The best red flag for the inappropriateness of the linear
-> model if when the fit of the curve does not seem to suit the plotting
-> of the experimental points.
+> In this pipeline, we show how to implement a linear model and a
+> polynomial model. The section on linear model is detailed in great
+> depth, then the polynomial model is presented more briefly, with
+> insistence only on points that differ from the linear model.
+>
+> For dosage of mineral N pools, a polynomial model can be necessary,
+> for example, when concentrations (and absorbance values) are high. The
+> best red flag for the inappropriateness of the linear model is when
+> the fit of the curve does not seem to suit the plotting of the
+> experimental points.
 >
 > For new pipelines, always check out the standard curves graphically to
-> ensure a good fit. See later, in section [Section 6](#sec-polynomial)
+> ensure a good fit
+
+We will illustrate the choice of model on another data set called
+`tidy_TDN` (equivalent in structure to the `tidy_plates` we had at the
+beginning of the vignette `blank-correction`):
+
+``` r
+
+tidy_TDN
+#> # A tibble: 3,072 × 8
+#>    row   column well_id unique_well_id dataset plate_id   abs   map  
+#>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>      <chr> <chr>
+#>  1 A     1      A1      A1_NO3_TDN_01  TDN     NO3_TDN_01 0.095 Std  
+#>  2 A     1      A1      A1_NO3_TDN_02  TDN     NO3_TDN_02 0.097 Std  
+#>  3 A     1      A1      A1_NO3_TDN_03  TDN     NO3_TDN_03 0.113 Std  
+#>  4 A     1      A1      A1_NO3_TDN_04  TDN     NO3_TDN_04 0.114 Std  
+#>  5 A     1      A1      A1_NO3_TDN_05  TDN     NO3_TDN_05 0.132 Std  
+#>  6 A     1      A1      A1_NO3_TDN_06  TDN     NO3_TDN_06 0.12  Std  
+#>  7 A     1      A1      A1_NO3_TDN_07  TDN     NO3_TDN_07 0.095 Std  
+#>  8 A     1      A1      A1_NO3_TDN_08  TDN     NO3_TDN_08 0.09  Std  
+#>  9 A     1      A1      A1_NO3_TDN_09  TDN     NO3_TDN_09 0.14  Std  
+#> 10 A     1      A1      A1_NO3_TDN_10  TDN     NO3_TDN_10 0.143 Std  
+#> # ℹ 3,062 more rows
+```
+
+To illustrate the polynomial vs the linear model, we extract standard
+data for a single curve from that dataset. We chose here the 9th curve
+because it illustrates the purpose nicely. But to base a model decision
+at the dataset scale, you would have to repeat this on several curves,
+e.g., by sampling a random number of curves, then plotting them in a
+loop.
+
+``` r
+
+# take data for a single curve and format it for the plotting
+curve <- (std_corrected_TDN |> 
+            # whatever steps are required to isolate a single curve
+            # Here: grouping by plate and column (2 curves per plate)
+            dplyr::group_by(plate_id, column) |> 
+            # dataset with several N-species for each plate_id --> choose only one
+            dplyr::filter(std_sp == "NO3") |> 
+           # dplyr::rename(abs = abs_corrected) |> 
+            # split the data by group:
+            # it creates a list where each group is one element
+            dplyr::group_split()
+          # take the 9th element of the list
+          )[[9]]
+
+# check it out
+curve
+#> # A tibble: 7 × 13
+#>   row   column well_id unique_well_id dataset plate_id   unique_curve_id map  
+#>   <chr> <chr>  <chr>   <chr>          <chr>   <chr>      <chr>           <chr>
+#> 1 B     1      B1      B1_NO3_TDN_09  TDN     NO3_TDN_09 NO3_TDN_09_col1 Std  
+#> 2 C     1      C1      C1_NO3_TDN_09  TDN     NO3_TDN_09 NO3_TDN_09_col1 Std  
+#> 3 D     1      D1      D1_NO3_TDN_09  TDN     NO3_TDN_09 NO3_TDN_09_col1 Std  
+#> 4 E     1      E1      E1_NO3_TDN_09  TDN     NO3_TDN_09 NO3_TDN_09_col1 Std  
+#> 5 F     1      F1      F1_NO3_TDN_09  TDN     NO3_TDN_09 NO3_TDN_09_col1 Std  
+#> 6 G     1      G1      G1_NO3_TDN_09  TDN     NO3_TDN_09 NO3_TDN_09_col1 Std  
+#> 7 H     1      H1      H1_NO3_TDN_09  TDN     NO3_TDN_09 NO3_TDN_09_col1 Std  
+#> # ℹ 5 more variables: abs_corrected <dbl>, std_sp <chr>, std_unit <chr>,
+#> #   date <date>, std_conc <dbl>
+```
+
+Now we compute both models: linear and polynomial, so that we may
+compare them.
+
+The linear model takes `abs_corrected ~ 0 + std_conc` as a formula,
+which is the equivalent to say: `y = mx + p` with y = absorbance and x =
+concentration. m is the slope, and because we blank-corrected the data
+already, we are constraining the model to fit through the origin, i.e.,
+p = 0, which justifies the `0 + std_conc` in the model call.
+
+The polynomial model takes
+`abs_corrected ~ 0 + std_conc + I(std_conc^2)` as a formula, which is
+the equivalent to say: `y = ax^2 + bx + c`. With the same logic as
+above, y = absorbance, x = concentration and c = 0 (blank-corrected
+data).
+
+``` r
+
+# compute both models
+lm_linear <- stats::lm(abs_corrected ~ 0 + std_conc, data = curve)
+lm_poly <- stats::lm(abs_corrected ~ 0 + std_conc + I(std_conc^2), data = curve)
+```
+
+While both models return p-values corresponding to highly significant
+models (see next chunk), and very high adjusted R-squared, we will see
+with the plots that, indeed, the polynomial model is a much better fit
+in this case
+
+``` r
+
+(sum_linear <- summary(lm_linear))
+#> 
+#> Call:
+#> stats::lm(formula = abs_corrected ~ 0 + std_conc, data = curve)
+#> 
+#> Residuals:
+#>      Min       1Q   Median       3Q      Max 
+#> -0.18370  0.04129  0.10244  0.13621  0.20977 
+#> 
+#> Coefficients:
+#>           Estimate Std. Error t value Pr(>|t|)    
+#> std_conc 0.0124279  0.0004877   25.48 2.41e-07 ***
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+#> 
+#> Residual standard error: 0.1477 on 6 degrees of freedom
+#> Multiple R-squared:  0.9908, Adjusted R-squared:  0.9893 
+#> F-statistic: 649.5 on 1 and 6 DF,  p-value: 2.405e-07
+(sum_poly <- summary(lm_poly))
+#> 
+#> Call:
+#> stats::lm(formula = abs_corrected ~ 0 + std_conc + I(std_conc^2), 
+#>     data = curve)
+#> 
+#> Residuals:
+#>         1         2         3         4         5         6         7 
+#> -0.003064  0.023935  0.025124  0.021264  0.002595 -0.028541  0.011591 
+#> 
+#> Coefficients:
+#>                 Estimate Std. Error t value Pr(>|t|)    
+#> std_conc       1.672e-02  2.846e-04   58.75 2.70e-08 ***
+#> I(std_conc^2) -2.127e-05  1.360e-06  -15.64 1.94e-05 ***
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+#> 
+#> Residual standard error: 0.0229 on 5 degrees of freedom
+#> Multiple R-squared:  0.9998, Adjusted R-squared:  0.9997 
+#> F-statistic: 1.363e+04 on 2 and 5 DF,  p-value: 4.551e-10
+```
+
+Seeing the summary of both models: both are significant, but the p-value
+of the coefficient for the second degree term (a in ax^2) in the
+polynomial model is \<\<0.05, which indicates that that term
+significantly contributes to the model.
+
+Now, we build the 2 plots. In the call to the plot below, we rename
+abs_corrected with abs, as that is the argument that the function
+[`plot_std()`](https://mdetoeuf.github.io/plate2N/reference/plot_std.md)
+takes.
+
+``` r
+
+# build the linear model plot
+p_linear <- 
+  plot_std(
+    curve |> dplyr::rename(abs = abs_corrected), 
+    through_origin = TRUE, 
+    model = "linear") + 
+  ggplot2::theme(legend.position = "none") + 
+  ggplot2::labs(title = "Linear model")
+
+# build the polynomial model plot
+p_poly <- 
+  plot_std(
+    curve |> dplyr::rename(abs = abs_corrected), 
+    through_origin = TRUE, 
+    model = "poly") + 
+  ggplot2::theme(legend.position = "none") + 
+  ggplot2::labs(title = "Polynomial model")
+
+# looking at both plots next to each other (package "patchwork" needed)
+p_linear + p_poly
+```
+
+![](abs-to-conc_files/figure-html/unnamed-chunk-7-1.png)
+
+Indeed, the polynomial model fits a lot better
+
+Let’s look at the Residual plot to confirm this intuition
+
+``` r
+
+# Extract residual data from the 2 models
+res_linear <- stats::residuals(sum_linear)
+res_poly <- stats::residuals(sum_poly)
+
+# plot both on the same graph
+
+# plot residuals for linear model
+plot(curve$std_conc, res_linear, main = "Residuals Analysis", xlab = "Concentration", ylab = "Residuals", col = "grey30", pch = 16)
+# add red line at y = 0
+graphics::abline(h = 0, col = "red", lty = 2)
+# add residuals for polynomial model
+graphics::points(curve$std_conc, res_poly,  col = "magenta", pch = 15)
+# add legend
+graphics::points(0, y = -0.1, col = "grey30", pch = 16)
+graphics::text(x = 6, y = -0.1, labels = "linear\nmodel", col = "grey30", adj = 0)
+graphics::points(0, y = -0.15, col = "magenta", pch = 15)
+graphics::text(x = 6, y = -0.15, labels = "polynomial\nmodel", col = "magenta", adj = 0)
+```
+
+![](abs-to-conc_files/figure-html/unnamed-chunk-8-1.png)
+
+Whereas this quick approach suffices to convince us that a polynomial
+model is a better fit for this particular curve, one should evaluate
+several curves before taking a decision that concerns a larger data set.
+
+## 3 - Linear model from Standard Curves
 
 [`lm_std_curve()`](https://mdetoeuf.github.io/plate2N/reference/lm_std_curve.md)
 computes a per-curve linear regression between 2 columns of the input
@@ -117,18 +328,20 @@ returns a table containing one row per standard curve, and a series of
 information characterizing the performance of the linear model for that
 curve (see below and also `?lm_std_curve()`.
 
-### 2.1 - Compute linear model, round 1
+### 3.1 - Compute linear model, round 1
 
 [`lm_std_curve()`](https://mdetoeuf.github.io/plate2N/reference/lm_std_curve.md)
-defines the curve based on the groups
-([`dplyr::group_by()`](https://dplyr.tidyverse.org/reference/group_by.html))
-of the input data (`std_corrected` in the example below). Additionally
-to the columns `abs_corrected` and `std_conc` (numeric), the function
-also requires the column `unique_curve_id`.
+defines a curve based on the groups (defined by
+[`dplyr::group_by()`](https://dplyr.tidyverse.org/reference/group_by.html))
+of the data given as input (`std_corrected` in the example below).
+Additionally to the columns `abs_corrected` and `std_conc` (numeric),
+the function also requires the column `unique_curve_id`.
 
 ``` r
 
-(lm_table_raw <- lm_std_curve(std_corrected |> dplyr::group_by(plate_id, column)))
+# compute the model and store model details
+(lm_table_raw <- lm_std_curve(
+  std_corrected |> dplyr::group_by(plate_id, column)))
 #> # A tibble: 10 × 12
 #>    dataset plate_id unique_curve_id std_sp  slope r_squared adj_r_squared
 #>    <chr>   <chr>    <chr>           <chr>   <dbl>     <dbl>         <dbl>
@@ -144,17 +357,35 @@ also requires the column `unique_curve_id`.
 #> 10 Nmin    NO3_1F5  NO3_1F5_col12   NO3    0.0185     0.999         0.998
 #> # ℹ 5 more variables: lm_p <dbl>, normality_lm_residuals <chr>,
 #> #   shapiro_p <dbl>, homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>
+
+# check out column names, type, and data
+str(lm_table_raw)
+#> tibble [10 × 12] (S3: tbl_df/tbl/data.frame)
+#>  $ dataset                      : chr [1:10] "Nmin" "Nmin" "Nmin" "Nmin" ...
+#>  $ plate_id                     : chr [1:10] "NO3_1F1" "NO3_1F1" "NO3_1F2" "NO3_1F2" ...
+#>  $ unique_curve_id              : chr [1:10] "NO3_1F1_col1" "NO3_1F1_col12" "NO3_1F2_col1" "NO3_1F2_col12" ...
+#>  $ std_sp                       : chr [1:10] "NO3" "NO3" "NO3" "NO3" ...
+#>  $ slope                        : num [1:10] 0.0189 0.0179 0.0178 0.019 0.0187 ...
+#>  $ r_squared                    : num [1:10] 0.999 0.999 0.999 0.999 0.999 ...
+#>  $ adj_r_squared                : num [1:10] 0.999 0.999 0.999 0.999 0.999 ...
+#>  $ lm_p                         : num [1:10] 6.49e-11 2.79e-10 6.03e-11 1.64e-10 9.25e-11 ...
+#>  $ normality_lm_residuals       : chr [1:10] "Normal" "Not Normal" "Normal" "Normal" ...
+#>  $ shapiro_p                    : num [1:10] 0.836 0.01 0.824 0.962 0.805 0.81 0.632 0.646 0.602 0.535
+#>  $ homoscedasticity_lm_residuals: chr [1:10] "Homoscedasticity" "Homoscedasticity" "Homoscedasticity" "Homoscedasticity" ...
+#>  $ breusch_pagan_p              : num [1:10] 0.445 0.721 0.686 0.789 0.916 0.483 0.46 0.445 0.537 0.621
 ```
 
-### 2.2 - QC Standard curves - check conditions of linear model
+### 3.2 - QC Standard curves - check conditions of linear model
 
 The function
 [`suspicious_lm()`](https://mdetoeuf.github.io/plate2N/reference/suspicious_lm.md)
-extracts from an `lm_table`\` as produced above all plates where the
+extracts from an `lm_table` as produced above all plates where the
 linear model is not optimal, i.e., either the p-value of the model is
 above 0.05, or its residuals are not normally distributed, or there is
-heteroscedasticity of residuals. lm_table_suspicious can serve for
-identification of outliers
+heteroscedasticity of residuals. `lm_table_suspicious` can serve for the
+identification of outlier wells.
+
+In this simplified data set, there is only one suspicious curve:
 
 ``` r
 
@@ -168,27 +399,48 @@ identification of outliers
 #> #   shapiro_p <dbl>, homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>
 ```
 
-For visual aid (useful for larger data sets,
+For visual aid (useful for larger data sets),
 [`plot_list_lm()`](https://mdetoeuf.github.io/plate2N/reference/plot_list_lm.md)
-creates a list of plots of each curve given as argument (here:
-suspicious lm’s). Calling individual plots can help spotting possible
-outlier wells, which can be removed with similar steps as shown above.
+creates a *list* of plots of each curve given as argument. This means
+that it can be used to store plots any subset of curves, or for the
+whole dataset. Calling individual plots from this list can help spotting
+possible outlier wells, which can be removed with similar steps as shown
+above.
+
+Each element of the list is one plot, so that calling
+`suspicious_lm_plotlist[[i]]` will return the i-th plot. The plots are
+named in the list, so that you can also access any plot by calling the
+`unique_curve_id`, e.g., with `suspicious_lm_plotlist$NO3_1F1_col12`
 
 ``` r
 
+# here, we create a list of plots from only the suspicious curve
 suspicious_lm_plotlist <- plot_list_lm(
   lm_data = lm_table_suspicious,
   std_data = std_corrected)
+
+# check out the names of elements of the list (here only 1)
+names(suspicious_lm_plotlist)
+#> [1] "NO3_1F1_col12"
 
 # check one plot out
 suspicious_lm_plotlist[[1]]
 ```
 
-![](abs-to-conc_files/figure-html/unnamed-chunk-4-1.png)
+![](abs-to-conc_files/figure-html/unnamed-chunk-11-1.png)
 
-When there are numerous suspicious curves, we can take advantage of the
-package `patchwork`\` to display multiple plots (example hereunder with
-the whole lm_table)
+``` r
+
+
+# or by name
+suspicious_lm_plotlist$NO3_1F1_col12
+```
+
+![](abs-to-conc_files/figure-html/unnamed-chunk-11-2.png)
+
+When there are numerous (suspicious) curves, we can take advantage of
+the package `patchwork` to display multiple plots (example hereunder
+with the whole lm_table)
 
 ``` r
 
@@ -201,9 +453,9 @@ patchwork::wrap_plots(full_plotlist, axis_titles = "collect_y") +
      patchwork::plot_annotation(title = "Plots of suspicious Standard curves")
 ```
 
-![](abs-to-conc_files/figure-html/unnamed-chunk-5-1.png)
+![](abs-to-conc_files/figure-html/unnamed-chunk-12-1.png)
 
-### 2.3 - outlier removal
+### 3.3 - outlier removal
 
 At this point, you may want to remove obvious outlier wells. Follow
 steps as shown in vignettes from prerequisites to
@@ -228,13 +480,13 @@ From now on, we no longer use `std_corrected`, but only
 quality check on the cleaned datasets before approving regression
 equations.
 
-### 2.4 - Per-dilution averages (if 2+ curves per plate)
+### 3.4 - Per-dilution averages (if 2+ curves per plate)
 
-Once the very few monstrously wrong wells have been removed from single
-curves, in the case where several curves were pipetted per 96-well
-plate, we still need to perform a per-dilution average of absorbance.
-Indeed, there have been 2 events of pipetting of the same dilution,
-rather than 2 successive dilutions.
+Once the outlier wells have been removed from single curves, in the case
+where several curves were pipetted per 96-well plate, we still need to
+perform a per-dilution average of absorbance. Indeed, there likely have
+been 2 events of pipetting of the same dilution, rather than 2
+independent dilutions.
 
 > **WARNING**
 >
@@ -248,20 +500,49 @@ rather than 2 successive dilutions.
 [`std_dilution_average()`](https://mdetoeuf.github.io/plate2N/reference/std_dilution_average.md)
 does that and creates an artificial “column 13”.
 
+Notice that the average reduced the number of rows ~ 2-fold, and notice
+unique curve ids ending with `_col13`.
+
 ``` r
 
 std_dilution_avg <- std_corrected_wash1 |> std_dilution_average()
+
+# Check it out (notice )
+std_dilution_avg
+#> # A tibble: 35 × 25
+#> # Groups:   plate_id [5]
+#>    plate_id row   column well_id unique_curve_id abs_mean dataset map   date 
+#>    <chr>    <chr>  <dbl> <chr>   <chr>              <dbl> <chr>   <chr> <lgl>
+#>  1 NO3_1F1  B         13 B13     NO3_1F1_col13    0.00700 Nmin    Std   NA   
+#>  2 NO3_1F1  C         13 C13     NO3_1F1_col13    0.0145  Nmin    Std   NA   
+#>  3 NO3_1F1  D         13 D13     NO3_1F1_col13    0.0295  Nmin    Std   NA   
+#>  4 NO3_1F1  E         13 E13     NO3_1F1_col13    0.0655  Nmin    Std   NA   
+#>  5 NO3_1F1  F         13 F13     NO3_1F1_col13    0.142   Nmin    Std   NA   
+#>  6 NO3_1F1  G         13 G13     NO3_1F1_col13    0.293   Nmin    Std   NA   
+#>  7 NO3_1F1  H         13 H13     NO3_1F1_col13    0.446   Nmin    Std   NA   
+#>  8 NO3_1F2  B         13 B13     NO3_1F2_col13    0.00800 Nmin    Std   NA   
+#>  9 NO3_1F2  C         13 C13     NO3_1F2_col13    0.0145  Nmin    Std   NA   
+#> 10 NO3_1F2  D         13 D13     NO3_1F2_col13    0.0345  Nmin    Std   NA   
+#> # ℹ 25 more rows
+#> # ℹ 16 more variables: time <lgl>, sampling_time <chr>, std_column <chr>,
+#> #   std_sp <chr>, std_unit <chr>, std_prep <chr>, sample_dilution <chr>,
+#> #   extractant_column <lgl>, extractant_sp <chr>, extractant_unit <chr>,
+#> #   extractant_conc <dbl>, empty_column <lgl>, wait_min <chr>, std_conc <dbl>,
+#> #   blank_sdev <dbl>, blank_coeff_var_percent <dbl>
 ```
 
-### 2.5 - Compute linear model + QC - round 2
+### 3.5 - Compute linear model + QC - round 2
 
 We can now rerun the linear model on the cleaned and (if required)
-per-dilution averaged, by repeating the same steps as above: computation
-of linear model, identification of suspicious curves and plotting
+per-dilution averaged curve, by repeating the same steps as above:
+computation of linear model, identification of suspicious curves and
+plotting
 
 ``` r
 
-(lm_std_mean <- lm_std_curve(std_dilution_avg |> dplyr::rename(abs_corrected = abs_mean)))
+# Generate linear model data
+(lm_std_mean <- lm_std_curve(
+  std_dilution_avg |> dplyr::rename(abs_corrected = abs_mean)))
 #> # A tibble: 5 × 12
 #>   dataset plate_id unique_curve_id std_sp  slope r_squared adj_r_squared
 #>   <chr>   <chr>    <chr>           <chr>   <dbl>     <dbl>         <dbl>
@@ -272,6 +553,8 @@ of linear model, identification of suspicious curves and plotting
 #> 5 Nmin    NO3_1F5  NO3_1F5_col13   NO3    0.0189     0.999         0.999
 #> # ℹ 5 more variables: lm_p <dbl>, normality_lm_residuals <chr>,
 #> #   shapiro_p <dbl>, homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>
+
+# look for suspicious curves
 (lm_suspicious_mean <- lm_std_mean |> suspicious_lm())
 #> # A tibble: 0 × 12
 #> # ℹ 12 variables: dataset <chr>, plate_id <chr>, unique_curve_id <chr>,
@@ -282,22 +565,32 @@ of linear model, identification of suspicious curves and plotting
 
 Good news, there are no more suspicious linear models anymore. Should
 there be any, one more round of QC as described above can still be
-helpful
+helpful in some cases
 ([`plot_list_lm()`](https://mdetoeuf.github.io/plate2N/reference/plot_list_lm.md)).
+However, one should not expect to always reach normality of residuals
+with only 7 points. If the curve fits and the p-value of the model if
+very low, non-normality and heteroscedasticity can be accepted. They are
+used as tools to “flag” suspicious curves, but should not be used as too
+strict criteria.
 
 Let’s store the last correction into a clean variable name to reduce
 possible confusion, and let’s compute all the plots in a big list, for
 storage purposes. We could then export this as one output data in a
 single list with
-[`readr::write_rds()`](https://readr.tidyverse.org/reference/read_rds.html)\`.
+[`readr::write_rds()`](https://readr.tidyverse.org/reference/read_rds.html),
+or save the plots with `ggsave()`.
 
 ``` r
 
+# save the last wash in a clean variable name
 std_data_clean <- std_dilution_avg
 lm_table_clean <- lm_std_mean
+
+# run model on the last, clean version
 lm_plots_clean <- plot_list_lm(
   lm_table_clean, std_data_clean |> dplyr::rename(abs_corrected = abs_mean))
 
+# store output and clean data in a list for export (optional)
 lm_output <- list(
   "std_data_clean" = std_data_clean,
   "lm_table_clean" = lm_table_clean,
@@ -309,95 +602,68 @@ lm_output <- list(
 #lm_output |> write_rds("output/data/lm_output.rds")
 ```
 
-### 2.6 - Multiple curve QC
+### 3.6 - Multiple curve QC
 
-TODO –\> make a function? Remove this?
+The function
+[`density_lm_param()`](https://mdetoeuf.github.io/plate2N/reference/density_lm_param.md)
+plots the density curve of either p-values or adjusted R^2 of the model
+(parameter `p_or_r`). See also `?density_lm_param()` for details and
+examples.
 
 First, let’s look at the distribution of p-values of the std curve
 regressions
 
 ``` r
 
-p_threshold <- 0.05
-
-lm_output$lm_table_clean |> 
-  tidyr::separate_wider_delim(
-    cols = unique_curve_id, delim = "_", 
-    names = c("n_sp", "rest"), too_many = "merge") |>
-  ggplot2::ggplot(ggplot2::aes(x = -log(lm_p))) + 
-  ggplot2::theme_minimal() +
-  # geom_histogram() +
-  ggplot2::geom_density() +
-  ggplot2::geom_vline(ggplot2::aes(xintercept = -log(p_threshold)), linetype = 2, colour = "purple") +
-  ggplot2::annotate(
-    geom = "label", label = paste0("p-val = ", p_threshold),
-    x = -log(p_threshold), y = 0.15, hjust = 0.25, colour = "purple" ) +
-  ggplot2::facet_wrap(~n_sp, nrow = 3) +
-  ggplot2::xlim(0,max(-log(lm_output$lm_table_clean$lm_p))) +
-  ggplot2::xlab("-log(p-value of linear model)") +
-  ggplot2::labs(
-    title = "Distribution of p-values of the linear model",
-    subtitle = "logarithmic scale"
-  )
+density_lm_param(
+  lm_table_clean, 
+  p_or_r = "p", threshold = 0.05, 
+  facetting_std_sp = FALSE, color_std_sp = FALSE) +
+  # add caption with number of curves
+  ggplot2::labs(caption = paste0("n = ", nrow(lm_table_clean)))
 ```
 
-![](abs-to-conc_files/figure-html/unnamed-chunk-10-1.png)
+![](abs-to-conc_files/figure-html/unnamed-chunk-17-1.png)
 
 Then, same with R_squared (or adjusted?)
 
 ``` r
 
-threshold <- 95
-
-lm_output$lm_table_clean |> 
-  tidyr::separate_wider_delim(
-    cols = unique_curve_id, delim = "_", 
-    names = c("n_sp", "rest"), too_many = "merge") |>
-  ggplot2::ggplot(ggplot2::aes(x = adj_r_squared, colour = n_sp, fill = n_sp)) + 
-  ggplot2::theme_minimal() +
-  #geom_histogram() +
-  ggplot2::geom_density(alpha = 0.3) +
-  ggplot2::geom_vline(ggplot2::aes(xintercept = 0.95), linetype = 2, colour = "purple") +
-  ggplot2::annotate(
-    geom = "label", label = paste0("adjusted R2 = ", threshold, "%"),
-    x = threshold/100, y = 500, hjust = 0.25, colour = "purple" ) +
-  #facet_wrap(~n_sp, nrow = 3, scales = "free_y") +
-  ggplot2::xlim(
-    0.945,
-    max(lm_output$lm_table_clean$adj_r_squared)) +
-  ggplot2::xlab("Adjusted R2") +
-  ggplot2::labs(
-    title = "Distribution of adjusted R2 values of the linear model"
-  )
+density_lm_param(
+  lm_table_clean, 
+  p_or_r = "adjR2", threshold = 0.95, 
+  facetting_std_sp = FALSE, color_std_sp = TRUE) +
+  # add caption with number of curves
+  ggplot2::labs(caption = paste0("n = ", nrow(lm_table_clean))) 
 ```
 
-![](abs-to-conc_files/figure-html/unnamed-chunk-11-1.png)
+![](abs-to-conc_files/figure-html/unnamed-chunk-18-1.png)
 
-Now we plot all curves on same plot
+Now we plot all curves on same plot. Here we only have 5 curves. But it
+can be useful to visualize the multi-curve plot to spot plates where
+something possibly went wrong.
 
 ``` r
 
-colors <- c("#7FC97F", "#BEAED4", "#FDC086")
+#colors <- c("#7FC97F", "#BEAED4", "#FDC086")
 
 lm_output$std_data_clean |> 
-  dplyr::filter_out(dataset == "TDN") |> 
-  ggplot2::ggplot(ggplot2::aes(x = as.numeric(std_conc), y = abs_mean, groups = plate_id, colour = dataset, fill = dataset)) +
-  ggplot2::theme_minimal()+
+  ggplot2::ggplot(ggplot2::aes(
+    x = as.numeric(std_conc), y = abs_mean, 
+    groups = plate_id, colour = dataset, fill = dataset)) +
+  ggplot2::theme_minimal() +
   ggplot2::geom_smooth(
-    formula = y~x-1, method = "lm", se = TRUE, 
-    alpha = 0.05) +
-  ggplot2::geom_point() +
-  ggplot2::facet_wrap(~std_sp, scales = "free") +
-  ggplot2::scale_color_discrete(palette = colors[1:2]) +
-  ggplot2::scale_fill_discrete(palette = colors[1:2]) 
+    formula = y ~ 0 + x, method = "lm", se = TRUE, 
+    alpha = 0.1, linewidth = 0.5) +
+  ggplot2::geom_point() 
 ```
 
-![](abs-to-conc_files/figure-html/unnamed-chunk-12-1.png)
+![](abs-to-conc_files/figure-html/unnamed-chunk-19-1.png)
 
-Now, finally, I decide that I am happy with my standard curves, so I can
-move on to apply the equations on my data
+Now, finally, we decide that we are happy with our standard curves, so
+we can move on to apply the equations on the data
 
-## 3 - Infer sample concentration from regression equation
+### 3.7 - Infer sample concentration from regression equation
 
 Check that we are now left with only one curve per plate (i.e., we
 indeed took a per-dilution average)
@@ -413,7 +679,7 @@ if (
 #> All good: there is exactly one curve per plate
 ```
 
-Regression equation is Abs = slope \* Concentration
+The regression equation is Abs = slope \* Concentration
 
 There is a default vector containing relevant molar masses. Make sure to
 append it with values that are relevant for your study. This is needed
@@ -447,6 +713,7 @@ data_mg_N_L <-
   dplyr::mutate(conc_mgNsp_L = abs_corrected / slope) |> 
   convert_molec(masses = molar_masses)
 
+# Check it out
 data_mg_N_L
 #> # A tibble: 264 × 13
 #>    dataset plate_id map   well_id abs_corrected std_sp target_sp std_unit  slope
@@ -466,6 +733,13 @@ data_mg_N_L
 #> #   conc_mgN_L <dbl>
 ```
 
+We finally have our computed concentration for each well, expressed in
+mg N per L. This is not the end of the data pipeline, but it is the end
+of what really belongs in this vignette. Downstream steps are different
+for each study. However, we propose below, in
+[Section 7](#sec-epilogue), a few examples of further data
+transformation.
+
 ## 4 - Polynomial model
 
 In this section, we cover the sames steps as in the previous 2 sections,
@@ -475,8 +749,8 @@ dosing nitrate after a total oxidation of all N-compounds to nitrate.
 For this experiment, standard curve concentrations have been increased
 ten-fold. This resulted in highly concentrated solutions generating
 absorbance values above 3. It appears that a polynomial model is more
-appropriated in this case, as can be seen in the next chunks (example of
-a single curve)
+appropriate in this case, as can be seen in the next chunks (example of
+a single curve).
 
 > **Only polynomial model - specific steps are reviewed in detail**
 >
@@ -488,7 +762,7 @@ a single curve)
 > - optional removal of outliers
 >
 > - if outliers were removed: 2nd computation of the model + plotting
->   suspicious curves again, etc untill we are satisfied with the curves
+>   suspicious curves again, etc until we are satisfied with the curves
 >
 > - In case of several curves per plate: computation of the per-dilution
 >   (per-plate-row) average of the standard curve
@@ -499,33 +773,16 @@ a single curve)
 > - Infering sample concentration
 >
 > In this section, we mainly focus on steps that differ from the linear
-> model
-
-***TO DO: Keep only a few plates (maybe those without outliers?)***
-
-### 4.1 - Choice of the best fitting model
+> model. If it appears too cryptic here, go and check the linear
+> model-equivalent section.
+>
+> For tips on choice of model, see [Section 4](#sec-choice)
 
 The dataset for Total Dissolved Nitrogen data (TDN), and its standard
 curve data look like this (very similar to what we have seen with other
 data sets before)
 
 ``` r
-
-tidy_TDN
-#> # A tibble: 3,072 × 8
-#>    row   column well_id unique_well_id dataset plate_id   abs   map  
-#>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>      <chr> <chr>
-#>  1 A     1      A1      A1_NO3_TDN_01  TDN     NO3_TDN_01 0.095 Std  
-#>  2 A     1      A1      A1_NO3_TDN_02  TDN     NO3_TDN_02 0.097 Std  
-#>  3 A     1      A1      A1_NO3_TDN_03  TDN     NO3_TDN_03 0.113 Std  
-#>  4 A     1      A1      A1_NO3_TDN_04  TDN     NO3_TDN_04 0.114 Std  
-#>  5 A     1      A1      A1_NO3_TDN_05  TDN     NO3_TDN_05 0.132 Std  
-#>  6 A     1      A1      A1_NO3_TDN_06  TDN     NO3_TDN_06 0.12  Std  
-#>  7 A     1      A1      A1_NO3_TDN_07  TDN     NO3_TDN_07 0.095 Std  
-#>  8 A     1      A1      A1_NO3_TDN_08  TDN     NO3_TDN_08 0.09  Std  
-#>  9 A     1      A1      A1_NO3_TDN_09  TDN     NO3_TDN_09 0.14  Std  
-#> 10 A     1      A1      A1_NO3_TDN_10  TDN     NO3_TDN_10 0.143 Std  
-#> # ℹ 3,062 more rows
 
 std_corrected_TDN
 #> # A tibble: 224 × 13
@@ -564,142 +821,9 @@ samples_corrected_TDN
 #> #   date <date>, extr_id <chr>, blank_sdev <dbl>, blank_coeff_var_percent <dbl>
 ```
 
-To illustrate the polynomial vs the linear model, we extract standard
-data for a single curve
+### 4.1 - Compute polynomial model on Standard curves
 
-``` r
-
-# take data for a single curve and format it for the plotting
-curve <- (std_corrected_TDN |> 
-            dplyr::group_by(plate_id, column) |> 
-            dplyr::filter(std_sp == "NO3") |> 
-            dplyr::rename(abs = abs_corrected) |> 
-            dplyr::group_split()
-          )[[9]]
-
-# check it out
-curve
-#> # A tibble: 7 × 13
-#>   row   column well_id unique_well_id dataset plate_id   unique_curve_id map  
-#>   <chr> <chr>  <chr>   <chr>          <chr>   <chr>      <chr>           <chr>
-#> 1 B     1      B1      B1_NO3_TDN_09  TDN     NO3_TDN_09 NO3_TDN_09_col1 Std  
-#> 2 C     1      C1      C1_NO3_TDN_09  TDN     NO3_TDN_09 NO3_TDN_09_col1 Std  
-#> 3 D     1      D1      D1_NO3_TDN_09  TDN     NO3_TDN_09 NO3_TDN_09_col1 Std  
-#> 4 E     1      E1      E1_NO3_TDN_09  TDN     NO3_TDN_09 NO3_TDN_09_col1 Std  
-#> 5 F     1      F1      F1_NO3_TDN_09  TDN     NO3_TDN_09 NO3_TDN_09_col1 Std  
-#> 6 G     1      G1      G1_NO3_TDN_09  TDN     NO3_TDN_09 NO3_TDN_09_col1 Std  
-#> 7 H     1      H1      H1_NO3_TDN_09  TDN     NO3_TDN_09 NO3_TDN_09_col1 Std  
-#> # ℹ 5 more variables: abs <dbl>, std_sp <chr>, std_unit <chr>, date <date>,
-#> #   std_conc <dbl>
-```
-
-Now we compute both models: linear and polynomial, so that we may
-compare them
-
-``` r
-
-# compute both models
-lm_linear <- stats::lm(abs ~ 0 + std_conc, data = curve)
-lm_poly <- stats::lm(abs ~ 0 + std_conc + I(std_conc^2), data = curve)
-```
-
-While both models return p-values corresponding to highly significant
-models (see next chunk), and very high adjusted R-squared, we will see
-with the plots that, indeed, the polynomial model is a much better fit
-
-``` r
-
-(sum_linear <- summary(lm_linear))
-#> 
-#> Call:
-#> stats::lm(formula = abs ~ 0 + std_conc, data = curve)
-#> 
-#> Residuals:
-#>      Min       1Q   Median       3Q      Max 
-#> -0.18370  0.04129  0.10244  0.13621  0.20977 
-#> 
-#> Coefficients:
-#>           Estimate Std. Error t value Pr(>|t|)    
-#> std_conc 0.0124279  0.0004877   25.48 2.41e-07 ***
-#> ---
-#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-#> 
-#> Residual standard error: 0.1477 on 6 degrees of freedom
-#> Multiple R-squared:  0.9908, Adjusted R-squared:  0.9893 
-#> F-statistic: 649.5 on 1 and 6 DF,  p-value: 2.405e-07
-(sum_poly <- summary(lm_poly))
-#> 
-#> Call:
-#> stats::lm(formula = abs ~ 0 + std_conc + I(std_conc^2), data = curve)
-#> 
-#> Residuals:
-#>         1         2         3         4         5         6         7 
-#> -0.003064  0.023935  0.025124  0.021264  0.002595 -0.028541  0.011591 
-#> 
-#> Coefficients:
-#>                 Estimate Std. Error t value Pr(>|t|)    
-#> std_conc       1.672e-02  2.846e-04   58.75 2.70e-08 ***
-#> I(std_conc^2) -2.127e-05  1.360e-06  -15.64 1.94e-05 ***
-#> ---
-#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-#> 
-#> Residual standard error: 0.0229 on 5 degrees of freedom
-#> Multiple R-squared:  0.9998, Adjusted R-squared:  0.9997 
-#> F-statistic: 1.363e+04 on 2 and 5 DF,  p-value: 4.551e-10
-```
-
-Seeing the summary of both models: both are significant, but the p-value
-of the coefficient for the second degree term (b in bx^2) in the
-polynomial model is \<0.05, which indicates that that term significantly
-contributes to the model. This becomes also very obvious when we look at
-the plots (the polynomial model fits a lot better)
-
-``` r
-
-p_linear <- plot_std(curve, through_origin = TRUE, model = "linear") + 
-  ggplot2::theme(legend.position = "none") + 
-  ggplot2::labs(title = "Linear model")
-p_poly <- plot_std(curve, through_origin = TRUE, model = "poly") + 
-  ggplot2::theme(legend.position = "none") + 
-  ggplot2::labs(title = "Polynomial model")
-
-p_linear + p_poly
-```
-
-![](abs-to-conc_files/figure-html/unnamed-chunk-21-1.png)
-
-Let’s look at the Residual plot to confirm this intuition
-
-``` r
-
-# Extract residual data from the 2 models
-res_linear <- stats::residuals(sum_linear)
-res_poly <- stats::residuals(sum_poly)
-
-# plot both on the same graph
-
-# plot residuals for linear model
-plot(curve$std_conc, res_linear, main = "Residuals Analysis", xlab = "Concentration", ylab = "Residuals", col = "grey30", pch = 16)
-# add red line at y = 0
-graphics::abline(h = 0, col = "red", lty = 2)
-# add residuals for polynomial model
-graphics::points(curve$std_conc, res_poly,  col = "magenta", pch = 15)
-# add legend
-graphics::points(0, y = -0.1, col = "grey30", pch = 16)
-graphics::text(x = 6, y = -0.1, labels = "linear\nmodel", col = "grey30", adj = 0)
-graphics::points(0, y = -0.15, col = "magenta", pch = 15)
-graphics::text(x = 6, y = -0.15, labels = "polynomial\nmodel", col = "magenta", adj = 0)
-```
-
-![](abs-to-conc_files/figure-html/unnamed-chunk-22-1.png)
-
-Whereas this quick approach suffices to convince us that a polynomial
-model is a better fit for this particular curve, one should evaluate
-several curves before taking a decision that concerns a larger data set
-
-### 4.2 - Compute polynomial model on Standard curves
-
-These steps follow the same steps as in section [Section 4](#sec-linear)
+These steps follow the same steps as in section [Section 5](#sec-linear)
 , with some adaptations.
 
 First, we perform a polynomial model on each NO3 curve individually. In
@@ -715,31 +839,6 @@ on each individual curve from the data
 lm_TDN_raw <- lm_std_curve(
   grouped_data = std_corrected_TDN |> dplyr::group_by(unique_curve_id), 
   model = "poly") 
-```
-
-This produces a table that has a similar structure to the one from the
-linear model, though columns are slightly different to reflect the
-differences in the model. This table has one row per standard curve.
-Columns poly_a and poly_b correspond to the coefficients `a` and `b`,
-respectively, in the equation `y = a*x^2 + b*x + c`, where
-
-- c = 0 because we used blank-corrected absorbance and the model was
-  forced to go through the origin
-
-- y = blank-corrected absorbance
-
-- x = concentration in the compound of interest (here: nitrate)
-
-### 4.3 - QC Standard curve
-
-Other columns in `lm_TDN_raw` contain the p-values associated to `a` and
-`b` (poly_a_p and poly_b_p, respectively), the R2 and adjusted R2
-values, the p-value associated with the model, and results of a
-normality test of residuals (columns `normality_lm_residuals` and
-`shapiro_p`), and results of a test of homoscedasticity (columns
-`homoscedasticity_lm_residuals` and `breusch_pagan_p`)
-
-``` r
 
 # Check it out
 lm_TDN_raw
@@ -762,6 +861,28 @@ lm_TDN_raw
 #> #   homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>
 ```
 
+This produces a table that has a similar structure to the one from the
+linear model, though columns are slightly different to reflect the
+differences in the model. This table has one row per standard curve.
+Columns poly_a and poly_b correspond to the coefficients `a` and `b`,
+respectively, in the equation `y = a*x^2 + b*x + c`, where
+
+- c = 0 because we used blank-corrected absorbance and the model was
+  forced to go through the origin
+
+- y = blank-corrected absorbance
+
+- x = concentration in the compound of interest (here: nitrate)
+
+Other columns in `lm_TDN_raw` contain the p-values associated to `a` and
+`b` (`poly_a_p` and `poly_b_p`, respectively), the R2 and adjusted R2
+values, the p-value associated with the model (`lm_p`), and results of a
+normality test of residuals (columns `normality_lm_residuals` and
+`shapiro_p`), and results of a test of homoscedasticity (columns
+`homoscedasticity_lm_residuals` and `breusch_pagan_p`)
+
+### 4.3 - QC Standard curve
+
 Then we take a subset to examine individually. The function
 [`suspicious_lm()`](https://mdetoeuf.github.io/plate2N/reference/suspicious_lm.md)
 allows the subsetting of those curves where the linear model doesn’t
@@ -769,7 +890,7 @@ seem to perform ideally. i.e., either non-significant model (p-value \>
 0.05), residuals not normally distributed, heteroscedasticity, or
 p-value of one of the coefficients \> 0.05.
 
-In this case, this concerns 7 curves (from 32)
+In our case, this concerns 7 curves (from 32)
 
 ``` r
 
@@ -802,9 +923,14 @@ suspicious_plots <- plot_list_lm(
   lm_suspicious, 
   std_data = std_corrected_TDN, 
   model = "poly")
+
+# Look at the first plot
+suspicious_plots[[1]]
 ```
 
-Then we plot them together. Notice that the “default” of each curve is
+![](abs-to-conc_files/figure-html/unnamed-chunk-26-1.png)
+
+Then we plot them together. Notice that the “problem” of each curve is
 displayed on the plots. In this case, non-normality of the residuals is
 always the issue. Should p-values (model or coefficients) be above 0.05
 or the residuals be heteroscedastic, this would be displayed as well.
@@ -817,33 +943,33 @@ patchwork::wrap_plots(suspicious_plots, axis_titles = "keep") +
 
 ![](abs-to-conc_files/figure-html/unnamed-chunk-27-1.png)
 
-Whereas the shapiro test that is ran in the background by
+Whereas the shapiro test that is run in the background by
 [`lm_std_curve()`](https://mdetoeuf.github.io/plate2N/reference/lm_std_curve.md)
-to test for normality of residuals is considered a trustworthy test,
-normality is not easily achieved with only 8 data points. This
+to test for normality of residuals is considered a trustworthy test in
+general, normality is not easily achieved with only 8 data points. This
 non-normality result should therefore be seen as an aid to spot possibly
-faulty curves, rather than a strict criterion to exclude curves. Visual
+faulty curves, rather than a strict criterion to exclude them. Visual
 assessment is therefore crucial.
 
 In this case, all 7 “suspicious” curves look quite good despite not
 hitting the normality threshold. Should a well be very obviously outside
 of the curve, then use
 [`remove_wells()`](https://mdetoeuf.github.io/plate2N/reference/remove_wells.md)
-to remove outliers as described many times above, the re-run the model,
-etc. until you are satisfied with the curves. Per-dilution averages in
-case of 2 or more curves per plate can be computed as shown above for
-the linear model.
+to remove outliers as described many times above and in previous
+vignettes. Then, re-run the model, etc. until you are satisfied with the
+curves. Per-dilution averages in case of 2 or more curves per plate can
+be computed as shown above for the linear model.
 
-> **Caution 1: Downward facing parable?**
+> **Caution 1: Downward facing parable or descending curve?**
 >
 > These functions for the polynomial model have been tested in the case
-> where the data form a downward-facing parable, i.e., when the curve is
-> fitted to go through the origin, the smallest value for x
-> (concentration) is the correct one when solving the equation
-> `a*x^2 + b*x - y = 0` for any value of y (absorbance). For an
-> upward-facing parable, however, the highest solution for x would be
-> the right one (provided the relationship between absorbance and
-> concentration is an ascending curve).
+> where the data form a downward-facing parable. Knowing this AND the
+> fact that we are in an ascending part of the curve, the smallest
+> solution for x (concentration) is the correct one when solving the
+> equation `a*x^2 + b*x - y = 0` for any value of y (absorbance).
+>
+> For the combination of upward-facing parable AND ascending curve,
+> however, the highest solution for x would be the right one.
 >
 > Should you have data where the polynomial fit is correct, but the
 > curves do not look like those displayed here, do check that the
@@ -866,20 +992,34 @@ TDN_adjR2 <- density_lm_param(
   lm_TDN_raw, "adjR2", 0.95, color_std_sp = FALSE 
 )
 
-TDN_p / TDN_adjR2 + patchwork::plot_annotation(title = "Multiple-curve QC of the polynomial model for TDN data")
+TDN_p / TDN_adjR2 + patchwork::plot_annotation(title = "Multiple-curve QC of the\npolynomial model for TDN data")
 ```
 
 ![](abs-to-conc_files/figure-html/unnamed-chunk-28-1.png)
 
-Now we plot all curves on same plot. Here, we check for batch-effects by
-assigning the date to the color aesthetics, this should be adapted as
-needed.
+Now we plot all curves on a single plot. Here, we check for
+batch-effects by assigning the date to the color aesthetics, this should
+be adapted as needed.
 
 ``` r
 
-annotation <- std_corrected_TDN |> 
+(annotation <- std_corrected_TDN |> 
   dplyr::select(plate_id, abs_corrected, std_conc, date) |> 
-  dplyr::slice_max(std_conc, with_ties = TRUE) 
+  dplyr::slice_max(std_conc, with_ties = TRUE))
+#> # A tibble: 32 × 4
+#>    plate_id   abs_corrected std_conc date      
+#>    <chr>              <dbl>    <dbl> <date>    
+#>  1 NO3_TDN_01          2.36      240 2025-08-26
+#>  2 NO3_TDN_02          2.24      240 2025-08-26
+#>  3 NO3_TDN_03          2.25      240 2025-08-26
+#>  4 NO3_TDN_04          2.28      240 2025-08-26
+#>  5 NO3_TDN_05          2.22      240 2025-08-26
+#>  6 NO3_TDN_06          2.26      240 2025-08-26
+#>  7 NO3_TDN_07          2.00      240 2025-08-28
+#>  8 NO3_TDN_08          1.97      240 2025-08-28
+#>  9 NO3_TDN_09          2.80      240 2025-09-15
+#> 10 NO3_TDN_10          2.65      240 2025-09-15
+#> # ℹ 22 more rows
 
 std_corrected_TDN |> 
   ggplot2::ggplot(ggplot2::aes(
@@ -909,17 +1049,18 @@ std_corrected_TDN |>
 
 ### 4.5 - Infer sample concentration from regression equation
 
-Here we use the last version of the linear model data (starts with
+Here we use the last version of the polynomial model data (starts with
 “lm”). In this case, no outlier removal or per-dilution average
 computation was necessary, therefore we are still working with
 `lm_TDN_raw`.
 
-First, we join the liner-model data (on a per-plate basis) to the sample
-data, i.e., each row (= sample-containing well) of the sample data
-receives additional columns containing polynomial model data. That is
-what the function
+First, we join the polynomial-model data (on a per-plate basis) to the
+sample absorbance data, i.e., each row (= sample-containing well) of the
+sample data receives additional columns containing polynomial model
+data. That is what the function
 [`reg_join_abs()`](https://mdetoeuf.github.io/plate2N/reference/reg_join_abs.md)
-does (it works on linear or polynomial model)
+does (it recognizes which model is given as input, so it works either
+way)
 
 ``` r
 
@@ -953,14 +1094,16 @@ mg NO3-N / L, mg NH4-N / L, etc.). Because the concentration of the
 standard curve dilution was expressed in mg N-sp / L (i.e., mg NO3 / L
 or mg NH4 /L, etc.), a conversion using molar masses of both the target
 species (N as an element) and the origin species (e.g., NO3-) needs to
-take place as a last step. For that purposes, `plate2N` stores molar
+take place as a last step. For that purpose, `plate2N` stores molar
 masses of N, NO3-, NO2-, NH4+ in a vector called `molar_masses`.
 
 In the script below, we take the smallest value of the solutions to the
 2nd degree equation `a*x^2 + b*x - y = 0`. See [Caution 1](#cau-parable)
-for more details on when to adapt this choice (change
-[`min()`](https://rdrr.io/r/base/Extremes.html) to
-[`max()`](https://rdrr.io/r/base/Extremes.html)).
+for more details on when to adapt this choice, which you can do by
+changing [`min()`](https://rdrr.io/r/base/Extremes.html) to
+[`max()`](https://rdrr.io/r/base/Extremes.html).
+
+**TO DO: make a function out of the concentration inference step**
 
 ``` r
 
@@ -1016,5 +1159,8 @@ example data sets, they were pipetted in 4 replicates in the 96-well
 plates). A pipeline for spotting and removing sample-outliers and
 computing per-sample average is under development and may arrive later.
 
+**TO DO: add examples of downstream steps: correct dilutions, per sample
+average and outlier removal, conversion to ppm, etc.**
+
 [^1]: To adapt to other compounds, you may need to add molar masses into
-    the data \`molar_masses\`, see later.
+    the data ‘molar_masses’, see later.

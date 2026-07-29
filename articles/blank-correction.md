@@ -12,9 +12,17 @@ library(plate2N)
 ## TO DO
 
 - Consider making a function of creating the “to_remove” table for
-  extractant outliers
+  extractant outliers (section 3.3.3,
+  [Section 5.3.3](#sec-multiple-extr))
 - In the function qc_raw_qbs(), separate condition for export plot and
   show plot. If we export it, we may not want to plot it as an output…
+- **Briefly describe steps of the pipeline at the end of the
+  introduction**
+- allow other digit and separator delimitors in extract_curve –\> make
+  it a parameter
+- the last paragraph of 3.3.3 is confusing –\> change the raw data so
+  that we can remove this bit and re-run the coefficient of variation as
+  we should
 
 ## Introduction
 
@@ -31,20 +39,53 @@ curves and from samples are merged again.
 In theory, the “samples” pipeline should be adaptable to the case where
 all wells used the same blank (including those containing standard curve
 solutions), though this has yet to be tested, and bugs may occur. Feel
-free to contact the authors to suggest improvements.
+free to reach out to suggest improvements or signal bugs.
 
 To avoid confusion between “blank of the standard curve” and “blank of
 the samples”, the sample-blank is referred to as “extractant” or `extr`
 throughout this vignette, to refer to the solution that was used to
-extract N-compounds from soil samples and now serves as blank. The
+extract (N-)compounds from soil samples and now serves as blank. The
 standard blank is referred to as `std_blank`.
+
+> **What this pipeline does**
+>
+> - Blank correction of standard curve
+>
+>   - extracting standard curve data and their blank
+>
+>   - if several curves per plate:
+>
+>     - identifying and remove outliers
+>
+>     - compute the per-plate mean of blanks without outliers
+>
+>   - correct the rest of standard curve data by subtracting the mean of
+>     its blank
+>
+> - Blank correction of samples
+>
+>   - extracting extractant (= sample-blank) data
+>
+>   - identifying and removing outliers
+>
+>   - compute the per-plate mean of blanks without outliers
+>
+>   - correct samples raw data by subtracting the mean of its blank
+>     (extractant)
+>
+> **Particularly useful is the automated identification of possible
+> outliers, so that users only need to assess and take outlier-removal
+> decisions for those “suspicious” curves or extractant data**
 
 ## 1 - Getting raw absorbance data
 
 The vignette `import-tidy` shows how to import and tidy absorbance data.
 The vignette `handling-outliers` shows how to run some preliminary
-quality checks and possibly remove some first outliers. To access those
-vignettes, run the following commands
+quality checks with the function
+[`qc_raw_abs()`](https://mdetoeuf.github.io/plate2N/reference/qc_raw_abs.md)
+and explains in detail the process of removing outliers once they are
+identified, which will be needed thoughout this pipeline. To access
+those vignettes, run the following commands
 
 [`vignette("import-tidy", package = "plate2N")`](https://mdetoeuf.github.io/plate2N/articles/import-tidy.md)
 
@@ -73,8 +114,16 @@ tidy_plates
 ```
 
 For quality checking of the standard curve, we will require some
-metadata for each 96-well plate containing at least the concentrations
-of the dilutions of the standard curve.
+metadata for each 96-well plate containing
+
+- at least the concentrations of the dilutions of the standard curve
+
+- anything else that is valid on a per-plate basis (`metadata` has one
+  row per plate) and would be useful in your downstream analysis
+
+`metadata` is an example data set that is part of this package (run
+[`?metadata`](https://mdetoeuf.github.io/plate2N/reference/metadata.md)
+to see its documentation).
 
 ``` r
 
@@ -89,12 +138,30 @@ of the dilutions of the standard curve.
 #> 5 Nmin    NO3_1F5  NO3    mg NO3- L-1 0-0.5-1-2-4-8-16-24
 ```
 
-We now join (raw) plate data and metadata (meta). Note that there has to
-be a correspondence in the columns `dataset` and `plate_id` between the
-raw absorbance data and the metadata.
+We now join (raw) plate data and metadata (`meta`). Note that there has
+to be a correspondence in the columns `dataset` and `plate_id` between
+the raw absorbance data and the metadata.
 
 ``` r
 
+# Checking out tidy_plates again and noticing the columns dataset and plate_id
+tidy_plates
+#> # A tibble: 480 × 8
+#>    row   column well_id unique_well_id dataset plate_id map      abs  
+#>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr>    <chr>
+#>  1 A     1      A1      A1_NO3_1F1     Nmin    NO3_1F1  Std      0.092
+#>  2 A     1      A1      A1_NO3_1F2     Nmin    NO3_1F2  Std      0.091
+#>  3 A     1      A1      A1_NO3_1F3     Nmin    NO3_1F3  Std      0.110
+#>  4 A     1      A1      A1_NO3_1F4     Nmin    NO3_1F4  Std      0.092
+#>  5 A     1      A1      A1_NO3_1F5     Nmin    NO3_1F5  Std      0.113
+#>  6 A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  81_t1_z2 0.114
+#>  7 A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  97_t1_z1 0.107
+#>  8 A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  89_t1_z3 0.095
+#>  9 A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  81_t1_z1 0.118
+#> 10 A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  Std_3_t1 0.167
+#> # ℹ 470 more rows
+
+# joining tidy_plates with meta
 (raw_meta <- tidy_plates |> 
   dplyr::left_join(meta, by = dplyr::join_by(dataset, plate_id)))
 #> # A tibble: 480 × 11
@@ -112,6 +179,21 @@ raw absorbance data and the metadata.
 #> 10 A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  Std_3_t1 0.167 NO3   
 #> # ℹ 470 more rows
 #> # ℹ 2 more variables: std_unit <chr>, std_conc <chr>
+
+# Notice the combined structure of both tables
+str(raw_meta)
+#> tibble [480 × 11] (S3: tbl_df/tbl/data.frame)
+#>  $ row           : chr [1:480] "A" "A" "A" "A" ...
+#>  $ column        : chr [1:480] "1" "1" "1" "1" ...
+#>  $ well_id       : chr [1:480] "A1" "A1" "A1" "A1" ...
+#>  $ unique_well_id: chr [1:480] "A1_NO3_1F1" "A1_NO3_1F2" "A1_NO3_1F3" "A1_NO3_1F4" ...
+#>  $ dataset       : chr [1:480] "Nmin" "Nmin" "Nmin" "Nmin" ...
+#>  $ plate_id      : chr [1:480] "NO3_1F1" "NO3_1F2" "NO3_1F3" "NO3_1F4" ...
+#>  $ map           : chr [1:480] "Std" "Std" "Std" "Std" ...
+#>  $ abs           : chr [1:480] "0.092" "0.091" "0.110" "0.092" ...
+#>  $ std_sp        : chr [1:480] "NO3" "NO3" "NO3" "NO3" ...
+#>  $ std_unit      : chr [1:480] "mg NO3- L-1" "mg NO3- L-1" "mg NO3- L-1" "mg NO3- L-1" ...
+#>  $ std_conc      : chr [1:480] "0-0.5-1-2-4-8-16-24" "0-0.5-1-2-4-8-16-24" "0-0.5-1-2-4-8-16-24" "0-0.5-1-2-4-8-16-24" ...
 ```
 
 ## 2 - Blank-correction of standard curves
@@ -133,7 +215,7 @@ raw_meta |> dplyr::select(plate_id, std_conc) |> head(n = 3)
 ```
 
 But in truth, only one of those concentration values corresponds to each
-value of well of the standard curve.
+value within wells of the standard curve.
 
 Note that concentration values are separated by a `-` and digits are
 marked by a `.`, which is important in the function call to
@@ -142,6 +224,11 @@ Also, concentration values MUST be in ascending order in the metadata
 file. See also
 [`?metadata`](https://mdetoeuf.github.io/plate2N/reference/metadata.md)
 and `?extract_curve()`
+
+[`extract_curve()`](https://mdetoeuf.github.io/plate2N/reference/extract_curve.md)
+“pulls” the curve concentration data to have only one concentration
+value per row (under the column `std_conc`), and adds corresponding
+“row” data in the order defined by the argument `pipetting_direction`.
 
 ``` r
 
@@ -160,10 +247,12 @@ and `?extract_curve()`
 #>  9 Nmin    NO3_1F2  A          0  
 #> 10 Nmin    NO3_1F2  B          0.5
 #> # ℹ 30 more rows
+length(unique(raw_meta$plate_id))
+#> [1] 5
 ```
 
-Notice now that each row only contains a single value under the column
-`std_conc`
+Notice that `curve_concentration` now has 40 rows = nb of plates (5) x
+nb of elements in each standard curve (8).
 
 > **Too many rows?**
 >
@@ -171,29 +260,35 @@ Notice now that each row only contains a single value under the column
 > [`extract_curve()`](https://mdetoeuf.github.io/plate2N/reference/extract_curve.md)
 > on `raw_meta` instead of `meta`. But `meta` has one row per plate,
 > whereas `raw_meta` has one row per well, so that calling
-> `extract_curve(raw_meta)` would result on a table that is much too
+> `extract_curve(raw_meta)` would result in a table that is much too
 > long (~96 times too long). If you run into issues later, this might be
 > the source.
 
 We now have curve concentrations corresponding to the `dataset`,
-`plate_id` and `row` of a plate, which we can use for all downstream
-steps. This goes under the assumption that standard curves are pipetted
-vertically in a complete column of the 96-well plate. Check
-`?extract_curve()` for more details.
+`plate_id` and `row` of each plate stored inside `curve_concentration`,
+which we can use for all downstream steps. This goes under the
+assumption that standard curves are pipetted vertically in a complete
+column of the 96-well plate. Check `?extract_curve()` for more details.
+Should other standard curve layouts be required, please reach out.
 
 ### 2.2 - Extract Standard data
 
-Here, we get a subset of the table `raw_meta`, keeping only absorbance
-reads of the wells of the standard curve (defined by the value `Std` in
+Here, we extract a subset of the table `raw_meta`, keeping only
+absorbance reads from the standard curve (defined by the value `Std` in
 the column `map`), from which we remove the “old” column `std_conc`
 (with all dilutions of the curve), and replace it by the “new” column
-`std_conc` (only 1 dilution per row).
+`std_conc` as created in `curve_concentration` (only 1 dilution level
+per row).
 
 ``` r
 
+# Preparing standard curve data
 std_data <- raw_meta |> 
+  # extract standard curve data
   extract_std_data(std_def = "Std") |> 
+  # remove "old" std_conc column
   dplyr::select(!std_conc) |> 
+  # adding the "new" std_conc column by joining the data with curve_concentration
   dplyr::left_join(curve_concentration, by = dplyr::join_by(row, dataset, plate_id))
 
 # Check it out (rearranging rows and columns for better readibility)
@@ -218,17 +313,29 @@ std_data |>
 #> # ℹ 3 more variables: unique_well_id <chr>, unique_curve_id <chr>, std_sp <chr>
 ```
 
-### 2.3 - Compute per-plate average of std_blank
+The correspondence between absorbance and concentration of each standard
+well is now made, which will allow plotting, outlier removal, and,
+later, computing the regression equation.
 
-`extract_std_blanc()` returns a list with several elements concerning
-standard blanks
+### 2.3 - Extract blank data from standard curve data
+
+`extract_std_blanc()` returns a list with 3 elements concerning standard
+blanks only (notice that `std_blank$all` has 8x less rows than
+`std_data` as it only contains the blank of the standard curve, i.e.,
+one well per column)
 
 ``` r
 
+# extract blank data from std_data
 std_blank <- std_data |> 
   extract_std_blank(
     std_def = "Std",
     pipetting_direction = "top_down")
+
+# check number of rows
+nrow(std_data) ; nrow(std_blank$all)
+#> [1] 80
+#> [1] 10
 ```
 
 - `std_blank$all` fetches all wells that are expected to contain the
@@ -257,7 +364,7 @@ std_blank <- std_data |>
 
 - `std_blank$untrusted` identifies expected blank wells that do not
   correspond to the lowest absorbance value of their standard curve[^1].
-  This item and may be empty
+  This item may be empty
 
 ``` r
 
@@ -292,18 +399,31 @@ std_blank <- std_data |>
 
 > **Check out untrusted standard blanks**
 >
-> The computation of per-plate standard curve blank average should made
-> on trusted blank wells only. It is therefore important to check curves
-> containing “untrusted” blank wells and decide whether to keep them or
-> not
+> The computation of per-plate standard curve blank average should be
+> made on trusted blank wells only. It is therefore important to check
+> curves containing “untrusted” blank wells and decide whether to keep
+> them or not
 
 The function
 [`plot_std()`](https://mdetoeuf.github.io/plate2N/reference/plot_std.md)
-allows the visualization of (a subset of) curves.
+allows the visualization of (a subset of) curves. With small datasets
+(as here, with only 5 plates), we could run it on all plates. With
+bigger datasets however, it comes in quite handy to plot only the
+automated subset of curves that really need a check on their blank data.
+
+Notice the argument `through_origin = FALSE` (default is true), which
+removes the default constraint on the smooth curve to go through the
+origin (which does not make sense before we have blank-corrected data).
+
+Notice also that
+[`plot_std()`](https://mdetoeuf.github.io/plate2N/reference/plot_std.md)
+is based on the ggplot grammar of graphics. This means that you can
+easily add additional ggplot-based layers like we do in the following
+chunk.
 
 ``` r
 
-# Select subset of std_data to be plotted because curves are in "untrusted"
+# Select subset of std_data to be plotted because their blanks are "untrusted"
 to_plot <- std_data |> 
   dplyr::filter(
     unique_curve_id %in% std_blank$untrusted$unique_curve_id) 
@@ -311,7 +431,9 @@ to_plot <- std_data |>
 # look at "suspicious" curves
 to_plot |> 
   plot_std(through_origin = FALSE) +
+  # ggplot layer: facetting per plate (adds the plate_id title and would group curves per plate)
   ggplot2::facet_wrap(~plate_id, scales = "free") +
+  # remove legend (because there is only one colour in this case)
   ggplot2::theme(legend.position = "none")
 ```
 
@@ -326,24 +448,39 @@ are 2 options to do so:
 
 - or by using
   [`remove_wells()`](https://mdetoeuf.github.io/plate2N/reference/remove_wells.md)
-  on `std_blank$all` and to generate a better-adapted list of “trusted”
-  standard blank wells.
+  on `std_blank$all` to generate a better-adapted list of “trusted”
+  standard blank wells (when you decide that some of the “untrusted”
+  wells should be trusted).
 
-Either way, blank averages will then be computed on trusted wells only
-(see hereunder). Of course, this only works if there were several
-standard curves on problematic plates, otherwise you will be removing
-the only `std_blank` of the plate[^2]. Here are 2 examples of how to
-compute average blanks.
+Either way, blank averages will then be computed on (really) trusted
+wells only. Of course, this only works if there were several standard
+curves on problematic plates, otherwise you will be removing the only
+`std_blank` of the plate[^2]. Here are 2 examples of how to compute
+average blanks, along the 2 options mentioned above. Both use the
+function
+[`std_blank_average()`](https://mdetoeuf.github.io/plate2N/reference/std_blank_average.md)
+to compute the blank average.
 
 ``` r
 
 # Option 1 - We keep std_blank$trusted
 std_blank_avg_1 <- std_blank_average(std_blank$trusted)
+
+# Check it out (don't be scared of the "NA" values: you cannot compute a standard deviation on 1 value)
+std_blank_avg_1
+#> # A tibble: 5 × 5
+#>   dataset plate_id blank_avg blank_sdev blank_coeff_var_percent
+#>   <chr>   <chr>        <dbl>      <dbl>                   <dbl>
+#> 1 Nmin    NO3_1F1     0.0915   0.000707                   0.773
+#> 2 Nmin    NO3_1F2     0.0905   0.000707                   0.781
+#> 3 Nmin    NO3_1F4     0.0915   0.000707                   0.773
+#> 4 Nmin    NO3_1F3     0.09    NA                         NA    
+#> 5 Nmin    NO3_1F5     0.092   NA                         NA
 ```
 
-For the second option, we decide to reject only one of the wells from
-`std_blank$untrusted`: let’s say the first one, for plate NO3_1F3 (which
-is obviously wrong in this case).
+For the second option, we could decide to reject only one of the blank
+wells from `std_blank$untrusted`: let’s say the first one, for plate
+NO3_1F3.
 
 ``` r
 
@@ -360,22 +497,9 @@ std_blank_clean <- std_blank$all |> remove_wells(to_remove)
 
 # compute per-plate blank average from that new trusted table
 std_blank_avg_2 <- std_blank_average(std_blank_clean)
-```
 
-Let’s compare both options and see that, indeed, plate NO3_1F5 now
-received 2 wells to compute the average from (no NA values)
-
-``` r
-
-std_blank_avg_1 ; std_blank_avg_2
-#> # A tibble: 5 × 5
-#>   dataset plate_id blank_avg blank_sdev blank_coeff_var_percent
-#>   <chr>   <chr>        <dbl>      <dbl>                   <dbl>
-#> 1 Nmin    NO3_1F1     0.0915   0.000707                   0.773
-#> 2 Nmin    NO3_1F2     0.0905   0.000707                   0.781
-#> 3 Nmin    NO3_1F4     0.0915   0.000707                   0.773
-#> 4 Nmin    NO3_1F3     0.09    NA                         NA    
-#> 5 Nmin    NO3_1F5     0.092   NA                         NA
+# Check it out
+std_blank_avg_2
 #> # A tibble: 5 × 5
 #>   dataset plate_id blank_avg blank_sdev blank_coeff_var_percent
 #>   <chr>   <chr>        <dbl>      <dbl>                   <dbl>
@@ -385,6 +509,10 @@ std_blank_avg_1 ; std_blank_avg_2
 #> 4 Nmin    NO3_1F5     0.103    0.0148                    14.5  
 #> 5 Nmin    NO3_1F3     0.09    NA                         NA
 ```
+
+Notice that in `std_blank_avg_2`, plate NO3_1F5 now received 2 wells to
+compute the average from (no NA values under standard deviation and
+coefficient of variation)
 
 We proposed the 2nd option for the sake of the example, but we will move
 on with the first option from here on, as the decision to keep the
@@ -397,11 +525,11 @@ std_blank_avg <- std_blank_avg_1
 
 > **Outlier check of the whole curve comes later**
 >
-> In this pipeline, we search for and remove outliers prior to critical
-> aggregation steps that will not be trustworthy otherwise (see also
-> vignette `handling-outliers`. With this logic in mind, the outlier
-> removal of other wells[^3] in the standard curve will be done later
-> on, before computing the regression between absorbance and
+> Throughout this pipeline, we search for and remove outliers prior to
+> critical aggregation steps that will not be trustworthy otherwise (see
+> also vignette `handling-outliers`). With this logic in mind, the
+> outlier removal of other wells[^3] of the standard curve will be done
+> later on, before computing the regression between absorbance and
 > concentration. This is shown in the next vignette, `abs-to-conc`.
 
 ### 2.5 - Blank-correction of Standard Curve
@@ -414,11 +542,15 @@ which will also be used to correct sample absorbance data in the next
 section.
 
 [`blank_correct_abs()`](https://mdetoeuf.github.io/plate2N/reference/blank_correct_abs.md)
-takes 3 main arguments:
+is a function that works for standard data and for sample data
+([Section 5](#sec-sample-blank)), so it’s arguments are named in a way
+that fits both cases. It takes 3 main arguments:
 
-- `raw_wells_data` takes the standard curves data. It should be
-  ungrouped and contain only non-blank data (i.e., in the case of
-  “top_down” pipetting, rows B to H)
+- `raw_wells_data` contains the data of the standard curves. It should
+  be ungrouped within the call to
+  [`blank_correct_abs()`](https://mdetoeuf.github.io/plate2N/reference/blank_correct_abs.md)
+  and contain only non-blank data (i.e., in the case of “top_down”
+  pipetting, rows B to H)
 
 - `per_plate_avg_blank` takes blank averages (e.g., `std_blank_avg`)
 
@@ -433,28 +565,32 @@ depends on the additional columns you may have in your data tables
 
 ``` r
 
-# prepare the first argument
+# prepare the first argument: ungroup and remove blank data (here: row A)
 raw_wells_data <- std_data |>
       dplyr::ungroup() |>
       dplyr::filter_out(row == "A")
 
 # check it out
-head(raw_wells_data)
-#> # A tibble: 6 × 12
-#>   row   column well_id unique_well_id dataset plate_id unique_curve_id map  
-#>   <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr>           <chr>
-#> 1 B     1      B1      B1_NO3_1F1     Nmin    NO3_1F1  NO3_1F1_col1    Std  
-#> 2 B     1      B1      B1_NO3_1F2     Nmin    NO3_1F2  NO3_1F2_col1    Std  
-#> 3 B     1      B1      B1_NO3_1F3     Nmin    NO3_1F3  NO3_1F3_col1    Std  
-#> 4 B     1      B1      B1_NO3_1F4     Nmin    NO3_1F4  NO3_1F4_col1    Std  
-#> 5 B     1      B1      B1_NO3_1F5     Nmin    NO3_1F5  NO3_1F5_col1    Std  
-#> 6 B     12     B12     B12_NO3_1F1    Nmin    NO3_1F1  NO3_1F1_col12   Std  
+raw_wells_data
+#> # A tibble: 70 × 12
+#>    row   column well_id unique_well_id dataset plate_id unique_curve_id map  
+#>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr>           <chr>
+#>  1 B     1      B1      B1_NO3_1F1     Nmin    NO3_1F1  NO3_1F1_col1    Std  
+#>  2 B     1      B1      B1_NO3_1F2     Nmin    NO3_1F2  NO3_1F2_col1    Std  
+#>  3 B     1      B1      B1_NO3_1F3     Nmin    NO3_1F3  NO3_1F3_col1    Std  
+#>  4 B     1      B1      B1_NO3_1F4     Nmin    NO3_1F4  NO3_1F4_col1    Std  
+#>  5 B     1      B1      B1_NO3_1F5     Nmin    NO3_1F5  NO3_1F5_col1    Std  
+#>  6 B     12     B12     B12_NO3_1F1    Nmin    NO3_1F1  NO3_1F1_col12   Std  
+#>  7 B     12     B12     B12_NO3_1F2    Nmin    NO3_1F2  NO3_1F2_col12   Std  
+#>  8 B     12     B12     B12_NO3_1F3    Nmin    NO3_1F3  NO3_1F3_col12   Std  
+#>  9 B     12     B12     B12_NO3_1F4    Nmin    NO3_1F4  NO3_1F4_col12   Std  
+#> 10 B     12     B12     B12_NO3_1F5    Nmin    NO3_1F5  NO3_1F5_col12   Std  
+#> # ℹ 60 more rows
 #> # ℹ 4 more variables: abs <chr>, std_sp <chr>, std_unit <chr>, std_conc <dbl>
 
 # blank-correct standard curve data
 std_corrected <-
   blank_correct_abs(
-    # ungroup std data, remove rows with the blanks (here: row A)
     raw_wells_data = raw_wells_data,
     per_plate_avg_blank = std_blank_avg,
     map_to_exclude = ""
@@ -491,11 +627,12 @@ corrected absorbance. Instead, it has been replaced by `abs_corrected`.
 
 ### 3.1 - Extract extractant data (sample blank)
 
-In a real world, `raw_meta` will have probably undergone some cleaning
-steps (e.g., outlier removal, see `handling-outliers`). In this example
+In a real world, `raw_meta` may have undergone some cleaning steps
+(e.g., outlier removal, see `handling-outliers`). In this example
 dataset, there are always 8 wells attributed to the sample blank (or
-extractant), which is found because its mapping (column “map” in
-`raw_meta`) contains the string “extr”, as can be seen here:
+extractant). Extractant wells are taken from `raw_meta`, where they are
+found because their mapping (column “map” in `raw_meta`) contains the
+string “extr”, as can be seen here:
 
 ``` r
 
@@ -520,16 +657,13 @@ raw_meta |> dplyr::filter(map == "extr")
 
 This filtering is also what
 [`extract_extractant()`](https://mdetoeuf.github.io/plate2N/reference/extract_extractant.md)
-does in the background, which is the first step of
+does in the background, which is the first step taken by the function
 [`extractant_average()`](https://mdetoeuf.github.io/plate2N/reference/extractant_average.md)
 (see below).
 
 ``` r
 
-extr_data <- extract_extractant(raw_meta)
-
-# Check it out
-extr_data
+(extr_data <- extract_extractant(raw_meta))
 #> # A tibble: 40 × 11
 #>    row   column well_id unique_well_id dataset plate_id map   abs   std_sp
 #>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr> <chr> <chr> 
@@ -549,13 +683,13 @@ extr_data
 
 ### 3.2 - Compute per-plate average of extractant
 
-This string “extr” is the default of the argument `extr_def` of
+The string “extr” is the default of the argument `extr_def` within
 [`extractant_average()`](https://mdetoeuf.github.io/plate2N/reference/extractant_average.md)
 and can be adapted to reflect your mapping. Like
-`extract_std_blank(..)$average`,
+[`std_blank_average()`](https://mdetoeuf.github.io/plate2N/reference/std_blank_average.md),
 [`extractant_average()`](https://mdetoeuf.github.io/plate2N/reference/extractant_average.md)
-computes the average, standard deviation and coefficient of variation
-(%) of the blanks.
+computes the per-plate average, standard deviation and coefficient of
+variation (%) of the blanks.
 
 ``` r
 
@@ -570,37 +704,61 @@ computes the average, standard deviation and coefficient of variation
 #> 5 Nmin    NO3_1F5  extr     0.0838   0.000463                   0.553
 ```
 
-> **More than 1 extractant per plate?**
+> **Tip 1: More than 1 extractant per plate?**
 >
 > [`extractant_average()`](https://mdetoeuf.github.io/plate2N/reference/extractant_average.md)
-> should also work when there are several extractants per plate, but the
-> argument `extr_def` must be given a vector with extractant (e.g.,
-> `extr_def = c("extr_1", "extr_2")`. See also `?extractant_average()`
-> for examples.
+> also works when there are several extractants per plate, but the
+> argument `extr_def` must be given a vector defining extractants (e.g.,
+> `extr_def = c("extr_1", "extr_2")`. Note that it complicates a bit the
+> process down the line because you will need to attribute an extractant
+> to each sample based on something more than just plate identifier. See
+> also `?extractant_average()` for examples and
+> [Section 5.3.3](#sec-multiple-extr)
 
 ### 3.3 - Quality check of extractant and outlier removal
 
-#### 3.3.1 - One extractant per plate
+#### 3.3.1 - Identifying suspicious extractant wells
+
+To show in detail all features of the function calls below, we go
+through the simple case of when there is only 1 extractant per plate.
+For cases with 2 or more extractants per plate, see
+[Section 5.3.3](#sec-multiple-extr)
 
 [`plot_blank_var_distrib()`](https://mdetoeuf.github.io/plate2N/reference/plot_blank_var_distrib.md)
-plots a distribution of this coefficient of variation throughout the
-data set (which becomes relevant in big data sets).
+plots a distribution of the coefficient of variation throughout the data
+set, which can be used as a criterion to identify “suspicious” wells
+(which becomes relevant in big data sets). Here, we have artificially
+generated “very wrong” wells for the purpose of the illustration. Note
+that whereas a threshold of 5% of coefficient of variation is reasonable
+in simple absorbance-based datasets with 8 replicates (8 wells for the
+extractant), you may need to adapt your noise-tolerance level for more
+noise-prone experiments or with fewer replicates.
+
+Notice, once more, that
+[`plot_blank_var_distrib()`](https://mdetoeuf.github.io/plate2N/reference/plot_blank_var_distrib.md)
+relies on the ggplot grammar of graphics, and you can easily add
+additional ggplot-based layers.
 
 ``` r
 
-plot_blank_var_distrib(extr_avg)
+plot_blank_var_distrib(extr_avg) +
+  # (optional) add threshold line + label
+  ggplot2::geom_vline(xintercept = 5, colour = "red", linetype = 2) +
+  ggplot2::annotate(
+    geom = "label", x = 6, y = 1.5,  hjust = 0.2,
+    label = "threshold of 5%", colour = "red")
 ```
 
-![](blank-correction_files/figure-html/unnamed-chunk-20-1.png)
+![](blank-correction_files/figure-html/unnamed-chunk-19-1.png)
 
-In big data sets, there is bound to be some plate where one or two wells
-went wrong in the lab, and seeing that there are some plates with much
-higher variation can be a sign that you need to investigate to remove
-outliers (like here, with a maximum coefficient of variation of almost
-60%). You can take advantage of `dplyr::arrange(desc())` that sorts rows
-by decreasing values of its argument, to quickly identify suspicious
-plates (consider removing the call to `desc()` if you have negative
-values for the coefficients of variation).
+In large data sets, there is bound to be some plate where one or two
+wells went wrong in the lab, and seeing that there are some plates with
+much higher variation can be a sign that you need to investigate to
+remove outliers (like here, with a maximum coefficient of variation of
+almost 60%). You can take advantage of `dplyr::arrange(desc())` that
+sorts rows by decreasing values of its argument, to quickly identify
+suspicious plates (consider removing the call to `desc()` if you have
+negative values for the coefficients of variation).
 
 ``` r
 
@@ -626,8 +784,8 @@ because in this pipeline, there has not been any prior outlier removal,
 but of course, we should work with the “cleanest” data that we have.
 
 A `max_coeff` threshold of 5% is reasonable to segregate “acceptable”
-coefficients if, like here, you have 8 wells per plate for the
-extractant.
+coefficients of variation if, like here, you have 8 wells per plate for
+the extractant.
 
 ``` r
 
@@ -658,8 +816,13 @@ suspicious_extr_per_plate
 Should all plates have a coefficient of variation for the absorbance of
 the extractant below the threshold,
 [`qc_raw_extr()`](https://mdetoeuf.github.io/plate2N/reference/qc_raw_extr.md)
-returns a happy message, instead of a warning, which can also be
-suppressed, using `suppress_message = TRUE`.
+sends a happy message, instead of a warning, which can also be
+suppressed, using `suppress_message = TRUE`. Note that in case there are
+no suspicious extractant wells, the function does not “return” anything,
+meaning that if you write
+`suspicious_extr_per_plate <- raw_meta |> qc_raw_extr(suppress_warning = FALSE, max_coeff = 60)`
+and try to check out the content of `suspicious_extr_per_plate`, you
+will only get `NULL`.
 
 ``` r
 
@@ -673,6 +836,7 @@ raw_meta |>
 To obtain the full extractant data corresponding to our
 `suspicious plate_ids`, we can use
 [`suspicious_extr()`](https://mdetoeuf.github.io/plate2N/reference/suspicious_extr.md).
+Make sure to use the same threshold.
 
 ``` r
 
@@ -706,31 +870,36 @@ To obtain the full extractant data corresponding to our
 Finally, we can use
 [`boxplot_outlier_extr()`](https://mdetoeuf.github.io/plate2N/reference/boxplot_outlier_extr.md)
 to plot extractant plates containing suspicious wells, so that we can
-decide whether or not to remove some outlier wells. To do so, we can,
-once more, take advantage of
-[`remove_wells()`](https://mdetoeuf.github.io/plate2N/reference/remove_wells.md),
-see also above, `?remove_wells()` and the vignette `handling-outliers`.
+decide whether or not to remove some outlier wells, and which ones.
 Should there be too many plates for a proper visualization, split
 `suspicious_extr` in subsets.
 
 ``` r
 
 # plot outliers
-suspicious_extr |> boxplot_outlier_extr(max_coeff = threshold) + ggplot2::facet_wrap(~map)
+suspicious_extr |> 
+  boxplot_outlier_extr(max_coeff = threshold) 
 #> Joining with `by = join_by(plate_id)`
 ```
 
-![](blank-correction_files/figure-html/unnamed-chunk-26-1.png)
+![](blank-correction_files/figure-html/unnamed-chunk-25-1.png)
 
 #### 3.3.2 - Outlier removal steps
 
-He have here 2 very obvious outliers: wells D8 and C8 in plate 1
-(NO3_1F2) and well F8 in plate 2 (NO3_1F4), which we want to remove. The
-plot given by
+To remove outlier wells, we can then, once more, take advantage of
+[`remove_wells()`](https://mdetoeuf.github.io/plate2N/reference/remove_wells.md)
+(see also above, `?remove_wells()` and the vignette
+`handling-outliers`).
+
+He have here 3 obvious outliers: wells D8 and C8 in plate 1 (NO3_1F2)
+and well F8 in plate 2 (NO3_1F4), which we want to remove. The plot
+given by
 [`boxplot_outlier_extr()`](https://mdetoeuf.github.io/plate2N/reference/boxplot_outlier_extr.md)
-gives all necessary information to do so. First, we create a small
-tibble that will serve to construct the tibble of wells to remove: first
-get dataset and plate_ids from `suspicious_extr`, then add a column
+displays all necessary information to do so.
+
+in the next chunk, we create a small tibble that will serve to construct
+the tibble of wells to remove: first get all unique combinations of
+dataset and plate_ids from `suspicious_extr`, then add a column
 “plate_order” that will help checking which plate is which (compared to
 the plot, useful when several plates are plotted).
 
@@ -747,7 +916,7 @@ the plot, useful when several plates are plotted).
 #> 1 Nmin    NO3_1F2 
 #> 2 Nmin    NO3_1F4
 
-# save numbers for plate order in the plot
+# save numbers for plate order as in the plot
 (plate_ids <- plate_ids |> 
   dplyr::mutate(plate_order = seq(1, nrow(plate_ids))))
 #> # A tibble: 2 × 3
@@ -762,7 +931,7 @@ from top to bottom).
 
 > **Manually remove outliers**
 >
-> > **Tip 1**
+> > **Tip 2**
 > >
 > > In the following chunk, we need to manually decide which wells to
 > > remove, based on the boxplots produced above.
@@ -787,7 +956,16 @@ plate_without_outliers <- c(9)
 well_ids <- c("C8", "D8", "F8") # only fill in well_ids that need to be removed, in the order of the plates
 ```
 
-Then we finish constructing the tibble of wells to be removed.
+Note that we did not consider the case of having 3 outliers to remove in
+a single plate. We considered that this situation will be rare enough
+that it does not justify having a per default step. However, you can
+easily remove single wells (the 3rd outlier of a plate) by adding an
+additional row manually to `to_remove`, or just add an additional step
+of
+[`remove_wells()`](https://mdetoeuf.github.io/plate2N/reference/remove_wells.md)
+with a one-line tibble.
+
+Now, we finish constructing the tibble of wells to be removed.
 
 **TODO: consider making a function out of this**
 
@@ -838,7 +1016,8 @@ nrow(extr_data) ; nrow(to_remove); nrow(extr_data_clean)
 #> [1] 37
 ```
 
-Finally, we re-run the average on cleaned extractant data
+Finally, we re-run the average, this time on cleaned, outlier-free,
+extractant data
 
 ``` r
 
@@ -862,13 +1041,19 @@ extr_avg_clean |> dplyr::arrange(dplyr::desc(blank_coeff_var_percent)) |> head()
 #> 5 Nmin    NO3_1F5  extr     0.0838   0.000463                   0.553
 ```
 
-#### 3.3.3 - 2 or more extractants per plate
+#### 3.3.3 - When there are 2 or more extractants per plate
 
 The steps are the same as with one extractant, but the syntax changes
-slightly. Let’s take the example data set `dbl_extr_plate`:
+slightly. Let’s take the example data set `dbl_extr_plate`. Note that
+the structure is very similar to what we are used to with `tidy_plates`,
+but we now have an additional column, called `extr_id`, that contains
+the correspondence of which sample needs to be blank-corrected from
+which extractant. Of course, standard curve data have “none” under that
+column.
 
 ``` r
 
+# check out the example data set
 dbl_extr_plate
 #> # A tibble: 480 × 9
 #>    row   column well_id unique_well_id dataset plate_id map      abs   extr_id
@@ -884,6 +1069,40 @@ dbl_extr_plate
 #>  9 A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  81_t1_z1 0.118 extr_1 
 #> 10 A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  Std_3_t1 0.167 extr_2 
 #> # ℹ 470 more rows
+
+# compare to tidy_plates
+tidy_plates
+#> # A tibble: 480 × 8
+#>    row   column well_id unique_well_id dataset plate_id map      abs  
+#>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr>    <chr>
+#>  1 A     1      A1      A1_NO3_1F1     Nmin    NO3_1F1  Std      0.092
+#>  2 A     1      A1      A1_NO3_1F2     Nmin    NO3_1F2  Std      0.091
+#>  3 A     1      A1      A1_NO3_1F3     Nmin    NO3_1F3  Std      0.110
+#>  4 A     1      A1      A1_NO3_1F4     Nmin    NO3_1F4  Std      0.092
+#>  5 A     1      A1      A1_NO3_1F5     Nmin    NO3_1F5  Std      0.113
+#>  6 A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  81_t1_z2 0.114
+#>  7 A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  97_t1_z1 0.107
+#>  8 A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  89_t1_z3 0.095
+#>  9 A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  81_t1_z1 0.118
+#> 10 A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  Std_3_t1 0.167
+#> # ℹ 470 more rows
+
+# Check out mapping for extr_data
+dbl_extr_plate |> dplyr::filter(map %in% c("extr_1", "extr_2"))
+#> # A tibble: 80 × 9
+#>    row   column well_id unique_well_id dataset plate_id map    abs   extr_id
+#>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr>  <chr> <chr>  
+#>  1 A     4      A4      A4_NO3_1F1     Nmin    NO3_1F1  extr_2 0.110 extr_2 
+#>  2 A     4      A4      A4_NO3_1F2     Nmin    NO3_1F2  extr_2 0.093 extr_2 
+#>  3 A     4      A4      A4_NO3_1F3     Nmin    NO3_1F3  extr_2 0.102 extr_2 
+#>  4 A     4      A4      A4_NO3_1F4     Nmin    NO3_1F4  extr_2 0.108 extr_2 
+#>  5 A     4      A4      A4_NO3_1F5     Nmin    NO3_1F5  extr_2 0.101 extr_2 
+#>  6 A     8      A8      A8_NO3_1F1     Nmin    NO3_1F1  extr_1 0.083 extr_1 
+#>  7 A     8      A8      A8_NO3_1F2     Nmin    NO3_1F2  extr_1 0.083 extr_1 
+#>  8 A     8      A8      A8_NO3_1F3     Nmin    NO3_1F3  extr_1 0.084 extr_1 
+#>  9 A     8      A8      A8_NO3_1F4     Nmin    NO3_1F4  extr_1 0.084 extr_1 
+#> 10 A     8      A8      A8_NO3_1F5     Nmin    NO3_1F5  extr_1 0.084 extr_1 
+#> # ℹ 70 more rows
 ```
 
 Here is, in brief, how to adapt the same steps as described above:
@@ -927,7 +1146,7 @@ Here is, in brief, how to adapt the same steps as described above:
 plot_blank_var_distrib(extr_avg_dbl)
 ```
 
-![](blank-correction_files/figure-html/unnamed-chunk-35-1.png)
+![](blank-correction_files/figure-html/unnamed-chunk-34-1.png)
 
 ``` r
 
@@ -974,11 +1193,11 @@ suspicious_extr_dbl |> boxplot_outlier_extr(max_coeff = 5)
 #> Joining with `by = join_by(plate_id)`
 ```
 
-![](blank-correction_files/figure-html/unnamed-chunk-35-2.png)
+![](blank-correction_files/figure-html/unnamed-chunk-34-2.png)
 
 Now, adapting the outlier removal steps
 
-> **Even with facetting, read each plate once**
+> **Even with several panels, read each plate only once**
 >
 > When determining outliers to remove, still read plates only once.
 > Indeed, even if each plate receives up to 2 boxplots, any well within
@@ -1061,9 +1280,13 @@ extr_avg_clean_dbl <- extractant_average(
 
 Here we do not re-check that the coefficient of variation is under the
 threshold because: the data under “extr_2” were artificially changed,
-but their absorbance readings are actually those of samples, therefore
-the distribution of values was not really presenting the sort of
-outliers that was expected. But it would be good to run it in real life
+but their absorbance readings are really those of samples, therefore the
+distribution of values was not really presenting the sort of outliers
+that was expected. But it would be good to run it in real life
+
+**TO DO: the last paragraph is confusing –\> change the raw data so that
+we can remove this bit and re-run the coefficient of variation as we
+should**
 
 ### 3.4 - Blank-correction of sample absorbance
 
@@ -1113,7 +1336,9 @@ sample_corrected_dbl <-
 Let’s have a look at the output and notice the absence of the value `1`
 in the column `column` (no data for standard curve[^4]), and of the
 value `extr` in the column `map` (though it was present in `raw_meta`
-and still can be found under `extr_id`).
+and still can be found under `extr_id` in the case of 2 extractants per
+plate, which we kept in case the info is relevant for downstream
+analysis.
 
 ``` r
 
@@ -1169,6 +1394,25 @@ sample_corrected |> dplyr::select(map) |> dplyr::arrange(dplyr::desc(map))
 #>  9 99_t1_z3_bis
 #> 10 99_t1_z3_bis
 #> # ℹ 254 more rows
+
+# check out column extr-id
+sample_corrected_dbl
+#> # A tibble: 232 × 11
+#>    row   column well_id unique_well_id dataset plate_id map      abs_corrected
+#>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr>            <dbl>
+#>  1 A     2      A2      A2_NO3_1F1     Nmin    NO3_1F1  81_t1_z2       0.0312 
+#>  2 A     2      A2      A2_NO3_1F2     Nmin    NO3_1F2  97_t1_z1       0.00975
+#>  3 A     2      A2      A2_NO3_1F3     Nmin    NO3_1F3  89_t1_z3      -0.00238
+#>  4 A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  81_t1_z1       0.0343 
+#>  5 A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  Std_3_t1       0.0788 
+#>  6 A     3      A3      A3_NO3_1F1     Nmin    NO3_1F1  82_t1_z2       0.0452 
+#>  7 A     3      A3      A3_NO3_1F2     Nmin    NO3_1F2  98_t1_z1       0.00675
+#>  8 A     3      A3      A3_NO3_1F3     Nmin    NO3_1F3  90_t1_z3       0.0124 
+#>  9 A     3      A3      A3_NO3_1F4     Nmin    NO3_1F4  82_t1_z3       0.0543 
+#> 10 A     3      A3      A3_NO3_1F5     Nmin    NO3_1F5  98_t1_z3       0.0188 
+#> # ℹ 222 more rows
+#> # ℹ 3 more variables: extr_id <chr>, blank_sdev <dbl>,
+#> #   blank_coeff_var_percent <dbl>
 ```
 
 ## 4 - Epilogue
@@ -1185,8 +1429,11 @@ detailed in vignette **`abs-to-conc`** **(under development)**
     pipettes, a small ejection of liquid has to occur before dispensing
     the first dose of solution. Failure to intentionally eject will
     result in the first well receiving the “ejection” dose, which is not
-    the correct volume. This can end up in various responses in terms of
-    absorbance, depending on which reagent has been wrongly pipetted.
+    the correct volume. This is not trivial because with big data sets
+    containing hundreds of plates, it is not unlikely that this human
+    error happens a coupls of times. This can end up in various
+    responses in terms of absorbance, depending on which reagent has
+    been wrongly pipetted.
 
 [^2]: In such cases, you must consider your options. If the inter-plate
     variability of `std_blank` is sufficiently small, taking an
