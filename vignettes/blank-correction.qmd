@@ -17,10 +17,10 @@ editor_options:
 library(plate2N)
 ```
 
-::: callout-caution
-## Work in progress
+::: callout-note
+## Actively evolving
 
-This vignette is still under development, bugs are to be expected
+This pipeline works for its current use cases, but it is still gaining flexibility — some behavior that is hardcoded today may later become a parameter, and new features get added as real use cases come up (e.g. support for multiple extractants per plate was added in response to a user's needs, and touched a fair amount of the underlying functions). So don't be surprised if some details shift between versions. If anything here feels more cryptic than the `import-tidy` vignette, that's fair — this one hasn't had as many passes yet, and it'll keep getting clearer.
 :::
 
 # TO DO
@@ -208,6 +208,12 @@ The computation of per-plate standard curve blank average should be made on trus
 The function `plot_std()` allows the visualization of (a subset of) curves. With small datasets (as here, with only 5 plates), we could run it on all plates. With bigger datasets however, it comes in quite handy to plot only the automated subset of curves that really need a check on their blank data.
 
 Notice the argument `through_origin = FALSE` (default is true), which removes the default constraint on the smooth curve to go through the origin (which does not make sense before we have blank-corrected data).
+
+::: callout-note
+## The reference line assumes a linear relationship
+
+`plot_std()` draws a smoothed reference line assuming a standard linear relationship between absorbance and concentration. If your own data is more concentrated and the curve looks noticeably bent rather than straight, don't worry — this is expected for some experiments and is addressed later, when choosing between a linear and polynomial model in the vignette `abs-to-conc`. Nothing about this affects the blank-correction steps covered here.
+:::
 
 Notice also that `plot_std()` is based on the ggplot grammar of graphics. This means that you can easily add additional ggplot-based layers like we do in the following chunk.
 
@@ -623,6 +629,12 @@ Now that we are confident in the per-plate average value of raw absorbance of ex
 - `per_plate_avg_blank` which contains absorbance data of the extractant, averaged per plate (one row per plate), based on trusted extractant wells
 
 - `map_to_exclude`, a vector of the strings representing non-sample data under the column `map` within `raw_wells_data`, i.e., blanks, standard curves and empty wells. It defaults to `c("empty","Std","extr")`. The output will thus only contain blank-corrected sample data. This means that for (linear) modelling of the standard curve, `std_corrected` will still be needed.
+
+::: callout-note
+## An assumption worth noting: spatial uniformity of the blank
+
+`per_plate_avg_blank` is a single value per plate, computed from whichever wells you defined as extractant (or blank) wells, then subtracted uniformly from every sample well on that same plate. This assumes the background absorbance is spatially uniform across the plate — that wells in different positions don't systematically differ in their background reading beyond ordinary well-to-well noise. This is a reasonable assumption for most standard plate readers, but if you have reason to suspect position-dependent optical effects (e.g. known edge effects specific to your instrument), it's worth checking rather than assuming.
+:::
 
 ```{r}
 sample_corrected <- 
