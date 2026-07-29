@@ -1,0 +1,137 @@
+---
+title: "microresp"
+vignette: >
+  %\VignetteIndexEntry{microresp}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{quarto::html}
+knitr:
+  opts_chunk:
+    collapse: true
+    comment: '#>'
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#| label: setup
+library(plate2N)
+library(roperators)
+```
+
+# 1 - Introduction {#sec-microresp}
+
+This vignette shows a variation of the import pipeline described in `vignette("import-tidy", package = "plate2N")`, adapted to the case where more than 2 layers of data are recorded for each physical plate (see the tip on multiple data layers in `import-tidy`).
+
+Here, we quickly go through the import pipeline with an example of data from a [MicroResp](https://www.hutton.ac.uk/scientific-services/analytical/analytical-services/microresp/) experiment. To understand what this means: here plates are incubated for 5h. An absorbance reading is done at t = 0h (`t0`) and t = 5h (`t5`). There is also mapping data, containing the info on which substrate has been added in which well. Substrates are, in this experiment: glucose (Glu), water (H2O), oxalic acid (OA), lignin (Lgn), N-acetylglucosamine (NAG), gamma-acetylbutyric acid (gABA), alanine (Ala) and urea (Urea).
+
+So, the 3 layers of data are referred to as `abs_t0`, `abs_t5`, and `map`.
+
+::: callout-note
+## More layers of data are possible
+
+in theory, any number of data layers are possible, you just need to extend the logic displayed here, with additional elements to some arguments that are vectors (e.g., `abs_map = c("abs_t0", "abs_t5", "map")` and others that are lists of all data sets (one per layer).
+:::
+
+# 2 Import the 2 layers of absorbance data
+
+```{r}
+# Import absorbance data, t0 and t5
+MR_t0_csv <- system.file("extdata", "MR_abs_t0.csv", package = "plate2N")
+MR_t5_csv <- system.file("extdata", "MR_abs_t5.csv", package = "plate2N")
+
+# import from csv file type
+MR_abs_t0 <- csv_to_tibble(MR_t0_csv)
+MR_abs_t5 <- csv_to_tibble(MR_t5_csv)
+
+# Check them out
+MR_abs_t0; MR_abs_t5
+```
+
+# 3 - Being creative with importing mappings
+
+In a classical MicroResp experiment, a whole 96-well plate is dedicated to a single sample, though this may vary between experimental design. In this particular case, the mapping did not relate to samples, but to substrates added. And because the template of substrate addition was strictly the same for each plate, with a complete column attributed per substrate, there is a much simpler way to import the mapping data than creating a plate layout csv and importing it. This holds particularly true for an experiment with a large number of plates (we had hundreds). So feel free to be creative in generating layers of data, as best fits your needs.
+
+Plate mapping is strictly the same for each plate throughout the experiment, so we propose to take advantage of the function `plate2N::map_plates()` (see also the `prepare-plates` [vignette](https://mdetoeuf.github.io/plate2N/articles/prepare_plates.html)) to create this mapping data in R.
+
+First, create a vector with the names of the substrates (in the order of the plate map)
+
+```{r}
+# vector of substrates
+MR_columns <- c(
+  "Std_Glu", "Std_H2O", 
+  "H2O", "OA", "Glu", "Lgn", "NAG", "gABA", "Ala", "Urea")
+```
+
+Then, compute the number of plates required (here, 5 plates) by counting how many cells in the first column of `MR_abs_t0` do not correspond to one of the 26 `LETTERS` (= number of plate ids).
+
+```{r}
+# nb of plates
+(nb_plates <- MR_abs_t0 |> 
+  dplyr::filter(row %ni% LETTERS) |> 
+  nrow())
+```
+
+Finally, run the mapping function with
+
+- plate_id that pastes “P” with numbers from 01 to the nb of plates
+
+- “sample list” = repetition of the vector of substrates x the nb of plates
+
+- no std curves or blank (not needed in MicroResp experiments), and 2 empty columns (1 and 12, typically disregarded in those experiments due to large edge effects)
+
+- 8 wells per “sample” (in this case: not samples but substrates)
+
+```{r}
+# compute the mapping
+MR_map <- map_plates(
+  plate_ids = paste0("P", sprintf("%02d", seq(01:nb_plates))), 
+  samples = rep(MR_columns, nb_plates),
+  n_samples_per_plate = 10,
+  column_curves = c(), column_blank = c(), column_empty = c(1,12),
+  n_wells_samples = 8)
+
+# Check it out
+MR_map
+```
+
+Such creative methods are particularly time-saving with large datasets. Here, we have only 5 plates \<=\> 45 rows in our tibble. But in a 100-plate dataset, this would correspond to 900 rows, quite time-consuming to encode by hand.
+
+# 4 - Verticalize and join all 3 layers
+
+Notice the use of a 3-element (rather than 2-element) list and a 3-element vector for the arguments `tibble_list` and `abs_map`, respectively. The logic stays the same as with 2 layers though.
+
+```{r}
+# verticalize and join the 3 layers
+MR_joined <- join_abs_map(
+  tibble_list = list( MR_abs_t0, MR_abs_t5, MR_map), 
+  abs_map = c("abs_t0-", "abs_t5-", "map-"), 
+  coerce_numeric = FALSE, 
+  dataset = "MR-" )
+
+# Check it out
+MR_joined
+```
+
+Notice the names of the columns, that now received 3 options for the layer prefix: `abs_t0-`, `abs_t5-` and `map-`.
+
+```{r}
+# Check out column names
+names(MR_joined)
+```
+
+# 5 - Tidy the data, 3 columns for 3 layers
+
+Tidy the table to reach 1 row per unique well (96 x nb of physical plates), and 3 important columns: `abs_t0`, `abs_t5`, `map`. The syntax for this step is strictly the same as with 2 layers, but we now have to specify the argument `column_def`\` as its default value, containing only `c("abs-", "map-")` would no longer work.
+
+```{r}
+# From vertical to tidy format with 3 layers
+tidy_MR <- vertical_to_tidy(
+  MR_joined, 
+  column_def = c("abs_t0", "abs_t5", "map"))
+
+# Check it out
+tidy_MR
+
+# If you like to reorder columns to have mapping first, then absorbance
+tidy_MR |> dplyr::relocate(map, .before = abs_t0)
+```
