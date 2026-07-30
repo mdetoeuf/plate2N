@@ -688,6 +688,10 @@ data_mg_N_L
 
 We now have clean and tidy concentration data, which can be exported for further downstream analysis, for example using `data_mg_N_L |> write_rds("path/to/my/output/TDN_data_mg_N_L")`.
 
-Notice that so far we still have 4 data points per sample (in our example data sets, they were pipetted in 4 replicates in the 96-well plates). A pipeline for spotting and removing sample-outliers and computing per-sample average is under development and may arrive later.
+It's worth being explicit about what this concentration represents: `conc_mgN_L` is the concentration **in the well as measured** — one value per well, not yet a final, per-sample or publication-ready number. Depending on your experimental design, one or more further steps are typically still needed, and which ones apply is study-specific. For example, in our own soil dataset:
 
-**TO DO: add examples of downstream steps: correct dilutions, per sample average and outlier removal, conversion to ppm, etc.**
+- **Correcting for dilution.** Any sample that was diluted before reading needs its concentration multiplied back by the dilution factor to reflect the original sample, e.g. `data_mg_N_L |> dplyr::mutate(conc_corrected = conc_mgN_L * dilution_factor)`.
+- **Per-sample averaging.** So far we still have 4 data points per sample (in our example data sets, they were pipetted in 4 replicates in the 96-well plates) — these typically need to be averaged, with outliers checked for, to get one value per sample.
+- **Unit conversion.** In our case, this means converting to ppm, i.e. mg N / kg dry soil. This requires bringing in external data collected in the lab, not part of the plate-reader pipeline itself: the fresh soil weight used in the extraction, the water content of that fresh soil, and the soil-to-extractant ratio used.
+
+A pipeline for spotting and removing sample-outliers and computing per-sample averages is under development and may arrive later. In the meantime, these downstream steps depend on your specific experimental design and aren't something this vignette can fully generalize.
