@@ -44,6 +44,72 @@ In this vignette, we cover the steps from blank-corrected absorbance to concentr
 
 [^1]: To adapt to other compounds, you may need to add molar masses into the data 'molar_masses', see later.
 
+## The Whole Game
+
+This pipeline picks up where `blank-correction` left off (`std_corrected` and `sample_corrected`), decides between a linear or polynomial model based on how your standard curves fit, computes the regression, and infers sample concentrations:
+
+```{mermaid}
+flowchart TD
+  A(std_corrected + sample_corrected) --> B{Choose model}
+  B -->|Linear| C1(Compute linear model)
+  C1 --> O1{{QC / outlier removal}}
+  O1 --> C1
+  C1 --> D1(Infer concentration)
+  B -->|Polynomial| C2(Compute polynomial model)
+  C2 --> O2{{QC / outlier removal}}
+  O2 --> C2
+  C2 --> D2(Infer concentration)
+  D1 --> E(Epilogue: downstream steps):::sideThing
+  D2 --> E
+  
+  classDef sideThing fill:#f8fafc,stroke:#cbd5e1,color:#64748b,stroke-width:1px; 
+   linkStyle 9 stroke:#cbd5e1,stroke-width:1px;
+   linkStyle 10 stroke:#cbd5e1,stroke-width:1px;
+```
+
+As with `blank-correction`, there's no honest one-shot snippet that skips outlier removal, since checking your standard curves is a manual, visual step. Here's the fast path for the linear model, assuming clean curves (no outlier) with one dilution per plate (no averaging needed):
+
+```{r}
+#| eval: false
+# compute linear model
+lm_table_raw <- lm_std_curve(std_corrected |> dplyr::group_by(plate_id, column))
+
+#** HERE COMES USER-DECISION ON OUTLIER REMOVAL / PER-DILUTION AVERAGING - ITERATIVE PROCESS *
+
+# infer concentration
+data_mg_N_L <- reg_join_abs(lm_table_raw, sample_corrected, target_sp = "N") |> 
+  dplyr::mutate(conc_mgNsp_L = abs_corrected / slope) |> 
+  convert_molec(masses = molar_masses)
+```
+
+For the polynomial model, the steps follow the same overall pattern, just with a different model formula — see [Polynomial model](#sec-polynomial) for the specifics.
+
+## The Cheat Sheet
+
+| Step | Function(s) | Purpose |
+|------------------------|------------------------|------------------------|
+| Compute model | `lm_std_curve()` (add `model = "poly"` for the polynomial model) | Fit a per-curve regression (linear or polynomial) through the origin |
+| QC & visualize | `suspicious_lm()`, `plot_list_lm()`, `density_lm_param()` | Identify and visualize curves that don't fit well *(see the upcoming plotting vignette)* |
+| Remove outlier wells | `remove_wells()` | Drop wells identified as outliers — explained in detail in `handling-outliers` |
+| Per-dilution average | `std_dilution_average()` | Average multiple curves per plate into one |
+| Join model to sample data | `reg_join_abs()` | Attach the fitted regression (linear or polynomial) to sample absorbance data |
+| Infer concentration | manual formula (linear) or quadratic solve (polynomial) | Convert absorbance to concentration using the fitted model |
+| Convert units | `convert_molec()` | Convert between mg *molecule* / L and mg *element* / L using `molar_masses` |
+
+## Overview of abs-to-conc
+
+- Decide which model to use (linear or polynomial) based on how well your standard curves fit a straight line
+
+- Compute the model
+
+  - if suspicious curves are flagged: identify and remove outliers, recompute
+
+  - if there's more than one standard blank per plate (e.g. several curves per plate, or several blank wells within a single curve): compute the per-dilution average, recompute the model
+
+- Join the fitted model to sample data and infer concentration
+
+- Convert to the units relevant to your study (e.g. mg N/L, later ppm — see Epilogue)
+
 ::: callout-important
 ## Prerequisites
 
