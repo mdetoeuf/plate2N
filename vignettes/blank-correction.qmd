@@ -40,15 +40,11 @@ In theory, the "samples" pipeline should be adaptable to the case where all well
 
 To avoid confusion between "blank of the standard curve" and "blank of the samples", the sample-blank is referred to as "extractant" or `extr` throughout this vignette, to refer to the solution that was used to extract (N-)compounds from soil samples and now serves as blank. The standard blank is referred to as `std_blank`.
 
-+-----------------------+-----------------------------------------------------------+---------------------------------------------------+
-|                       | Standard curve blank                                      | Sample blank                                      |
-+=======================+===========================================================+===================================================+
-| Name used             | `std_blank`                                               | `extr` (extractant)                               |
-+-----------------------+-----------------------------------------------------------+---------------------------------------------------+
+|   | Standard curve blank | Sample blank |
+|----|----|----|
+| Name used | `std_blank` | `extr` (extractant) |
 | What it physically is | The zero-concentration point of the standard curve itself | The blank solution matching the sample matrix[^1] |
-+-----------------------+-----------------------------------------------------------+---------------------------------------------------+
-| What it corrects      | Standard curve absorbance readings                        | Sample absorbance readings                        |
-+-----------------------+-----------------------------------------------------------+---------------------------------------------------+
+| What it corrects | Standard curve absorbance readings | Sample absorbance readings |
 
 [^1]: In our experiments, this is the solution used to extract N-compounds from soil samples. More generally, this pipeline works for any dosage following a Beer-Lambert-style relationship between absorbance and concentration — `extr` can be whatever solution serves as the blank for your own sample matrix.
 
