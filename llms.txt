@@ -36,6 +36,8 @@ concentrations.
 - [`boxplot_outlier_extr()`](https://mdetoeuf.github.io/plate2N/reference/boxplot_outlier_extr.md)
   : Identify outlier-wells within plates containing suspicious
   extractant data
+- [`boxplot_values()`](https://mdetoeuf.github.io/plate2N/reference/boxplot_values.md)
+  : Boxplot of values by sample, with optional colour and point labels
 - [`convert_molec()`](https://mdetoeuf.github.io/plate2N/reference/convert_molec.md)
   : Converts Concentrations From Compound Weight to Target Weight
 - [`correct_std_blank()`](https://mdetoeuf.github.io/plate2N/reference/correct_std_blank.md)
@@ -90,6 +92,11 @@ concentrations.
   extractant data
 - [`plot_list_lm()`](https://mdetoeuf.github.io/plate2N/reference/plot_list_lm.md)
   : Compute a list of plots, one per standard curve
+- [`plot_list_qc_microresp()`](https://mdetoeuf.github.io/plate2N/reference/plot_list_qc_microresp.md)
+  : Build per-substrate/treatment QC plots for MicroResp data, paginated
+  into panels
+- [`plot_ridges_values()`](https://mdetoeuf.github.io/plate2N/reference/plot_ridges_values.md)
+  : Ridge-line density plot of values, grouped by sample
 - [`plot_std()`](https://mdetoeuf.github.io/plate2N/reference/plot_std.md)
   : Display one or more standard curve(s)
 - [`qc_raw_abs()`](https://mdetoeuf.github.io/plate2N/reference/qc_raw_abs.md)

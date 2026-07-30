@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -658,8 +658,433 @@
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">right_join</a></span><span class="op">(</span><span class="va">suspicious_substrates</span>, by <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/join_by.html" class="external-link">join_by</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span>, <span class="va">map</span><span class="op">)</span><span class="op">)</span> </span></code></pre></div>
 </div>
 <p>Now, with a threshold of 8% as max coef of variation, we are left with only 6 combinations of plate x substrate to look at (instead of 50).</p>
-</section><section class="level2"><h3 id="section"></h3>
-</section></section><script id="quarto-html-after-body" type="application/javascript">
+<p>!! This means we are ok with not looking at all data !!</p>
+</section><section class="level2"><h3 id="create-qc-plots">6.2 - create QC plots<a class="anchor" aria-label="anchor" href="#create-qc-plots"></a>
+</h3>
+<p>Create one list of QC plots per dataset.</p>
+<p>Notice that we get a list with 1 plot per substrate (but not all bc not all had outliers in this reduced dataset)</p>
+<p>–&gt; TO DO: update microresp data to get more plate, maybe include plates 11-15, so we have 10 total, and 2 runs, so that using the run_id parameter makes sense visually here</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">qc_plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plot_list_qc_microresp.html">plot_list_qc_microresp</a></span><span class="op">(</span></span>
+<span>  <span class="va">suspicious_MR</span>, </span>
+<span>  map_col <span class="op">=</span> <span class="st">"map"</span>,</span>
+<span>  run_id_col <span class="op">=</span> <span class="st">"run_id"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">qc_plots</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "Std_H2O" "OA"      "Glu"     "NAG"     "gABA"</span></span></code></pre></div>
+</div>
+<p>For the sake of illustration, we just plot 2 of the plots (one per dataset per substrate): it facets the plots per run, and only displays data that is suspicious (coefficient of variation above threshold defined above). - H2O: i’d remove B3 - Glu: i’d remove nothing Notice that - the nb of plate changes between plots, only suspicious plates are displayed</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">qc_plots</span><span class="op">$</span><span class="va">Std_H2O</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.00386</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="microresp_files/figure-html/unnamed-chunk-23-1.png" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">qc_plots</span><span class="op">$</span><span class="va">Glu</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.0325</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="microresp_files/figure-html/unnamed-chunk-23-2.png" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>To get general idea, plot it all in one go - <strong>briefly</strong> explain the rationale behind using <code><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">patchwork::wrap_elements</a></code> here (keep title) - But say that in real datasets, depending on substrates, more plates are displayed, so this patchworking might make things unreadable anyway</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="op">(</span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">wrap_elements</a></span><span class="op">(</span>full <span class="op">=</span> <span class="va">qc_plots</span><span class="op">$</span><span class="va">gABA</span><span class="op">)</span> <span class="op">+</span></span>
+<span> <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">wrap_elements</a></span><span class="op">(</span>full <span class="op">=</span> <span class="va">qc_plots</span><span class="op">$</span><span class="va">Glu</span><span class="op">)</span> <span class="op">+</span></span>
+<span> <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">wrap_elements</a></span><span class="op">(</span>full <span class="op">=</span> <span class="va">qc_plots</span><span class="op">$</span><span class="va">NAG</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span></span>
+<span><span class="op">(</span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">wrap_elements</a></span><span class="op">(</span>full <span class="op">=</span> <span class="va">qc_plots</span><span class="op">$</span><span class="va">OA</span><span class="op">)</span> <span class="op">+</span></span>
+<span> <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">wrap_elements</a></span><span class="op">(</span>full <span class="op">=</span> <span class="va">qc_plots</span><span class="op">$</span><span class="va">Std_H2O</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.00626</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.0325</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.00765</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.113</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.00386</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="microresp_files/figure-html/unnamed-chunk-24-1.png" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Save QC plots for review outside R (optional), in a loop. Notice that because plots are named in the list, they can be easily accessed by name (= substrate), and this can then serve as filenaming for export</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">qc_plots</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  </span>
+<span>  <span class="va">plot</span> <span class="op">&lt;-</span> <span class="va">qc_plots</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span></span>
+<span>  </span>
+<span>  <span class="va">filepath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span></span>
+<span>      <span class="st">"output/figures/QC/microresp/"</span>,</span>
+<span>      <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">plot</span><span class="op">)</span>, <span class="st">"_"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.Date</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">".pdf"</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggsave</a></span><span class="op">(</span></span>
+<span>    filename <span class="op">=</span> <span class="va">filepath</span>, </span>
+<span>    plot <span class="op">=</span> <span class="va">plot</span>, width <span class="op">=</span> <span class="fl">18</span>, height <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+</div>
+</section><section class="level2"><h3 id="identifying-outliers-removal">6.3 - identifying outliers + removal<a class="anchor" aria-label="anchor" href="#identifying-outliers-removal"></a>
+</h3>
+<p>Then, by visual assessment of the plots one by one, we create a table of wells to remove, and clean the dataset from obvious outliers</p>
+<p>Starting with greenhouse outliers</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">to_remove</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tribble.html" class="external-link">tribble</a></span><span class="op">(</span></span>
+<span>  <span class="op">~</span> <span class="va">plate_id</span>, <span class="op">~</span><span class="va">well_id</span>, </span>
+<span>  <span class="co"># gABA</span></span>
+<span>  <span class="st">"P01"</span>, <span class="st">"F9"</span>,   </span>
+<span>  <span class="co"># NAG</span></span>
+<span>  <span class="st">"P01"</span>, <span class="st">"E8"</span>,</span>
+<span>  <span class="co"># Std-H2O</span></span>
+<span>  <span class="st">"P01"</span>, <span class="st">"B3"</span>,      </span>
+<span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>dataset <span class="op">=</span> <span class="st">"MR"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">to_remove</span></span>
+<span><span class="co">#&gt; # A tibble: 3 × 3</span></span>
+<span><span class="co">#&gt;   plate_id well_id dataset</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;   &lt;chr&gt;  </span></span>
+<span><span class="co">#&gt; 1 P01      F9      MR     </span></span>
+<span><span class="co">#&gt; 2 P01      E8      MR     </span></span>
+<span><span class="co">#&gt; 3 P01      B3      MR</span></span></code></pre></div>
+</div>
+<p>In a real dataset with hundreds of plates, this can take a while, and we recommand a second reading of those plots after “sleeping on it”, and seeing if we still agree with ourselves, and didn’t make any mistake</p>
+<p>Remove those outliers</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">MR_wash1</span> <span class="op">&lt;-</span> <span class="va">MR_co2_g_h</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="../reference/remove_wells.html">remove_wells</a></span><span class="op">(</span><span class="va">to_remove</span><span class="op">)</span> </span></code></pre></div>
+</div>
+<p>It is possible to run once more through the quality check before deciding to move on, and possibly create a “wash2”, “wash3”, etc. version, though we never needed it so far. But it might become relevant, for example, in the case of one single really extreme value, that would “squeeze” the rest of the data for all plates of the same panel in a plot too tight to discern patterns. In such cases, a removal of the extreme outlier first, followed by re-plotting, allows the unfolding of squeezed plots</p>
+<p>Store last version in a new variable (easier for edits…)</p>
+<p>–&gt; To Do: check, I feel that MR_clean is created twice. If that’s the case, this could lead to confusions –&gt; rename one</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">MR_clean</span> <span class="op">&lt;-</span> <span class="va">MR_wash1</span></span></code></pre></div>
+</div>
+</section></section><section class="section level2"><h2 id="average-per-plate-per-substrate">7 - Average per plate per substrate<a class="anchor" aria-label="anchor" href="#average-per-plate-per-substrate"></a>
+</h2>
+<section class="level2"><h3 id="compute-samplesubstrate-average">7.1 - Compute sample*substrate average<a class="anchor" aria-label="anchor" href="#compute-samplesubstrate-average"></a>
+</h3>
+<p>Now that outliers are removed, we can compute the average value per plate per substrate.</p>
+<p>Note that we create a new column where we store, for each substrate, whether the well contained “sample soil” or “standard soil” (this will be needed for downstream analysis)</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">MR_avg</span> <span class="op">&lt;-</span> <span class="va">MR_clean</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span>, <span class="va">map</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span></span>
+<span>    co2_g_h_avg <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">co2_g_h</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="co"># attribute sample soil or std soil</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>std_sample <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/case-and-replace-when.html" class="external-link">case_when</a></span><span class="op">(</span></span>
+<span>      <span class="va">map</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Std_H2O"</span>, <span class="st">"Std_Glu"</span><span class="op">)</span> <span class="op">~</span> <span class="st">"std_soil"</span>,</span>
+<span>      .default <span class="op">=</span> <span class="st">"sample"</span></span>
+<span>    <span class="op">)</span><span class="op">)</span> </span>
+<span></span>
+<span><span class="co"># Check it out</span></span>
+<span><span class="va">MR_avg</span></span></code></pre></div>
+</div>
+<p>Plot distribution of values</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">distrib_uncorrected</span> <span class="op">&lt;-</span> <span class="va">MR_avg</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">co2_g_h_avg</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_histogram.html" class="external-link">geom_histogram</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
+<span>    title <span class="op">=</span> <span class="st">"Distribution of per plate per substrate average\nof CO2 emission rate"</span>,</span>
+<span>    x <span class="op">=</span> <span class="st">"CO2 emission rate [gCO2 / g dry soil / hour]"</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">dataset</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">distrib_uncorrected</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="microresp_files/figure-html/unnamed-chunk-30-1.png" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section><section class="level2"><h3 id="correction-of-averages---remove-basal-respiration">7.2 - Correction of averages - remove basal respiration<a class="anchor" aria-label="anchor" href="#correction-of-averages---remove-basal-respiration"></a>
+</h3>
+<p><span class="citation" data-cites="bongiorno2020">[@bongiorno2020]</span> write: <em>Thereafter, we corrected for the average respiration rate of soil to which the deionized water was added.</em></p>
+<p>Although not explicit, I believe that what they say if that they consider that substrate-induced respirations as computed so far are indeed the sum of basal respiration + the “real” part of the respiration that is substrate induced. So probably they do a subtraction?</p>
+<p>So, now we correct SIR’s for basal respiration (subtract H2O-resp from substrate-induced resp)</p>
+<p>First, extract basal respiration and keep only H2O rows, so that we have, separately, the basal respiration of the samples vs the standard soil</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Extract basal resp data only</span></span>
+<span><span class="va">basal_resp</span> <span class="op">&lt;-</span> <span class="va">MR_avg</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">map</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"H2O"</span>, <span class="st">"Std_H2O"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span>, <span class="va">std_sample</span>, <span class="va">co2_g_h_avg</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename</a></span><span class="op">(</span>basal_resp <span class="op">=</span> <span class="va">co2_g_h_avg</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Check it out</span></span>
+<span><span class="va">basal_resp</span></span>
+<span><span class="co">#&gt; # A tibble: 10 × 4</span></span>
+<span><span class="co">#&gt; # Groups:   dataset, plate_id [5]</span></span>
+<span><span class="co">#&gt;    dataset plate_id std_sample basal_resp</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;           &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt;  1 MR      P01      sample         0.119 </span></span>
+<span><span class="co">#&gt;  2 MR      P01      std_soil       0.123 </span></span>
+<span><span class="co">#&gt;  3 MR      P02      sample         0.105 </span></span>
+<span><span class="co">#&gt;  4 MR      P02      std_soil       0.113 </span></span>
+<span><span class="co">#&gt;  5 MR      P03      sample         0.0962</span></span>
+<span><span class="co">#&gt;  6 MR      P03      std_soil       0.0878</span></span>
+<span><span class="co">#&gt;  7 MR      P04      sample         0.0828</span></span>
+<span><span class="co">#&gt;  8 MR      P04      std_soil       0.0909</span></span>
+<span><span class="co">#&gt;  9 MR      P05      sample         0.0733</span></span>
+<span><span class="co">#&gt; 10 MR      P05      std_soil       0.0845</span></span></code></pre></div>
+</div>
+<p>Now we can join this info to the rest of the data and compute H2O-corrected data</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">H2O_corrected</span> <span class="op">&lt;-</span> <span class="va">MR_avg</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">basal_resp</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>H2O_corrected <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/case-and-replace-when.html" class="external-link">case_when</a></span><span class="op">(</span></span>
+<span>    <span class="va">map</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"H2O"</span>, <span class="st">"Std_H2O"</span><span class="op">)</span> <span class="op">~</span> <span class="va">basal_resp</span>,</span>
+<span>    .default <span class="op">=</span> <span class="va">co2_g_h_avg</span> <span class="op">-</span> <span class="va">basal_resp</span></span>
+<span>  <span class="op">)</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>Check it out</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">H2O_corrected</span></span>
+<span><span class="co">#&gt; # A tibble: 50 × 7</span></span>
+<span><span class="co">#&gt; # Groups:   dataset, plate_id [5]</span></span>
+<span><span class="co">#&gt;    dataset plate_id map     co2_g_h_avg std_sample basal_resp H2O_corrected</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;         &lt;dbl&gt; &lt;chr&gt;           &lt;dbl&gt;         &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt;  1 MR      P01      Ala           0.286 sample          0.119        0.168 </span></span>
+<span><span class="co">#&gt;  2 MR      P01      Glu           0.552 sample          0.119        0.434 </span></span>
+<span><span class="co">#&gt;  3 MR      P01      H2O           0.119 sample          0.119        0.119 </span></span>
+<span><span class="co">#&gt;  4 MR      P01      Lgn           0.248 sample          0.119        0.129 </span></span>
+<span><span class="co">#&gt;  5 MR      P01      NAG           0.261 sample          0.119        0.142 </span></span>
+<span><span class="co">#&gt;  6 MR      P01      OA            2.06  sample          0.119        1.94  </span></span>
+<span><span class="co">#&gt;  7 MR      P01      Std_Glu       1.27  std_soil        0.123        1.14  </span></span>
+<span><span class="co">#&gt;  8 MR      P01      Std_H2O       0.123 std_soil        0.123        0.123 </span></span>
+<span><span class="co">#&gt;  9 MR      P01      Urea          0.223 sample          0.119        0.104 </span></span>
+<span><span class="co">#&gt; 10 MR      P01      gABA          0.189 sample          0.119        0.0702</span></span>
+<span><span class="co">#&gt; # ℹ 40 more rows</span></span></code></pre></div>
+</div>
+<p>In the following sections, I follow computations as in <span class="citation" data-cites="bongiorno2020a">[@bongiorno2020a]</span>, i.e.:</p>
+<ul>
+<li><p>Compute MSIR, MBC, metabolic quotient</p></li>
+<li><p>Compute relative contributions of SIR’s (SIR / MSIR), refered to as rSIR’s</p></li>
+<li><p>Derive from this relative contribution an intermediary value needed for Shanon (x*ln(x)), refered to as sSIR’s</p></li>
+<li><p>Compute the Shannon index</p></li>
+</ul>
+<p>Then, we can still discuss some N-based index</p>
+</section></section><section class="section level2"><h2 id="mbc-basal-respiration-metabolic-quotient-msir">8 - MBC, basal respiration, metabolic quotient, MSIR<a class="anchor" aria-label="anchor" href="#mbc-basal-respiration-metabolic-quotient-msir"></a>
+</h2>
+<p>Now, we compute the MBC, qCO2 and MSIR (here, we use H2O-corrected data, and don’t keep water in the computation. So it is only a sum of non-H2O substrates. Also, we don’t keep std soil data from here on, so we start by storing it somewhere (it will be needed for QC)</p>
+<p><u><strong>!! TO DO: check where computation of MBC and qCO2 come from + units !!</strong></u></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># pivot to get one column per substrate</span></span>
+<span><span class="va">wider_data</span> <span class="op">&lt;-</span> <span class="va">H2O_corrected</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/pivot_wider.html" class="external-link">pivot_wider</a></span><span class="op">(</span></span>
+<span>    names_from <span class="op">=</span> <span class="va">map</span>, </span>
+<span>    values_from <span class="op">=</span> <span class="va">H2O_corrected</span>, id_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># extract std_soil_data and store it in an object</span></span>
+<span><span class="va">std_soil_data</span> <span class="op">&lt;-</span> <span class="va">wider_data</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span>, <span class="fu">tidyselect</span><span class="fu">::</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"Std"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># compute first round of indicators</span></span>
+<span><span class="va">MSIR</span> <span class="op">&lt;-</span> <span class="va">wider_data</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="co"># exclude std soil data</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">!</span><span class="fu">tidyselect</span><span class="fu">::</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"Std"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="co"># compute Basal resp, MBC, metabolic quotient</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename</a></span><span class="op">(</span>basal_resp <span class="op">=</span> <span class="st">"H2O"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/relocate.html" class="external-link">relocate</a></span><span class="op">(</span><span class="va">basal_resp</span>, .after <span class="op">=</span> <span class="fu">tidyselect</span><span class="fu">::</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/everything.html" class="external-link">everything</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
+<span>    MBC <span class="op">=</span> <span class="op">(</span><span class="va">Glu</span> <span class="op">*</span> <span class="fl">40.04</span><span class="op">)</span> <span class="op">+</span> <span class="fl">0.37</span>, <span class="co"># not sure where those numbers come from!</span></span>
+<span>    qCO2 <span class="op">=</span> <span class="va">basal_resp</span> <span class="op">*</span> <span class="fl">1000</span> <span class="op">/</span> <span class="va">MBC</span> <span class="co"># same here</span></span>
+<span>  <span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="co"># compute MSIR</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rowwise.html" class="external-link">rowwise</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>MSIR <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/c_across.html" class="external-link">c_across</a></span><span class="op">(</span><span class="va">Ala</span><span class="op">:</span><span class="va">gABA</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+</div>
+</section><section class="section level2"><h2 id="shannon-index">9 - Shannon index<a class="anchor" aria-label="anchor" href="#shannon-index"></a>
+</h2>
+<p>Now, we re-pivot longer to compute on a per-substrate basis again, and directly compute relative SIRs (rSIR) and -x*ln(x) intermediary value</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">rSIRs</span> <span class="op">&lt;-</span> <span class="va">MSIR</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html" class="external-link">pivot_longer</a></span><span class="op">(</span>cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">Ala</span><span class="op">:</span><span class="va">gABA</span><span class="op">)</span>, names_to <span class="op">=</span> <span class="st">"substrate"</span>, values_to <span class="op">=</span> <span class="st">"SIR"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
+<span>    rSIR <span class="op">=</span> <span class="va">SIR</span> <span class="op">/</span> <span class="va">MSIR</span>,</span>
+<span>    sSIR <span class="op">=</span> <span class="op">-</span><span class="va">rSIR</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">rSIR</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>! There is still one warning: we are loosing one data point (possibly still a negative or null value given to the log?)</p>
+<p><u><strong>!! TODO : Deal with this later !!</strong></u></p>
+<p>Still, check out the output</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">rSIRs</span></span>
+<span><span class="co">#&gt; # A tibble: 35 × 10</span></span>
+<span><span class="co">#&gt;    dataset plate_id basal_resp   MBC  qCO2  MSIR substrate    SIR   rSIR   sSIR</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;         &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;      &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt;  1 MR      P01           0.119  17.7  6.69  2.99 Ala       0.168  0.0560 0.161 </span></span>
+<span><span class="co">#&gt;  2 MR      P01           0.119  17.7  6.69  2.99 Glu       0.434  0.145  0.280 </span></span>
+<span><span class="co">#&gt;  3 MR      P01           0.119  17.7  6.69  2.99 Lgn       0.129  0.0431 0.136 </span></span>
+<span><span class="co">#&gt;  4 MR      P01           0.119  17.7  6.69  2.99 NAG       0.142  0.0476 0.145 </span></span>
+<span><span class="co">#&gt;  5 MR      P01           0.119  17.7  6.69  2.99 OA        1.94   0.650  0.280 </span></span>
+<span><span class="co">#&gt;  6 MR      P01           0.119  17.7  6.69  2.99 Urea      0.104  0.0349 0.117 </span></span>
+<span><span class="co">#&gt;  7 MR      P01           0.119  17.7  6.69  2.99 gABA      0.0702 0.0235 0.0881</span></span>
+<span><span class="co">#&gt;  8 MR      P02           0.105  19.9  5.27  3.11 Ala       0.158  0.0508 0.151 </span></span>
+<span><span class="co">#&gt;  9 MR      P02           0.105  19.9  5.27  3.11 Glu       0.487  0.157  0.290 </span></span>
+<span><span class="co">#&gt; 10 MR      P02           0.105  19.9  5.27  3.11 Lgn       0.139  0.0448 0.139 </span></span>
+<span><span class="co">#&gt; # ℹ 25 more rows</span></span></code></pre></div>
+</div>
+<p>Now, we can pivot wider again to sum sSIRs on a per sample basis</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb39"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">shannon</span> <span class="op">&lt;-</span> <span class="va">rSIRs</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/pivot_wider.html" class="external-link">pivot_wider</a></span><span class="op">(</span></span>
+<span>    names_from <span class="op">=</span> <span class="va">substrate</span>, names_prefix <span class="op">=</span> <span class="st">"sSIR_"</span>,</span>
+<span>    values_from <span class="op">=</span> <span class="va">sSIR</span>,</span>
+<span>    id_cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span>, <span class="va">basal_resp</span>, <span class="va">MBC</span>, <span class="va">qCO2</span>, <span class="va">MSIR</span><span class="op">)</span></span>
+<span>  <span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rowwise.html" class="external-link">rowwise</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>shannon <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/c_across.html" class="external-link">c_across</a></span><span class="op">(</span><span class="va">sSIR_Ala</span><span class="op">:</span><span class="va">sSIR_gABA</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Check it out</span></span>
+<span><span class="va">shannon</span></span>
+<span><span class="co">#&gt; # A tibble: 5 × 14</span></span>
+<span><span class="co">#&gt; # Rowwise: </span></span>
+<span><span class="co">#&gt;   dataset plate_id basal_resp   MBC  qCO2  MSIR sSIR_Ala sSIR_Glu sSIR_Lgn</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;         &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 MR      P01          0.119  17.7   6.69  2.99    0.161    0.280    0.136</span></span>
+<span><span class="co">#&gt; 2 MR      P02          0.105  19.9   5.27  3.11    0.151    0.290    0.139</span></span>
+<span><span class="co">#&gt; 3 MR      P03          0.0962 23.8   4.05  3.30    0.148    0.307    0.136</span></span>
+<span><span class="co">#&gt; 4 MR      P04          0.0828 14.7   5.64  2.84    0.135    0.261    0.116</span></span>
+<span><span class="co">#&gt; 5 MR      P05          0.0733  8.49  8.63  2.34    0.107    0.212    0.107</span></span>
+<span><span class="co">#&gt; # ℹ 5 more variables: sSIR_NAG &lt;dbl&gt;, sSIR_OA &lt;dbl&gt;, sSIR_Urea &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   sSIR_gABA &lt;dbl&gt;, shannon &lt;dbl&gt;</span></span></code></pre></div>
+</div>
+<p>Gather all data (except std soil data)</p>
+<p>–&gt; to do: reevaluate selection of variables to keep (more readibility if less)</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">MR_indices</span> <span class="op">&lt;-</span> <span class="va">MR_clean</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="co">#take relevant categorical variables (no quantitative data)</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span>, <span class="va">run_id</span><span class="op">:</span><span class="va">sample_name</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="co"># reduce it to one row per plate</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="co"># join it to the quantitative, plate-wise (=sample-wise) agregated quantitative data</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">shannon</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="co"># give it a better order for readability</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/relocate.html" class="external-link">relocate</a></span><span class="op">(</span><span class="va">plate_id</span>, <span class="va">sample_id</span>, <span class="va">soil</span>, <span class="va">basal_resp</span>, <span class="va">MBC</span>, <span class="va">qCO2</span>, <span class="va">MSIR</span>, <span class="va">shannon</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>Check it out</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">MR_indices</span> </span>
+<span><span class="co">#&gt; # A tibble: 5 × 28</span></span>
+<span><span class="co">#&gt;   plate_id sample_id soil  basal_resp   MBC  qCO2  MSIR shannon dataset run_id</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;     &lt;chr&gt;      &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt; </span></span>
+<span><span class="co">#&gt; 1 P01      t2_102_z1 Auto      0.119  17.7   6.69  2.99   1.21  MR      R1    </span></span>
+<span><span class="co">#&gt; 2 P02      t2_103_z3 Auto      0.105  19.9   5.27  3.11   1.26  MR      R1    </span></span>
+<span><span class="co">#&gt; 3 P03      t2_86_z2  ABC       0.0962 23.8   4.05  3.30   1.28  MR      R1    </span></span>
+<span><span class="co">#&gt; 4 P04      t2_101_z3 Auto      0.0828 14.7   5.64  2.84   1.08  MR      R1    </span></span>
+<span><span class="co">#&gt; 5 P05      t2_84_z1  ABC       0.0733  8.49  8.63  2.34   0.865 MR      R1    </span></span>
+<span><span class="co">#&gt; # ℹ 18 more variables: lab_id &lt;chr&gt;, detection_plate_id &lt;chr&gt;, expe &lt;chr&gt;,</span></span>
+<span><span class="co">#&gt; #   cra_trial &lt;chr&gt;, sd_c &lt;chr&gt;, crop_diversity &lt;chr&gt;, bloc &lt;chr&gt;,</span></span>
+<span><span class="co">#&gt; #   sampling_time &lt;chr&gt;, zone &lt;chr&gt;, date &lt;chr&gt;, sample_name &lt;chr&gt;,</span></span>
+<span><span class="co">#&gt; #   sSIR_Ala &lt;dbl&gt;, sSIR_Glu &lt;dbl&gt;, sSIR_Lgn &lt;dbl&gt;, sSIR_NAG &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   sSIR_OA &lt;dbl&gt;, sSIR_Urea &lt;dbl&gt;, sSIR_gABA &lt;dbl&gt;</span></span></code></pre></div>
+</div>
+<p>We lost</p>
+<ul>
+<li><p>the data on raw SIR and relative SIR (rSIR), which is stored in rSIRs (just in case)</p></li>
+<li><p>and std soil data</p></li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb42"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">rSIRs</span></span>
+<span><span class="co">#&gt; # A tibble: 35 × 10</span></span>
+<span><span class="co">#&gt;    dataset plate_id basal_resp   MBC  qCO2  MSIR substrate    SIR   rSIR   sSIR</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;         &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;      &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt;  1 MR      P01           0.119  17.7  6.69  2.99 Ala       0.168  0.0560 0.161 </span></span>
+<span><span class="co">#&gt;  2 MR      P01           0.119  17.7  6.69  2.99 Glu       0.434  0.145  0.280 </span></span>
+<span><span class="co">#&gt;  3 MR      P01           0.119  17.7  6.69  2.99 Lgn       0.129  0.0431 0.136 </span></span>
+<span><span class="co">#&gt;  4 MR      P01           0.119  17.7  6.69  2.99 NAG       0.142  0.0476 0.145 </span></span>
+<span><span class="co">#&gt;  5 MR      P01           0.119  17.7  6.69  2.99 OA        1.94   0.650  0.280 </span></span>
+<span><span class="co">#&gt;  6 MR      P01           0.119  17.7  6.69  2.99 Urea      0.104  0.0349 0.117 </span></span>
+<span><span class="co">#&gt;  7 MR      P01           0.119  17.7  6.69  2.99 gABA      0.0702 0.0235 0.0881</span></span>
+<span><span class="co">#&gt;  8 MR      P02           0.105  19.9  5.27  3.11 Ala       0.158  0.0508 0.151 </span></span>
+<span><span class="co">#&gt;  9 MR      P02           0.105  19.9  5.27  3.11 Glu       0.487  0.157  0.290 </span></span>
+<span><span class="co">#&gt; 10 MR      P02           0.105  19.9  5.27  3.11 Lgn       0.139  0.0448 0.139 </span></span>
+<span><span class="co">#&gt; # ℹ 25 more rows</span></span>
+<span><span class="va">std_soil_data</span></span>
+<span><span class="co">#&gt; # A tibble: 5 × 4</span></span>
+<span><span class="co">#&gt; # Groups:   dataset, plate_id [5]</span></span>
+<span><span class="co">#&gt;   dataset plate_id Std_Glu Std_H2O</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;      &lt;dbl&gt;   &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 MR      P01        1.14   0.123 </span></span>
+<span><span class="co">#&gt; 2 MR      P02        1.08   0.113 </span></span>
+<span><span class="co">#&gt; 3 MR      P03        1.02   0.0878</span></span>
+<span><span class="co">#&gt; 4 MR      P04        0.922  0.0909</span></span>
+<span><span class="co">#&gt; 5 MR      P05        0.984  0.0845</span></span></code></pre></div>
+</div>
+</section><section class="section level2"><h2 id="qc---check-standard-soils">10 - QC - check standard soils<a class="anchor" aria-label="anchor" href="#qc---check-standard-soils"></a>
+</h2>
+<p>I’m actually not sooo happy about this. FYI: here, I took H2O-corrected data for the glucose</p>
+<p>–&gt; To Do: again, we have only one run, so… not displaying as it could</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb43"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># prepare data for the graph</span></span>
+<span><span class="va">std_soil_longer</span> <span class="op">&lt;-</span> <span class="va">std_soil_data</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html" class="external-link">pivot_longer</a></span><span class="op">(</span></span>
+<span>    values_to <span class="op">=</span> <span class="st">"SIR"</span>, </span>
+<span>    names_to <span class="op">=</span> <span class="st">"substrate"</span>, </span>
+<span>    cols <span class="op">=</span> <span class="fu">tidyselect</span><span class="fu">::</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/starts_with.html" class="external-link">starts_with</a></span><span class="op">(</span><span class="st">"Std"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="co"># add categorical data</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span></span>
+<span>    <span class="va">MR_clean</span> <span class="op">|&gt;</span> </span>
+<span>      <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span>, <span class="va">run_id</span>, <span class="va">detection_plate_id</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>      <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>    by <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/join_by.html" class="external-link">join_by</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># plot it</span></span>
+<span><span class="va">std_soil_longer</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">run_id</span>, y <span class="op">=</span> <span class="va">SIR</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_boxplot.html" class="external-link">geom_boxplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">substrate</span>, scales <span class="op">=</span> <span class="st">"free"</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="microresp_files/figure-html/unnamed-chunk-41-1.png" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section><section class="section level2"><h2 id="last-data-wrangling">11 - Last data wrangling<a class="anchor" aria-label="anchor" href="#last-data-wrangling"></a>
+</h2>
+<p>For our Field experiment, some modalities are to be removed: Bloc 1 is not a real bloc, and the faba bean did not take in the Ref treatment, so we removed it from MR data. Not relevant to write it out here though (didn’t make it into plates 1 to 5), but nice to mention that some more post analysis might me relevant</p>
+<p>Plot the indices</p>
+<p>–&gt; make this into a loop, fo each variable between basal_resp and shannon</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb44"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">MR_indices</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">soil</span>, y <span class="op">=</span> <span class="va">basal_resp</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_boxplot.html" class="external-link">geom_boxplot</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="microresp_files/figure-html/unnamed-chunk-42-1.png" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section><section class="section level2"><h2 id="next-steps">12 - Next steps<a class="anchor" aria-label="anchor" href="#next-steps"></a>
+</h2>
+<p>Can be exported with <code>MR_indices |&gt; write_rds("path/to/the/file.rds")</code> or as a csv with <code>MR_indices |&gt; write_csv("path/to/the/file.csv")</code></p>
+<p>Now would come: plotting, modelling, etc. –&gt; “usual data analysis”</p>
+</section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
