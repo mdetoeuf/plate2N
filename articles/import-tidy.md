@@ -2,6 +2,33 @@
 
 ## Introduction
 
+### Where this vignette fits
+
+Before diving in, here’s how `import-tidy` fits into the full `plate2N`
+pipeline — click any step to jump to its vignette.
+
+``` mermaid
+ flowchart TD
+   A(Import &amp; tidy) --> B(Handle outliers)
+   B --> C1(Blank correction: std curve)
+   B --> C2(Blank correction: samples)
+   C1 --> D(Regression &amp; concentration)
+   C2 --> D
+   B -.-> M(MicroResp variant):::sideThing
+
+   click A "articles/import-tidy.html" "import-tidy"
+   click B "articles/handling-outliers.html" "handling-outliers"
+   click C1 "articles/blank-correction.html" "blank-correction"
+   click C2 "articles/blank-correction.html" "blank-correction"
+   click D "articles/abs-to-conc.html" "abs-to-conc"
+   click M "articles/microresp.html" "microresp"
+
+%% color = font color
+
+   classDef sideThing fill:#f8fafc,stroke:#cbd5e1,color:#64748b,stroke-width:1px;
+   linkStyle 5 stroke:#cbd5e1,stroke-width:1px;
+```
+
 The goal of `plate2N` is to facilitate data wrangling and data analysis
 for raw data that originates from absorbance readings with a 96-well
 plate reader (spectrophotometry).

@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,8 +83,6 @@
 <section class="section level2"><h2 id="todo">TODO<a class="anchor" aria-label="anchor" href="#todo"></a>
 </h2>
 <ul>
-<li><p>Integrate polynomial modelling, take it from personal pipeline</p></li>
-<li><p>write out last sections: 2.6, 3 and 4</p></li>
 <li><p>Consider creating a function for the multiple-curve QC (+ explain idea why it is relevant to look at it)</p></li>
 <li><p>For conversion: explain well difference btw mg N-sp/L and mg N/L, and how it relates to molar masses</p></li>
 <li><p>Consider using ggplot to build the residuals plots, evtl. make it a function (or even make a function of the whole comparison plotting process (4 plots given from the data of one curve)</p></li>
@@ -166,7 +164,8 @@
 <p><strong>Choose your model wisely</strong></p>
 <p>In this pipeline, we show how to implement a linear model and a polynomial model. The section on linear model is detailed in great depth, then the polynomial model is presented more briefly, with insistence only on points that differ from the linear model.</p>
 <p>For dosage of mineral N pools, a polynomial model can be necessary, for example, when concentrations (and absorbance values) are high. The best red flag for the inappropriateness of the linear model is when the fit of the curve does not seem to suit the plotting of the experimental points.</p>
-<p>For new pipelines, always check out the standard curves graphically to ensure a good fit</p>
+<p>For new pipelines, always check out the standard curves graphically to ensure a good fit.</p>
+<p>Curvature at high absorbance can come from more than one source — for example, the color-forming reagent becoming limiting at high concentrations, or stray light, an optical artifact of the plate reader itself that affects any sufficiently high absorbance reading regardless of chemistry. Switching to a polynomial model is a reasonable empirical fix either way, but it’s worth understanding roughly why your curve bends before doing so, since the two causes have different implications — for example, whether readings above your calibrated range can be trusted, or whether diluting samples is a better fix than adding model complexity.</p>
 </blockquote>
 </div>
 <p>We will illustrate the choice of model on another data set called <code>tidy_TDN</code> (equivalent in structure to the <code>tidy_plates</code> we had at the beginning of the vignette <code>blank-correction</code>):</p>
@@ -658,6 +657,12 @@
 </section></section><section class="section level2"><h2 id="sec-polynomial">4 - Polynomial model<a class="anchor" aria-label="anchor" href="#sec-polynomial"></a>
 </h2>
 <p>In this section, we cover the sames steps as in the previous 2 sections, but implementing a polynomial, rather than linear, model. This was necessary, for example, when dosing total dissolved nitrogen, i.e., dosing nitrate after a total oxidation of all N-compounds to nitrate. For this experiment, standard curve concentrations have been increased ten-fold. This resulted in highly concentrated solutions generating absorbance values above 3. It appears that a polynomial model is more appropriate in this case, as can be seen in the next chunks (example of a single curve).</p>
+<div>
+<blockquote>
+<p><strong>Does a polynomial model change blank correction?</strong></p>
+<p>No. Blank correction (see the <code>blank-correction</code> vignette) was already carried out using simple subtraction, and that remains valid here even though the model in this section is polynomial. The blank is measured at (or near) zero concentration, before either of the mechanisms mentioned in <a href="#sec-choice">Tips for choosing the model</a> becomes relevant — so blank subtraction and curve shape are answering two separate questions. Nothing about using a polynomial model here requires revisiting the earlier blank-correction step.</p>
+</blockquote>
+</div>
 <div>
 <blockquote>
 <p><strong>Only polynomial model - specific steps are reviewed in detail</strong></p>

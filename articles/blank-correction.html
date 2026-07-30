@@ -12,6 +12,7 @@
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="blank-correction_files/libs/quarto-html/popper.min.js"></script><script src="blank-correction_files/libs/quarto-html/tippy.umd.min.js"></script><link href="blank-correction_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="blank-correction_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<script src="blank-correction_files/libs/quarto-diagram/mermaid.min.js"></script><script src="blank-correction_files/libs/quarto-diagram/mermaid-init.js"></script><link href="blank-correction_files/libs/quarto-diagram/mermaid.css" rel="stylesheet">
 <!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="blank-correction">
 </head>
 <body>
@@ -22,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,16 +82,15 @@
 </div>
 <div>
 <blockquote>
-<p><strong>Work in progress</strong></p>
-<p>This vignette is still under development, bugs are to be expected</p>
+<p><strong>Actively evolving</strong></p>
+<p>This pipeline works for its current use cases, but it is still gaining flexibility — some behavior that is hardcoded today may later become a parameter, and new features get added as real use cases come up (e.g. support for multiple extractants per plate was added in response to a user’s needs, and touched a fair amount of the underlying functions). So don’t be surprised if some details shift between versions. If anything here feels more cryptic than the <code>import-tidy</code> vignette, that’s fair — this one hasn’t had as many passes yet, and it’ll keep getting clearer.</p>
 </blockquote>
 </div>
 <section class="section level2"><h2 id="to-do">TO DO<a class="anchor" aria-label="anchor" href="#to-do"></a>
 </h2>
 <ul>
-<li>Consider making a function of creating the “to_remove” table for extractant outliers (section 3.3.3, <a href="#sec-multiple-extr" class="quarto-xref">Section 5.3.3</a>)</li>
+<li>Consider making a function of creating the “to_remove” table for extractant outliers (section 3.3.3, [the multiple-extractants section](#sec-multiple-extr))</li>
 <li>In the function qc_raw_qbs(), separate condition for export plot and show plot. If we export it, we may not want to plot it as an output…</li>
-<li><strong>Briefly describe steps of the pipeline at the end of the introduction</strong></li>
 <li>allow other digit and separator delimitors in extract_curve –&gt; make it a parameter</li>
 <li>the last paragraph of 3.3.3 is confusing –&gt; change the raw data so that we can remove this bit and re-run the coefficient of variation as we should</li>
 </ul></section><section class="section level2"><h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
@@ -99,22 +99,202 @@
 <p>This pipeline is adapted to the case where the standard curve solutions were prepared with a different blank than the samples. Because of that, there are 2 parallel pipelines to perform the blank-correction (first on standard curves data, then on samples data), then data from standard curves and from samples are merged again.</p>
 <p>In theory, the “samples” pipeline should be adaptable to the case where all wells used the same blank (including those containing standard curve solutions), though this has yet to be tested, and bugs may occur. Feel free to reach out to suggest improvements or signal bugs.</p>
 <p>To avoid confusion between “blank of the standard curve” and “blank of the samples”, the sample-blank is referred to as “extractant” or <code>extr</code> throughout this vignette, to refer to the solution that was used to extract (N-)compounds from soil samples and now serves as blank. The standard blank is referred to as <code>std_blank</code>.</p>
+<table class="table caption-top" style="width:99%;">
+<colgroup>
+<col style="width: 17%">
+<col style="width: 43%">
+<col style="width: 37%">
+</colgroup>
+<thead><tr class="header">
+<th></th>
+<th>Standard curve blank</th>
+<th>Sample blank</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Name used</td>
+<td><code>std_blank</code></td>
+<td>
+<code>extr</code> (extractant)</td>
+</tr>
+<tr class="even">
+<td>What it physically is</td>
+<td>The zero-concentration point of the standard curve itself</td>
+<td>The blank solution matching the sample matrix<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;In our experiments, this is the solution used to extract N-compounds from soil samples. More generally, this pipeline works for any dosage following a Beer-Lambert-style relationship between absorbance and concentration — &lt;code&gt;extr&lt;/code&gt; can be whatever solution serves as the blank for your own sample matrix.&lt;/p&gt;"><sup>1</sup></a>
+</td>
+</tr>
+<tr class="odd">
+<td>What it corrects</td>
+<td>Standard curve absorbance readings</td>
+<td>Sample absorbance readings</td>
+</tr>
+</tbody>
+</table>
+<section class="level2"><h3 id="the-whole-game">The Whole Game<a class="anchor" aria-label="anchor" href="#the-whole-game"></a>
+</h3>
+<p>This pipeline runs as two parallel branches — one for the standard curve, one for samples — that merge again once both are blank-corrected:</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
 <div>
-<blockquote>
-<p><strong>What this pipeline does</strong></p>
+<p></p>
+<figure class=""><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TD
+  A[Raw absorbance + metadata]
+  A --&gt; B1[Extract std curve data]
+  B1 --&gt; C1[Compute blank average]
+  C1 --&gt; O1{{Outlier removal}}
+  O1 --&gt; C1
+  C1 --&gt; D1[Blank-correct std curve]
+  D1 --&gt; E1[std_corrected]
+
+  A --&gt; B2[Extract extractant data]
+  B2 --&gt; C2[Compute blank average]
+  C2 --&gt; O2{{Outlier removal}}
+  O2 --&gt; C2
+  C2 --&gt; D2[Blank-correct samples]
+  D2 --&gt; E2[sample_corrected]
+
+  E1 --&gt; F[abs-to-conc]
+  E2 --&gt; F
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<p>There’s no honest one-shot code snippet for the whole thing, because deciding which wells are outliers is a manual, visual step — not something that can be scripted. But if your data happens to be clean (no outliers to remove), here’s the fast path:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># join raw data with per-plate metadata</span></span>
+<span><span class="va">raw_meta</span> <span class="op">&lt;-</span> <span class="va">tidy_plates</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">meta</span>, by <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/join_by.html" class="external-link">join_by</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">###############################</span></span>
+<span><span class="co"># --- standard curve branch ---</span></span>
+<span><span class="co">###############################</span></span>
+<span></span>
+<span><span class="co"># extract serial dilutions of the standard curve</span></span>
+<span><span class="va">curve_concentration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_curve.html">extract_curve</a></span><span class="op">(</span><span class="va">meta</span>, pipetting_direction <span class="op">=</span> <span class="st">"top_down"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># extract standard data and connect it to curve concentration</span></span>
+<span><span class="va">std_data</span> <span class="op">&lt;-</span> <span class="va">raw_meta</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="co"># extract data corresponding to the standard curve only</span></span>
+<span>  <span class="fu"><a href="../reference/extract_std_data.html">extract_std_data</a></span><span class="op">(</span>std_def <span class="op">=</span> <span class="st">"Std"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="co"># remove the 1-liner standard curve concentration</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">!</span><span class="va">std_conc</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="co"># create correspondence with curve concentration</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">curve_concentration</span>, by <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/join_by.html" class="external-link">join_by</a></span><span class="op">(</span><span class="va">row</span>, <span class="va">dataset</span>, <span class="va">plate_id</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># extract the blank from standard data</span></span>
+<span><span class="va">std_blank</span> <span class="op">&lt;-</span> <span class="va">std_data</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/extract_std_blank.html">extract_std_blank</a></span><span class="op">(</span>std_def <span class="op">=</span> <span class="st">"Std"</span>, pipetting_direction <span class="op">=</span> <span class="st">"top_down"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># compute per-curve blank average from trusted wells</span></span>
+<span><span class="va">std_blank_avg</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/std_blank_average.html">std_blank_average</a></span><span class="op">(</span><span class="va">std_blank</span><span class="op">$</span><span class="va">trusted</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">#** HERE COMES USER-DECISION ON OUTLIER REMOVAL - ITERATIVE PROCESS *</span></span>
+<span></span>
+<span><span class="co"># blank-correct standard curve data</span></span>
+<span><span class="va">std_corrected</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blank_correct_abs.html">blank_correct_abs</a></span><span class="op">(</span></span>
+<span>  raw_wells_data <span class="op">=</span> <span class="va">std_data</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">ungroup</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter_out</a></span><span class="op">(</span><span class="va">row</span> <span class="op">==</span> <span class="st">"A"</span><span class="op">)</span>,</span>
+<span>  per_plate_avg_blank <span class="op">=</span> <span class="va">std_blank_avg</span>,</span>
+<span>  map_to_exclude <span class="op">=</span> <span class="st">""</span></span>
+<span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">row</span><span class="op">:</span><span class="va">abs_corrected</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">#######################</span></span>
+<span><span class="co"># --- sample branch ---</span></span>
+<span><span class="co">#######################</span></span>
+<span></span>
+<span><span class="co"># compute per-plate average for extractant data</span></span>
+<span><span class="va">extr_avg</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extractant_average.html">extractant_average</a></span><span class="op">(</span><span class="va">raw_meta</span>, extr_def <span class="op">=</span> <span class="st">"extr"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">#** HERE COMES USER-DECISION ON OUTLIER REMOVAL - ITERATIVE PROCESS *</span></span>
+<span></span>
+<span><span class="co"># blank-correct sample data </span></span>
+<span><span class="va">sample_corrected</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/blank_correct_abs.html">blank_correct_abs</a></span><span class="op">(</span></span>
+<span>  raw_wells_data <span class="op">=</span> <span class="va">raw_meta</span>,</span>
+<span>  per_plate_avg_blank <span class="op">=</span> <span class="va">extr_avg</span>,</span>
+<span>   map_to_exclude <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"empty"</span>, <span class="st">"Std"</span>, <span class="st">"extr"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>In practice, you’ll almost always want the quality-check and outlier-removal steps covered in detail below — this shortcut just shows the shape of the pipeline before we get into the specifics.</p>
+</section><section class="level2"><h3 id="the-cheat-sheet">The Cheat Sheet<a class="anchor" aria-label="anchor" href="#the-cheat-sheet"></a>
+</h3>
+<table class="table caption-top" style="width:100%;">
+<colgroup>
+<col style="width: 15%">
+<col style="width: 35%">
+<col style="width: 48%">
+</colgroup>
+<thead><tr class="header">
+<th>Step</th>
+<th>Function(s)</th>
+<th>Purpose</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Join data</td>
+<td><code><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">dplyr::left_join()</a></code></td>
+<td>Join two data frames together based on shared column values (e.g., matching per-plate metadata to raw absorbance data)</td>
+</tr>
+<tr class="even">
+<td>Extract curve concentrations</td>
+<td><code><a href="../reference/extract_curve.html">extract_curve()</a></code></td>
+<td>Expand compact per-plate curve concentrations into one row per well</td>
+</tr>
+<tr class="odd">
+<td>Extract std curve &amp; blank</td>
+<td>
+<code><a href="../reference/extract_std_data.html">extract_std_data()</a></code>, <code><a href="../reference/extract_std_blank.html">extract_std_blank()</a></code>
+</td>
+<td>Subset standard curve wells and identify their blank wells</td>
+</tr>
+<tr class="even">
+<td>Average std blank</td>
+<td><code><a href="../reference/std_blank_average.html">std_blank_average()</a></code></td>
+<td>Compute the per-plate average of the standard blank</td>
+</tr>
+<tr class="odd">
+<td>Extract &amp; average extractant</td>
+<td><code><a href="../reference/extractant_average.html">extractant_average()</a></code></td>
+<td>Compute the per-plate average of the sample blank (extractant)</td>
+</tr>
+<tr class="even">
+<td>QC &amp; visualize outliers</td>
+<td>
+<code><a href="../reference/qc_raw_extr.html">qc_raw_extr()</a></code>, <code><a href="../reference/plot_blank_var_distrib.html">plot_blank_var_distrib()</a></code>, <code><a href="../reference/boxplot_outlier_extr.html">boxplot_outlier_extr()</a></code>, <code><a href="../reference/suspicious_extr.html">suspicious_extr()</a></code>
+</td>
+<td>
+<p>Identify and visualize suspicious/outlier wells</p>
+<p><em>(see the upcoming plotting vignette)</em></p>
+</td>
+</tr>
+<tr class="odd">
+<td>Remove outlier wells</td>
+<td><code><a href="../reference/remove_wells.html">remove_wells()</a></code></td>
+<td>Drop wells identified as outliers — explained in detail in <code>handling-outliers</code>
+</td>
+</tr>
+<tr class="even">
+<td>Blank-correct (std curve or samples)</td>
+<td><code><a href="../reference/blank_correct_abs.html">blank_correct_abs()</a></code></td>
+<td>Subtract the relevant blank average from absorbance — same function for both branches, just called with different arguments</td>
+</tr>
+</tbody>
+</table></section><section class="level2"><h3 id="overview-of-blank-correction">Overview of blank-correction<a class="anchor" aria-label="anchor" href="#overview-of-blank-correction"></a>
+</h3>
 <ul>
 <li>
 <p>Blank correction of standard curve</p>
 <ul>
 <li><p>extracting standard curve data and their blank</p></li>
 <li>
-<p>if several curves per plate:</p>
+<p>if there is more than one blank well to compare (e.g. several curves per plate, or several blank wells within a single curve):</p>
 <ul>
 <li><p>identifying and remove outliers</p></li>
 <li><p>compute the per-plate mean of blanks without outliers</p></li>
 </ul>
 </li>
-<li><p>correct the rest of standard curve data by subtracting the mean of its blank</p></li>
+<li><p>correct the rest of the standard curve data by subtracting the mean of its blank</p></li>
 </ul>
 </li>
 <li>
@@ -123,21 +303,28 @@
 <li><p>extracting extractant (= sample-blank) data</p></li>
 <li><p>identifying and removing outliers</p></li>
 <li><p>compute the per-plate mean of blanks without outliers</p></li>
-<li><p>correct samples raw data by subtracting the mean of its blank (extractant)</p></li>
+<li><p>correct samples raw data by subtracting the mean of their blank (extractant)</p></li>
 </ul>
 </li>
 </ul>
-<p><strong>Particularly useful is the automated identification of possible outliers, so that users only need to assess and take outlier-removal decisions for those “suspicious” curves or extractant data</strong></p>
+<p>Particularly useful throughout is the automated identification of possible outliers, so that you only need to assess and take outlier-removal decisions for those “suspicious” curves or extractant data.</p>
+<div>
+<blockquote>
+<p><strong>Prerequisites</strong></p>
+<ul>
+<li><p>data has been imported and tidied, see <code><a href="../articles/import-tidy.html">vignette("import-tidy", package = "plate2N")</a></code></p></li>
+<li><p>(recommended) a preliminary quality check has been run on raw absorbance data, see <code><a href="../articles/handling-outliers.html">vignette("handling-outliers", package = "plate2N")</a></code></p></li>
+</ul>
 </blockquote>
 </div>
-</section><section class="section level2"><h2 id="getting-raw-absorbance-data">1 - Getting raw absorbance data<a class="anchor" aria-label="anchor" href="#getting-raw-absorbance-data"></a>
+</section></section><section class="section level2"><h2 id="getting-raw-absorbance-data">1 - Getting raw absorbance data<a class="anchor" aria-label="anchor" href="#getting-raw-absorbance-data"></a>
 </h2>
 <p>The vignette <code>import-tidy</code> shows how to import and tidy absorbance data. The vignette <code>handling-outliers</code> shows how to run some preliminary quality checks with the function <code><a href="../reference/qc_raw_abs.html">qc_raw_abs()</a></code> and explains in detail the process of removing outliers once they are identified, which will be needed thoughout this pipeline. To access those vignettes, run the following commands</p>
 <p><code><a href="../articles/import-tidy.html">vignette("import-tidy", package = "plate2N")</a></code></p>
 <p><code><a href="../articles/handling-outliers.html">vignette("handling-outliers", package = "plate2N")</a></code></p>
 <p>Tidy data as imported according to <code>import-tidy</code> should look something like this:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tidy_plates</span></span>
 <span><span class="co">#&gt; # A tibble: 480 × 8</span></span>
 <span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id map      abs  </span></span>
@@ -161,7 +348,7 @@
 </ul>
 <p><code>metadata</code> is an example data set that is part of this package (run <code><a href="../reference/metadata.html">?metadata</a></code> to see its documentation).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">meta</span> <span class="op">&lt;-</span> <span class="va">metadata</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span>, <span class="va">std_sp</span>, <span class="va">std_unit</span>, <span class="va">std_conc</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 5 × 5</span></span>
 <span><span class="co">#&gt;   dataset plate_id std_sp std_unit    std_conc           </span></span>
@@ -174,7 +361,7 @@
 </div>
 <p>We now join (raw) plate data and metadata (<code>meta</code>). Note that there has to be a correspondence in the columns <code>dataset</code> and <code>plate_id</code> between the raw absorbance data and the metadata.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Checking out tidy_plates again and noticing the columns dataset and plate_id</span></span>
 <span><span class="va">tidy_plates</span></span>
 <span><span class="co">#&gt; # A tibble: 480 × 8</span></span>
@@ -232,7 +419,7 @@
 </h3>
 <p>To fit in one row per plate, the concentrations for standard curve are, so far, stored in a compact manner, like this:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">raw_meta</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">plate_id</span>, <span class="va">std_conc</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 3 × 2</span></span>
 <span><span class="co">#&gt;   plate_id std_conc           </span></span>
@@ -245,7 +432,7 @@
 <p>Note that concentration values are separated by a <code>-</code> and digits are marked by a <code>.</code>, which is important in the function call to <code><a href="../reference/extract_curve.html">extract_curve()</a></code>. Also, concentration values MUST be in ascending order in the metadata file. See also <code><a href="../reference/metadata.html">?metadata</a></code> and <code>?extract_curve()</code></p>
 <p><code><a href="../reference/extract_curve.html">extract_curve()</a></code> “pulls” the curve concentration data to have only one concentration value per row (under the column <code>std_conc</code>), and adds corresponding “row” data in the order defined by the argument <code>pipetting_direction</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">curve_concentration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_curve.html">extract_curve</a></span><span class="op">(</span><span class="va">meta</span>, pipetting_direction <span class="op">=</span> <span class="st">"top_down"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 40 × 4</span></span>
 <span><span class="co">#&gt;    dataset plate_id row   std_conc</span></span>
@@ -276,7 +463,7 @@
 </h3>
 <p>Here, we extract a subset of the table <code>raw_meta</code>, keeping only absorbance reads from the standard curve (defined by the value <code>Std</code> in the column <code>map</code>), from which we remove the “old” column <code>std_conc</code> (with all dilutions of the curve), and replace it by the “new” column <code>std_conc</code> as created in <code>curve_concentration</code> (only 1 dilution level per row).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Preparing standard curve data</span></span>
 <span><span class="va">std_data</span> <span class="op">&lt;-</span> <span class="va">raw_meta</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="co"># extract standard curve data</span></span>
@@ -312,7 +499,7 @@
 </h3>
 <p><code>extract_std_blanc()</code> returns a list with 3 elements concerning standard blanks only (notice that <code>std_blank$all</code> has 8x less rows than <code>std_data</code> as it only contains the blank of the standard curve, i.e., one well per column)</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># extract blank data from std_data</span></span>
 <span><span class="va">std_blank</span> <span class="op">&lt;-</span> <span class="va">std_data</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="../reference/extract_std_blank.html">extract_std_blank</a></span><span class="op">(</span></span>
@@ -329,7 +516,7 @@
 <code>std_blank$all</code> fetches all wells that are expected to contain the standard blank, i.e., all standard data from plate-row A (<code>pipetting_direction = "top_down"</code>) or H (<code>pipetting_direction = "bottom_up"</code>)</li>
 </ul>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span>  <span class="va">std_blank</span><span class="op">$</span><span class="va">all</span></span>
 <span><span class="co">#&gt; # A tibble: 10 × 8</span></span>
 <span><span class="co">#&gt; # Groups:   dataset, plate_id, column [10]</span></span>
@@ -348,10 +535,10 @@
 </div>
 <ul>
 <li>
-<code>std_blank$untrusted</code> identifies expected blank wells that do not correspond to the lowest absorbance value of their standard curve<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;This quality check was added because, in case of top_down pipetting, A1 often will contain the standard blank, but it is also often the first well to be filled during pipetting. With automated pipettes, a small ejection of liquid has to occur before dispensing the first dose of solution. Failure to intentionally eject will result in the first well receiving the “ejection” dose, which is not the correct volume. This is not trivial because with big data sets containing hundreds of plates, it is not unlikely that this human error happens a coupls of times. This can end up in various responses in terms of absorbance, depending on which reagent has been wrongly pipetted.&lt;/p&gt;"><sup>1</sup></a>. This item may be empty</li>
+<code>std_blank$untrusted</code> identifies expected blank wells that do not correspond to the lowest absorbance value of their standard curve<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;This quality check was added because, in case of top_down pipetting, A1 often will contain the standard blank, but it is also often the first well to be filled during pipetting. With automated pipettes, a small ejection of liquid has to occur before dispensing the first dose of solution. Failure to intentionally eject will result in the first well receiving the “ejection” dose, which is not the correct volume. This is not trivial because with big data sets containing hundreds of plates, it is not unlikely that this human error happens a coupls of times. This can end up in various responses in terms of absorbance, depending on which reagent has been wrongly pipetted.&lt;/p&gt;"><sup>2</sup></a>. This item may be empty</li>
 </ul>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span>  <span class="va">std_blank</span><span class="op">$</span><span class="va">untrusted</span></span>
 <span><span class="co">#&gt; # A tibble: 2 × 8</span></span>
 <span><span class="co">#&gt; # Groups:   dataset, plate_id, column [2]</span></span>
@@ -365,7 +552,7 @@
 <code>std_blank$trusted</code> is the complement to <code>std_blank$untrusted</code>.</li>
 </ul>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span>  <span class="va">std_blank</span><span class="op">$</span><span class="va">trusted</span></span>
 <span><span class="co">#&gt; # A tibble: 8 × 8</span></span>
 <span><span class="co">#&gt;   well_id dataset plate_id row   column unique_well_id unique_curve_id   abs</span></span>
@@ -389,9 +576,15 @@
 </div>
 <p>The function <code><a href="../reference/plot_std.html">plot_std()</a></code> allows the visualization of (a subset of) curves. With small datasets (as here, with only 5 plates), we could run it on all plates. With bigger datasets however, it comes in quite handy to plot only the automated subset of curves that really need a check on their blank data.</p>
 <p>Notice the argument <code>through_origin = FALSE</code> (default is true), which removes the default constraint on the smooth curve to go through the origin (which does not make sense before we have blank-corrected data).</p>
+<div>
+<blockquote>
+<p><strong>The reference line assumes a linear relationship</strong></p>
+<p><code><a href="../reference/plot_std.html">plot_std()</a></code> draws a smoothed reference line assuming a standard linear relationship between absorbance and concentration. If your own data is more concentrated and the curve looks noticeably bent rather than straight, don’t worry — this is expected for some experiments and is addressed later, when choosing between a linear and polynomial model in the vignette <code>abs-to-conc</code>. Nothing about this affects the blank-correction steps covered here.</p>
+</blockquote>
+</div>
 <p>Notice also that <code><a href="../reference/plot_std.html">plot_std()</a></code> is based on the ggplot grammar of graphics. This means that you can easily add additional ggplot-based layers like we do in the following chunk.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Select subset of std_data to be plotted because their blanks are "untrusted"</span></span>
 <span><span class="va">to_plot</span> <span class="op">&lt;-</span> <span class="va">std_data</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span></span>
@@ -406,7 +599,7 @@
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="blank-correction_files/figure-html/unnamed-chunk-11-1.png" width="672"></p>
+<figure><p><img src="blank-correction_files/figure-html/unnamed-chunk-13-1.png" width="672"></p>
 </figure>
 </div>
 </div>
@@ -416,9 +609,9 @@
 <li><p>either by keeping <code>std_blank$trusted</code> as is (all “untrusted” wells should indeed be removed)</p></li>
 <li><p>or by using <code><a href="../reference/remove_wells.html">remove_wells()</a></code> on <code>std_blank$all</code> to generate a better-adapted list of “trusted” standard blank wells (when you decide that some of the “untrusted” wells should be trusted).</p></li>
 </ul>
-<p>Either way, blank averages will then be computed on (really) trusted wells only. Of course, this only works if there were several standard curves on problematic plates, otherwise you will be removing the only <code>std_blank</code> of the plate<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;In such cases, you must consider your options. If the inter-plate variability of &lt;code&gt;std_blank&lt;/code&gt; is sufficiently small, taking an across-dataset or an across-batch mean might do the trick.&lt;/p&gt;"><sup>2</sup></a>. Here are 2 examples of how to compute average blanks, along the 2 options mentioned above. Both use the function <code><a href="../reference/std_blank_average.html">std_blank_average()</a></code> to compute the blank average.</p>
+<p>Either way, blank averages will then be computed on (really) trusted wells only. Of course, this only works if there were several standard curves on problematic plates, otherwise you will be removing the only <code>std_blank</code> of the plate<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;In such cases, you must consider your options. If the inter-plate variability of &lt;code&gt;std_blank&lt;/code&gt; is sufficiently small, taking an across-dataset or an across-batch mean might do the trick.&lt;/p&gt;"><sup>3</sup></a>. Here are 2 examples of how to compute average blanks, along the 2 options mentioned above. Both use the function <code><a href="../reference/std_blank_average.html">std_blank_average()</a></code> to compute the blank average.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Option 1 - We keep std_blank$trusted</span></span>
 <span><span class="va">std_blank_avg_1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/std_blank_average.html">std_blank_average</a></span><span class="op">(</span><span class="va">std_blank</span><span class="op">$</span><span class="va">trusted</span><span class="op">)</span></span>
 <span></span>
@@ -435,7 +628,7 @@
 </div>
 <p>For the second option, we could decide to reject only one of the blank wells from <code>std_blank$untrusted</code>: let’s say the first one, for plate NO3_1F3.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Option 2 - We create a table of wells to remove</span></span>
 <span><span class="op">(</span><span class="va">to_remove</span> <span class="op">&lt;-</span> <span class="va">std_blank</span><span class="op">$</span><span class="va">untrusted</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">plate_id</span> <span class="op">==</span> <span class="st">"NO3_1F3"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 8</span></span>
@@ -464,13 +657,13 @@
 <p>Notice that in <code>std_blank_avg_2</code>, plate NO3_1F5 now received 2 wells to compute the average from (no NA values under standard deviation and coefficient of variation)</p>
 <p>We proposed the 2nd option for the sake of the example, but we will move on with the first option from here on, as the decision to keep the untrusted well for plate NO3_1F3 was obviously misled.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">std_blank_avg</span> <span class="op">&lt;-</span> <span class="va">std_blank_avg_1</span></span></code></pre></div>
 </div>
 <div>
 <blockquote>
 <p><strong>Outlier check of the whole curve comes later</strong></p>
-<p>Throughout this pipeline, we search for and remove outliers prior to critical aggregation steps that will not be trustworthy otherwise (see also vignette <code>handling-outliers</code>). With this logic in mind, the outlier removal of other wells<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;I.e., wells in the rows “B” to “H” (top-down pipetting) or “A” to “G” (bottom-up pipetting)&lt;/p&gt;"><sup>3</sup></a> of the standard curve will be done later on, before computing the regression between absorbance and concentration. This is shown in the next vignette, <code>abs-to-conc</code>.</p>
+<p>Throughout this pipeline, we search for and remove outliers prior to critical aggregation steps that will not be trustworthy otherwise (see also vignette <code>handling-outliers</code>). With this logic in mind, the outlier removal of other wells<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;I.e., wells in the rows “B” to “H” (top-down pipetting) or “A” to “G” (bottom-up pipetting)&lt;/p&gt;"><sup>4</sup></a> of the standard curve will be done later on, before computing the regression between absorbance and concentration. This is shown in the next vignette, <code>abs-to-conc</code>.</p>
 </blockquote>
 </div>
 </section><section class="level2"><h3 id="blank-correction-of-standard-curve">2.5 - Blank-correction of Standard Curve<a class="anchor" aria-label="anchor" href="#blank-correction-of-standard-curve"></a>
@@ -484,7 +677,7 @@
 </ul>
 <p>You can ignore the message <code>Joining with by = join_by(...)</code>, which just depends on the additional columns you may have in your data tables</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># prepare the first argument: ungroup and remove blank data (here: row A)</span></span>
 <span><span class="va">raw_wells_data</span> <span class="op">&lt;-</span> <span class="va">std_data</span> <span class="op">|&gt;</span></span>
 <span>      <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">ungroup</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -546,7 +739,7 @@
 </h3>
 <p>In a real world, <code>raw_meta</code> may have undergone some cleaning steps (e.g., outlier removal, see <code>handling-outliers</code>). In this example dataset, there are always 8 wells attributed to the sample blank (or extractant). Extractant wells are taken from <code>raw_meta</code>, where they are found because their mapping (column “map” in <code>raw_meta</code>) contains the string “extr”, as can be seen here:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># look at extractant data</span></span>
 <span><span class="va">raw_meta</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">map</span> <span class="op">==</span> <span class="st">"extr"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 40 × 11</span></span>
@@ -567,7 +760,7 @@
 </div>
 <p>This filtering is also what <code><a href="../reference/extract_extractant.html">extract_extractant()</a></code> does in the background, which is the first step taken by the function <code><a href="../reference/extractant_average.html">extractant_average()</a></code> (see below).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">extr_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_extractant.html">extract_extractant</a></span><span class="op">(</span><span class="va">raw_meta</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 40 × 11</span></span>
 <span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id map   abs   std_sp</span></span>
@@ -589,7 +782,7 @@
 </h3>
 <p>The string “extr” is the default of the argument <code>extr_def</code> within <code><a href="../reference/extractant_average.html">extractant_average()</a></code> and can be adapted to reflect your mapping. Like <code><a href="../reference/std_blank_average.html">std_blank_average()</a></code>, <code><a href="../reference/extractant_average.html">extractant_average()</a></code> computes the per-plate average, standard deviation and coefficient of variation (%) of the blanks.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">extr_avg</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extractant_average.html">extractant_average</a></span><span class="op">(</span><span class="va">raw_meta</span>, extr_def <span class="op">=</span> <span class="st">"extr"</span><span class="op">)</span><span class="op">)</span> </span>
 <span><span class="co">#&gt; # A tibble: 5 × 6</span></span>
 <span><span class="co">#&gt;   dataset plate_id map   blank_avg blank_sdev blank_coeff_var_percent</span></span>
@@ -603,18 +796,18 @@
 <div id="tip-multiple_extr">
 <blockquote>
 <p><strong>Tip 1: More than 1 extractant per plate?</strong></p>
-<p><code><a href="../reference/extractant_average.html">extractant_average()</a></code> also works when there are several extractants per plate, but the argument <code>extr_def</code> must be given a vector defining extractants (e.g., <code>extr_def = c("extr_1", "extr_2")</code>. Note that it complicates a bit the process down the line because you will need to attribute an extractant to each sample based on something more than just plate identifier. See also <code>?extractant_average()</code> for examples and <a href="#sec-multiple-extr" class="quarto-xref">Section 5.3.3</a></p>
+<p><code><a href="../reference/extractant_average.html">extractant_average()</a></code> also works when there are several extractants per plate, but the argument <code>extr_def</code> must be given a vector defining extractants (e.g., <code>extr_def = c("extr_1", "extr_2")</code>. Note that it complicates a bit the process down the line because you will need to attribute an extractant to each sample based on something more than just plate identifier. See also <code>?extractant_average()</code> for examples and [the multiple-extractants section](#sec-multiple-extr)</p>
 </blockquote>
 </div>
 </section><section class="level2"><h3 id="quality-check-of-extractant-and-outlier-removal">3.3 - Quality check of extractant and outlier removal<a class="anchor" aria-label="anchor" href="#quality-check-of-extractant-and-outlier-removal"></a>
 </h3>
 <section class="level3"><h4 id="identifying-suspicious-extractant-wells">3.3.1 - Identifying suspicious extractant wells<a class="anchor" aria-label="anchor" href="#identifying-suspicious-extractant-wells"></a>
 </h4>
-<p>To show in detail all features of the function calls below, we go through the simple case of when there is only 1 extractant per plate. For cases with 2 or more extractants per plate, see <a href="#sec-multiple-extr" class="quarto-xref">Section 5.3.3</a></p>
+<p>To show in detail all features of the function calls below, we go through the simple case of when there is only 1 extractant per plate. For cases with 2 or more extractants per plate, see [the multiple-extractants section](#sec-multiple-extr)</p>
 <p><code><a href="../reference/plot_blank_var_distrib.html">plot_blank_var_distrib()</a></code> plots a distribution of the coefficient of variation throughout the data set, which can be used as a criterion to identify “suspicious” wells (which becomes relevant in big data sets). Here, we have artificially generated “very wrong” wells for the purpose of the illustration. Note that whereas a threshold of 5% of coefficient of variation is reasonable in simple absorbance-based datasets with 8 replicates (8 wells for the extractant), you may need to adapt your noise-tolerance level for more noise-prone experiments or with fewer replicates.</p>
 <p>Notice, once more, that <code><a href="../reference/plot_blank_var_distrib.html">plot_blank_var_distrib()</a></code> relies on the ggplot grammar of graphics, and you can easily add additional ggplot-based layers.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_blank_var_distrib.html">plot_blank_var_distrib</a></span><span class="op">(</span><span class="va">extr_avg</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="co"># (optional) add threshold line + label</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_vline</a></span><span class="op">(</span>xintercept <span class="op">=</span> <span class="fl">5</span>, colour <span class="op">=</span> <span class="st">"red"</span>, linetype <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span></span>
@@ -623,14 +816,14 @@
 <span>    label <span class="op">=</span> <span class="st">"threshold of 5%"</span>, colour <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="blank-correction_files/figure-html/unnamed-chunk-19-1.png" width="672"></p>
+<figure><p><img src="blank-correction_files/figure-html/unnamed-chunk-21-1.png" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>In large data sets, there is bound to be some plate where one or two wells went wrong in the lab, and seeing that there are some plates with much higher variation can be a sign that you need to investigate to remove outliers (like here, with a maximum coefficient of variation of almost 60%). You can take advantage of <code>dplyr::arrange(desc())</code> that sorts rows by decreasing values of its argument, to quickly identify suspicious plates (consider removing the call to <code>desc()</code> if you have negative values for the coefficients of variation).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">extr_avg</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">arrange</a></span><span class="op">(</span><span class="fu">desc</span><span class="op">(</span><span class="va">blank_coeff_var_percent</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 5 × 6</span></span>
@@ -645,7 +838,7 @@
 <p>Here, we see that the suspicious plates are <code>NO3_1F2</code> and <code>NO3_1F4</code>. This is easy with a small dataset. For larger data sets, <code><a href="../reference/qc_raw_extr.html">qc_raw_extr()</a></code> performs a quality check of raw absorbance data for extractant wells. It returns a vector containing the “suspicious” <code>plate_id</code>s of plates exceeding a user-defined threshold. Note that we work from <code>raw_meta</code> because in this pipeline, there has not been any prior outlier removal, but of course, we should work with the “cleanest” data that we have.</p>
 <p>A <code>max_coeff</code> threshold of 5% is reasonable to segregate “acceptable” coefficients of variation if, like here, you have 8 wells per plate for the extractant.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">threshold</span> <span class="op">&lt;-</span> <span class="fl">5</span></span>
 <span></span>
 <span><span class="va">suspicious_extr_per_plate</span> <span class="op">&lt;-</span> <span class="va">raw_meta</span> <span class="op">|&gt;</span> </span>
@@ -657,7 +850,7 @@
 </div>
 <p>We get a warning message (to suppress it, opt for <code>suppress_warning = TRUE</code>). The identifiers of the suspicious plates have been recorded in <code>suspicious_plate_ids</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">suspicious_extr_per_plate</span></span>
 <span><span class="co">#&gt; # A tibble: 2 × 2</span></span>
 <span><span class="co">#&gt;   plate_id map  </span></span>
@@ -667,7 +860,7 @@
 </div>
 <p>Should all plates have a coefficient of variation for the absorbance of the extractant below the threshold, <code><a href="../reference/qc_raw_extr.html">qc_raw_extr()</a></code> sends a happy message, instead of a warning, which can also be suppressed, using <code>suppress_message = TRUE</code>. Note that in case there are no suspicious extractant wells, the function does not “return” anything, meaning that if you write <code>suspicious_extr_per_plate &lt;- raw_meta |&gt; qc_raw_extr(suppress_warning = FALSE, max_coeff = 60)</code> and try to check out the content of <code>suspicious_extr_per_plate</code>, you will only get <code>NULL</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># run it with a very unreasonably high threshold</span></span>
 <span><span class="va">raw_meta</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="../reference/qc_raw_extr.html">qc_raw_extr</a></span><span class="op">(</span>suppress_warning <span class="op">=</span> <span class="cn">FALSE</span>, max_coeff <span class="op">=</span> <span class="fl">60</span><span class="op">)</span></span>
@@ -676,7 +869,7 @@
 </div>
 <p>To obtain the full extractant data corresponding to our <code>suspicious plate_ids</code>, we can use <code><a href="../reference/suspicious_extr.html">suspicious_extr()</a></code>. Make sure to use the same threshold.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">suspicious_extr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/suspicious_extr.html">suspicious_extr</a></span><span class="op">(</span></span>
 <span>  <span class="va">raw_meta</span>, </span>
 <span>  suspicious_extr_per_plate <span class="op">=</span> <span class="va">suspicious_extr_per_plate</span>, </span>
@@ -705,14 +898,14 @@
 </div>
 <p>Finally, we can use <code><a href="../reference/boxplot_outlier_extr.html">boxplot_outlier_extr()</a></code> to plot extractant plates containing suspicious wells, so that we can decide whether or not to remove some outlier wells, and which ones. Should there be too many plates for a proper visualization, split <code>suspicious_extr</code> in subsets.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># plot outliers</span></span>
 <span><span class="va">suspicious_extr</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="../reference/boxplot_outlier_extr.html">boxplot_outlier_extr</a></span><span class="op">(</span>max_coeff <span class="op">=</span> <span class="va">threshold</span><span class="op">)</span> </span>
 <span><span class="co">#&gt; Joining with `by = join_by(plate_id)`</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="blank-correction_files/figure-html/unnamed-chunk-25-1.png" width="672"></p>
+<figure><p><img src="blank-correction_files/figure-html/unnamed-chunk-27-1.png" width="672"></p>
 </figure>
 </div>
 </div>
@@ -723,7 +916,7 @@
 <p>He have here 3 obvious outliers: wells D8 and C8 in plate 1 (NO3_1F2) and well F8 in plate 2 (NO3_1F4), which we want to remove. The plot given by <code><a href="../reference/boxplot_outlier_extr.html">boxplot_outlier_extr()</a></code> displays all necessary information to do so.</p>
 <p>in the next chunk, we create a small tibble that will serve to construct the tibble of wells to remove: first get all unique combinations of dataset and plate_ids from <code>suspicious_extr</code>, then add a column “plate_order” that will help checking which plate is which (compared to the plot, useful when several plates are plotted).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Construct tibble to remove</span></span>
 <span><span class="op">(</span><span class="va">plate_ids</span> <span class="op">&lt;-</span> <span class="va">suspicious_extr</span> <span class="op">|&gt;</span> </span>
 <span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">ungroup</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
@@ -762,7 +955,7 @@
 </div>
 <p>To remove well C8 and D8 from plate 1, and wells F8 from plate 2:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">#** !!! MANUAL INPUT !!! *</span></span>
 <span></span>
 <span><span class="co"># Which plate needs 2 outliers removed?</span></span>
@@ -777,7 +970,7 @@
 <p>Now, we finish constructing the tibble of wells to be removed.</p>
 <p><strong>TODO: consider making a function out of this</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">to_remove</span> <span class="op">&lt;-</span> <span class="va">plate_ids</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="co"># double rows for plates with 2 outliers</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span></span>
@@ -803,12 +996,12 @@
 <p>Always check out that the content of <code>to_remove</code> corresponds to the outliers spotted in the plot, as this is a possible source of error, especially for larger datasets.</p>
 <p>Now, we remove it from extractant data (which is the same as removing 3 rows)</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">extr_data_clean</span> <span class="op">&lt;-</span> <span class="va">extr_data</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/remove_wells.html">remove_wells</a></span><span class="op">(</span><span class="va">to_remove</span><span class="op">)</span> </span></code></pre></div>
 </div>
 <p>Check out that indeed, 3 rows have been removed:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">extr_data</span><span class="op">)</span> ; <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">to_remove</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">extr_data_clean</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 40</span></span>
 <span><span class="co">#&gt; [1] 3</span></span>
@@ -816,13 +1009,13 @@
 </div>
 <p>Finally, we re-run the average, this time on cleaned, outlier-free, extractant data</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">extr_avg_clean</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extractant_average.html">extractant_average</a></span><span class="op">(</span></span>
 <span>  extractant_data <span class="op">=</span> <span class="va">extr_data_clean</span>, extr_def <span class="op">=</span> <span class="st">"extr"</span><span class="op">)</span> </span></code></pre></div>
 </div>
 <p>Check that the highest coefficients of variation are now indeed satisfactory (below our threshold of 5%).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">extr_avg_clean</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">arrange</a></span><span class="op">(</span><span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/desc.html" class="external-link">desc</a></span><span class="op">(</span><span class="va">blank_coeff_var_percent</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 5 × 6</span></span>
 <span><span class="co">#&gt;   dataset plate_id map   blank_avg blank_sdev blank_coeff_var_percent</span></span>
@@ -837,7 +1030,7 @@
 </h4>
 <p>The steps are the same as with one extractant, but the syntax changes slightly. Let’s take the example data set <code>dbl_extr_plate</code>. Note that the structure is very similar to what we are used to with <code>tidy_plates</code>, but we now have an additional column, called <code>extr_id</code>, that contains the correspondence of which sample needs to be blank-corrected from which extractant. Of course, standard curve data have “none” under that column.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb34"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># check out the example data set</span></span>
 <span><span class="va">dbl_extr_plate</span></span>
 <span><span class="co">#&gt; # A tibble: 480 × 9</span></span>
@@ -891,7 +1084,7 @@
 </div>
 <p>Here is, in brief, how to adapt the same steps as described above:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb35"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># extracting only extractant data</span></span>
 <span><span class="op">(</span><span class="va">extr_data_dbl</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_extractant.html">extract_extractant</a></span><span class="op">(</span><span class="va">dbl_extr_plate</span>,extr_def <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"extr_1"</span>, <span class="st">"extr_2"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> </span>
 <span><span class="co">#&gt; # A tibble: 80 × 9</span></span>
@@ -929,11 +1122,11 @@
 <span><span class="fu"><a href="../reference/plot_blank_var_distrib.html">plot_blank_var_distrib</a></span><span class="op">(</span><span class="va">extr_avg_dbl</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="blank-correction_files/figure-html/unnamed-chunk-34-1.png" width="672"></p>
+<figure><p><img src="blank-correction_files/figure-html/unnamed-chunk-36-1.png" width="672"></p>
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb36"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># identifying suspicious plate-extractant combinations</span></span>
 <span><span class="op">(</span><span class="va">suspicious_extr_per_plate_dbl</span> <span class="op">&lt;-</span> <span class="va">dbl_extr_plate</span> <span class="op">|&gt;</span> </span>
@@ -977,7 +1170,7 @@
 <span><span class="co">#&gt; Joining with `by = join_by(plate_id)`</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="blank-correction_files/figure-html/unnamed-chunk-34-2.png" width="672"></p>
+<figure><p><img src="blank-correction_files/figure-html/unnamed-chunk-36-2.png" width="672"></p>
 </figure>
 </div>
 </div>
@@ -990,7 +1183,7 @@
 </blockquote>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb37"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Construct tibble to remove</span></span>
 <span><span class="op">(</span><span class="va">plate_ids_dbl</span> <span class="op">&lt;-</span> <span class="va">suspicious_extr_dbl</span> <span class="op">|&gt;</span> </span>
 <span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">ungroup</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
@@ -1071,8 +1264,14 @@
 <li><p><code>per_plate_avg_blank</code> which contains absorbance data of the extractant, averaged per plate (one row per plate), based on trusted extractant wells</p></li>
 <li><p><code>map_to_exclude</code>, a vector of the strings representing non-sample data under the column <code>map</code> within <code>raw_wells_data</code>, i.e., blanks, standard curves and empty wells. It defaults to <code>c("empty","Std","extr")</code>. The output will thus only contain blank-corrected sample data. This means that for (linear) modelling of the standard curve, <code>std_corrected</code> will still be needed.</p></li>
 </ul>
+<div>
+<blockquote>
+<p><strong>An assumption worth noting: spatial uniformity of the blank</strong></p>
+<p><code>per_plate_avg_blank</code> is a single value per plate, computed from whichever wells you defined as extractant (or blank) wells, then subtracted uniformly from every sample well on that same plate. This assumes the background absorbance is spatially uniform across the plate — that wells in different positions don’t systematically differ in their background reading beyond ordinary well-to-well noise. This is a reasonable assumption for most standard plate readers, but if you have reason to suspect position-dependent optical effects (e.g. known edge effects specific to your instrument), it’s worth checking rather than assuming.</p>
+</blockquote>
+</div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb38"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sample_corrected</span> <span class="op">&lt;-</span> </span>
 <span>  <span class="fu"><a href="../reference/blank_correct_abs.html">blank_correct_abs</a></span><span class="op">(</span></span>
 <span>    raw_wells_data <span class="op">=</span> <span class="va">raw_meta</span>, </span>
@@ -1093,9 +1292,9 @@
 <span><span class="co">#&gt; Joining with `by = join_by(row, column, well_id, unique_well_id, dataset,</span></span>
 <span><span class="co">#&gt; plate_id, map, extr_id)`</span></span></code></pre></div>
 </div>
-<p>Let’s have a look at the output and notice the absence of the value <code>1</code> in the column <code>column</code> (no data for standard curve<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content='&lt;p&gt;In case the blanks are the same for sample wells and standard curve wells, this blank-correction should also be applied on Standard curve data. In this case, remove &lt;code&gt;"Std"&lt;/code&gt; from the call to &lt;code&gt;map_to_exclude&lt;/code&gt;.&lt;/p&gt;'><sup>4</sup></a>), and of the value <code>extr</code> in the column <code>map</code> (though it was present in <code>raw_meta</code> and still can be found under <code>extr_id</code> in the case of 2 extractants per plate, which we kept in case the info is relevant for downstream analysis.</p>
+<p>Let’s have a look at the output and notice the absence of the value <code>1</code> in the column <code>column</code> (no data for standard curve<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content='&lt;p&gt;In case the blanks are the same for sample wells and standard curve wells, this blank-correction should also be applied on Standard curve data. In this case, remove &lt;code&gt;"Std"&lt;/code&gt; from the call to &lt;code&gt;map_to_exclude&lt;/code&gt;.&lt;/p&gt;'><sup>5</sup></a>), and of the value <code>extr</code> in the column <code>map</code> (though it was present in <code>raw_meta</code> and still can be found under <code>extr_id</code> in the case of 2 extractants per plate, which we kept in case the info is relevant for downstream analysis.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb39"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Check it out</span></span>
 <span><span class="va">sample_corrected</span></span>
 <span><span class="co">#&gt; # A tibble: 264 × 14</span></span>

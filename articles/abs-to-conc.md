@@ -8,10 +8,6 @@ library(patchwork)
 
 ## TODO
 
-- Integrate polynomial modelling, take it from personal pipeline
-
-- write out last sections: 2.6, 3 and 4
-
 - Consider creating a function for the multiple-curve QC (+ explain idea
   why it is relevant to look at it)
 
@@ -117,7 +113,18 @@ std_corrected
 > experimental points.
 >
 > For new pipelines, always check out the standard curves graphically to
-> ensure a good fit
+> ensure a good fit.
+>
+> Curvature at high absorbance can come from more than one source — for
+> example, the color-forming reagent becoming limiting at high
+> concentrations, or stray light, an optical artifact of the plate
+> reader itself that affects any sufficiently high absorbance reading
+> regardless of chemistry. Switching to a polynomial model is a
+> reasonable empirical fix either way, but it’s worth understanding
+> roughly why your curve bends before doing so, since the two causes
+> have different implications — for example, whether readings above your
+> calibrated range can be trusted, or whether diluting samples is a
+> better fix than adding model complexity.
 
 We will illustrate the choice of model on another data set called
 `tidy_TDN` (equivalent in structure to the `tidy_plates` we had at the
@@ -751,6 +758,17 @@ ten-fold. This resulted in highly concentrated solutions generating
 absorbance values above 3. It appears that a polynomial model is more
 appropriate in this case, as can be seen in the next chunks (example of
 a single curve).
+
+> **Does a polynomial model change blank correction?**
+>
+> No. Blank correction (see the `blank-correction` vignette) was already
+> carried out using simple subtraction, and that remains valid here even
+> though the model in this section is polynomial. The blank is measured
+> at (or near) zero concentration, before either of the mechanisms
+> mentioned in [Tips for choosing the model](#sec-choice) becomes
+> relevant — so blank subtraction and curve shape are answering two
+> separate questions. Nothing about using a polynomial model here
+> requires revisiting the earlier blank-correction step.
 
 > **Only polynomial model - specific steps are reviewed in detail**
 >

@@ -5,19 +5,25 @@
 library(plate2N)
 ```
 
-> **Work in progress**
+> **Actively evolving**
 >
-> This vignette is still under development, bugs are to be expected
+> This pipeline works for its current use cases, but it is still gaining
+> flexibility — some behavior that is hardcoded today may later become a
+> parameter, and new features get added as real use cases come up
+> (e.g. support for multiple extractants per plate was added in response
+> to a user’s needs, and touched a fair amount of the underlying
+> functions). So don’t be surprised if some details shift between
+> versions. If anything here feels more cryptic than the `import-tidy`
+> vignette, that’s fair — this one hasn’t had as many passes yet, and
+> it’ll keep getting clearer.
 
 ## TO DO
 
 - Consider making a function of creating the “to_remove” table for
-  extractant outliers (section 3.3.3,
-  [Section 5.3.3](#sec-multiple-extr))
+  extractant outliers (section 3.3.3, \[the multiple-extractants
+  section\](#sec-multiple-extr))
 - In the function qc_raw_qbs(), separate condition for export plot and
   show plot. If we export it, we may not want to plot it as an output…
-- **Briefly describe steps of the pipeline at the end of the
-  introduction**
 - allow other digit and separator delimitors in extract_curve –\> make
   it a parameter
 - the last paragraph of 3.3.3 is confusing –\> change the raw data so
@@ -47,35 +53,144 @@ throughout this vignette, to refer to the solution that was used to
 extract (N-)compounds from soil samples and now serves as blank. The
 standard blank is referred to as `std_blank`.
 
-> **What this pipeline does**
+|  | Standard curve blank | Sample blank |
+|----|----|----|
+| Name used | `std_blank` | `extr` (extractant) |
+| What it physically is | The zero-concentration point of the standard curve itself | The blank solution matching the sample matrix[^1] |
+| What it corrects | Standard curve absorbance readings | Sample absorbance readings |
+
+### The Whole Game
+
+This pipeline runs as two parallel branches — one for the standard
+curve, one for samples — that merge again once both are blank-corrected:
+
+``` mermaid
+flowchart TD
+  A[Raw absorbance + metadata]
+  A --> B1[Extract std curve data]
+  B1 --> C1[Compute blank average]
+  C1 --> O1{{Outlier removal}}
+  O1 --> C1
+  C1 --> D1[Blank-correct std curve]
+  D1 --> E1[std_corrected]
+
+  A --> B2[Extract extractant data]
+  B2 --> C2[Compute blank average]
+  C2 --> O2{{Outlier removal}}
+  O2 --> C2
+  C2 --> D2[Blank-correct samples]
+  D2 --> E2[sample_corrected]
+
+  E1 --> F[abs-to-conc]
+  E2 --> F
+```
+
+There’s no honest one-shot code snippet for the whole thing, because
+deciding which wells are outliers is a manual, visual step — not
+something that can be scripted. But if your data happens to be clean (no
+outliers to remove), here’s the fast path:
+
+``` r
+
+# join raw data with per-plate metadata
+raw_meta <- tidy_plates |> 
+  dplyr::left_join(meta, by = dplyr::join_by(dataset, plate_id))
+
+###############################
+# --- standard curve branch ---
+###############################
+
+# extract serial dilutions of the standard curve
+curve_concentration <- extract_curve(meta, pipetting_direction = "top_down")
+
+# extract standard data and connect it to curve concentration
+std_data <- raw_meta |> 
+  # extract data corresponding to the standard curve only
+  extract_std_data(std_def = "Std") |> 
+  # remove the 1-liner standard curve concentration
+  dplyr::select(!std_conc) |> 
+  # create correspondence with curve concentration
+  dplyr::left_join(curve_concentration, by = dplyr::join_by(row, dataset, plate_id))
+
+# extract the blank from standard data
+std_blank <- std_data |> extract_std_blank(std_def = "Std", pipetting_direction = "top_down")
+
+# compute per-curve blank average from trusted wells
+std_blank_avg <- std_blank_average(std_blank$trusted)
+
+#** HERE COMES USER-DECISION ON OUTLIER REMOVAL - ITERATIVE PROCESS *
+
+# blank-correct standard curve data
+std_corrected <- blank_correct_abs(
+  raw_wells_data = std_data |> dplyr::ungroup() |> dplyr::filter_out(row == "A"),
+  per_plate_avg_blank = std_blank_avg,
+  map_to_exclude = ""
+) |> dplyr::select(row:abs_corrected)
+
+#######################
+# --- sample branch ---
+#######################
+
+# compute per-plate average for extractant data
+extr_avg <- extractant_average(raw_meta, extr_def = "extr")
+
+#** HERE COMES USER-DECISION ON OUTLIER REMOVAL - ITERATIVE PROCESS *
+
+# blank-correct sample data 
+sample_corrected <- blank_correct_abs(
+  raw_wells_data = raw_meta,
+  per_plate_avg_blank = extr_avg,
+   map_to_exclude = c("empty", "Std", "extr"))
+```
+
+In practice, you’ll almost always want the quality-check and
+outlier-removal steps covered in detail below — this shortcut just shows
+the shape of the pipeline before we get into the specifics.
+
+### The Cheat Sheet
+
+[TABLE]
+
+### Overview of blank-correction
+
+- Blank correction of standard curve
+
+  - extracting standard curve data and their blank
+
+  - if there is more than one blank well to compare (e.g. several curves
+    per plate, or several blank wells within a single curve):
+
+    - identifying and remove outliers
+
+    - compute the per-plate mean of blanks without outliers
+
+  - correct the rest of the standard curve data by subtracting the mean
+    of its blank
+
+- Blank correction of samples
+
+  - extracting extractant (= sample-blank) data
+
+  - identifying and removing outliers
+
+  - compute the per-plate mean of blanks without outliers
+
+  - correct samples raw data by subtracting the mean of their blank
+    (extractant)
+
+Particularly useful throughout is the automated identification of
+possible outliers, so that you only need to assess and take
+outlier-removal decisions for those “suspicious” curves or extractant
+data.
+
+> **Prerequisites**
 >
-> - Blank correction of standard curve
+> - data has been imported and tidied, see
+>   [`vignette("import-tidy", package = "plate2N")`](https://mdetoeuf.github.io/plate2N/articles/import-tidy.md)
 >
->   - extracting standard curve data and their blank
->
->   - if several curves per plate:
->
->     - identifying and remove outliers
->
->     - compute the per-plate mean of blanks without outliers
->
->   - correct the rest of standard curve data by subtracting the mean of
->     its blank
->
-> - Blank correction of samples
->
->   - extracting extractant (= sample-blank) data
->
->   - identifying and removing outliers
->
->   - compute the per-plate mean of blanks without outliers
->
->   - correct samples raw data by subtracting the mean of its blank
->     (extractant)
->
-> **Particularly useful is the automated identification of possible
-> outliers, so that users only need to assess and take outlier-removal
-> decisions for those “suspicious” curves or extractant data**
+> - (recommended) a preliminary quality check has been run on raw
+>   absorbance data, see
+>   [`vignette("handling-outliers", package = "plate2N")`](https://mdetoeuf.github.io/plate2N/articles/handling-outliers.md)
 
 ## 1 - Getting raw absorbance data
 
@@ -363,7 +478,7 @@ nrow(std_data) ; nrow(std_blank$all)
 ```
 
 - `std_blank$untrusted` identifies expected blank wells that do not
-  correspond to the lowest absorbance value of their standard curve[^1].
+  correspond to the lowest absorbance value of their standard curve[^2].
   This item may be empty
 
 ``` r
@@ -415,6 +530,17 @@ Notice the argument `through_origin = FALSE` (default is true), which
 removes the default constraint on the smooth curve to go through the
 origin (which does not make sense before we have blank-corrected data).
 
+> **The reference line assumes a linear relationship**
+>
+> [`plot_std()`](https://mdetoeuf.github.io/plate2N/reference/plot_std.md)
+> draws a smoothed reference line assuming a standard linear
+> relationship between absorbance and concentration. If your own data is
+> more concentrated and the curve looks noticeably bent rather than
+> straight, don’t worry — this is expected for some experiments and is
+> addressed later, when choosing between a linear and polynomial model
+> in the vignette `abs-to-conc`. Nothing about this affects the
+> blank-correction steps covered here.
+
 Notice also that
 [`plot_std()`](https://mdetoeuf.github.io/plate2N/reference/plot_std.md)
 is based on the ggplot grammar of graphics. This means that you can
@@ -437,7 +563,7 @@ to_plot |>
   ggplot2::theme(legend.position = "none")
 ```
 
-![](blank-correction_files/figure-html/unnamed-chunk-11-1.png)
+![](blank-correction_files/figure-html/unnamed-chunk-13-1.png)
 
 If the absorbance in well A is very obviously wrong (like here), then
 remove those wells for the computation of standard blank average. There
@@ -455,7 +581,7 @@ are 2 options to do so:
 Either way, blank averages will then be computed on (really) trusted
 wells only. Of course, this only works if there were several standard
 curves on problematic plates, otherwise you will be removing the only
-`std_blank` of the plate[^2]. Here are 2 examples of how to compute
+`std_blank` of the plate[^3]. Here are 2 examples of how to compute
 average blanks, along the 2 options mentioned above. Both use the
 function
 [`std_blank_average()`](https://mdetoeuf.github.io/plate2N/reference/std_blank_average.md)
@@ -528,7 +654,7 @@ std_blank_avg <- std_blank_avg_1
 > Throughout this pipeline, we search for and remove outliers prior to
 > critical aggregation steps that will not be trustworthy otherwise (see
 > also vignette `handling-outliers`). With this logic in mind, the
-> outlier removal of other wells[^3] of the standard curve will be done
+> outlier removal of other wells[^4] of the standard curve will be done
 > later on, before computing the regression between absorbance and
 > concentration. This is shown in the next vignette, `abs-to-conc`.
 
@@ -712,8 +838,8 @@ variation (%) of the blanks.
 > `extr_def = c("extr_1", "extr_2")`. Note that it complicates a bit the
 > process down the line because you will need to attribute an extractant
 > to each sample based on something more than just plate identifier. See
-> also `?extractant_average()` for examples and
-> [Section 5.3.3](#sec-multiple-extr)
+> also `?extractant_average()` for examples and \[the
+> multiple-extractants section\](#sec-multiple-extr)
 
 ### 3.3 - Quality check of extractant and outlier removal
 
@@ -721,8 +847,8 @@ variation (%) of the blanks.
 
 To show in detail all features of the function calls below, we go
 through the simple case of when there is only 1 extractant per plate.
-For cases with 2 or more extractants per plate, see
-[Section 5.3.3](#sec-multiple-extr)
+For cases with 2 or more extractants per plate, see \[the
+multiple-extractants section\](#sec-multiple-extr)
 
 [`plot_blank_var_distrib()`](https://mdetoeuf.github.io/plate2N/reference/plot_blank_var_distrib.md)
 plots a distribution of the coefficient of variation throughout the data
@@ -749,7 +875,7 @@ plot_blank_var_distrib(extr_avg) +
     label = "threshold of 5%", colour = "red")
 ```
 
-![](blank-correction_files/figure-html/unnamed-chunk-19-1.png)
+![](blank-correction_files/figure-html/unnamed-chunk-21-1.png)
 
 In large data sets, there is bound to be some plate where one or two
 wells went wrong in the lab, and seeing that there are some plates with
@@ -882,7 +1008,7 @@ suspicious_extr |>
 #> Joining with `by = join_by(plate_id)`
 ```
 
-![](blank-correction_files/figure-html/unnamed-chunk-25-1.png)
+![](blank-correction_files/figure-html/unnamed-chunk-27-1.png)
 
 #### 3.3.2 - Outlier removal steps
 
@@ -1146,7 +1272,7 @@ Here is, in brief, how to adapt the same steps as described above:
 plot_blank_var_distrib(extr_avg_dbl)
 ```
 
-![](blank-correction_files/figure-html/unnamed-chunk-34-1.png)
+![](blank-correction_files/figure-html/unnamed-chunk-36-1.png)
 
 ``` r
 
@@ -1193,7 +1319,7 @@ suspicious_extr_dbl |> boxplot_outlier_extr(max_coeff = 5)
 #> Joining with `by = join_by(plate_id)`
 ```
 
-![](blank-correction_files/figure-html/unnamed-chunk-34-2.png)
+![](blank-correction_files/figure-html/unnamed-chunk-36-2.png)
 
 Now, adapting the outlier removal steps
 
@@ -1310,6 +1436,19 @@ takes 3 arguments:
   that for (linear) modelling of the standard curve, `std_corrected`
   will still be needed.
 
+> **An assumption worth noting: spatial uniformity of the blank**
+>
+> `per_plate_avg_blank` is a single value per plate, computed from
+> whichever wells you defined as extractant (or blank) wells, then
+> subtracted uniformly from every sample well on that same plate. This
+> assumes the background absorbance is spatially uniform across the
+> plate — that wells in different positions don’t systematically differ
+> in their background reading beyond ordinary well-to-well noise. This
+> is a reasonable assumption for most standard plate readers, but if you
+> have reason to suspect position-dependent optical effects (e.g. known
+> edge effects specific to your instrument), it’s worth checking rather
+> than assuming.
+
 ``` r
 
 sample_corrected <- 
@@ -1334,7 +1473,7 @@ sample_corrected_dbl <-
 ```
 
 Let’s have a look at the output and notice the absence of the value `1`
-in the column `column` (no data for standard curve[^4]), and of the
+in the column `column` (no data for standard curve[^5]), and of the
 value `extr` in the column `map` (though it was present in `raw_meta`
 and still can be found under `extr_id` in the case of 2 extractants per
 plate, which we kept in case the info is relevant for downstream
@@ -1423,7 +1562,13 @@ linear or polynomial model to obtain the regression equation to convert
 blank-corrected absorbance data to (N-species) concentration data, as is
 detailed in vignette **`abs-to-conc`** **(under development)**
 
-[^1]: This quality check was added because, in case of top_down
+[^1]: In our experiments, this is the solution used to extract
+    N-compounds from soil samples. More generally, this pipeline works
+    for any dosage following a Beer-Lambert-style relationship between
+    absorbance and concentration — `extr` can be whatever solution
+    serves as the blank for your own sample matrix.
+
+[^2]: This quality check was added because, in case of top_down
     pipetting, A1 often will contain the standard blank, but it is also
     often the first well to be filled during pipetting. With automated
     pipettes, a small ejection of liquid has to occur before dispensing
@@ -1435,14 +1580,14 @@ detailed in vignette **`abs-to-conc`** **(under development)**
     responses in terms of absorbance, depending on which reagent has
     been wrongly pipetted.
 
-[^2]: In such cases, you must consider your options. If the inter-plate
+[^3]: In such cases, you must consider your options. If the inter-plate
     variability of `std_blank` is sufficiently small, taking an
     across-dataset or an across-batch mean might do the trick.
 
-[^3]: I.e., wells in the rows “B” to “H” (top-down pipetting) or “A” to
+[^4]: I.e., wells in the rows “B” to “H” (top-down pipetting) or “A” to
     “G” (bottom-up pipetting)
 
-[^4]: In case the blanks are the same for sample wells and standard
+[^5]: In case the blanks are the same for sample wells and standard
     curve wells, this blank-correction should also be applied on
     Standard curve data. In this case, remove `"Std"` from the call to
     `map_to_exclude`.

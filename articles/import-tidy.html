@@ -12,6 +12,7 @@
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="import-tidy_files/libs/quarto-html/popper.min.js"></script><script src="import-tidy_files/libs/quarto-html/tippy.umd.min.js"></script><link href="import-tidy_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="import-tidy_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<script src="import-tidy_files/libs/quarto-diagram/mermaid.min.js"></script><script src="import-tidy_files/libs/quarto-diagram/mermaid-init.js"></script><link href="import-tidy_files/libs/quarto-diagram/mermaid.css" rel="stylesheet">
 <!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="import-tidy">
 </head>
 <body>
@@ -22,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,6 +78,40 @@
 
     <section class="section level2"><h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
+<section class="level2"><h3 id="where-this-vignette-fits">Where this vignette fits<a class="anchor" aria-label="anchor" href="#where-this-vignette-fits"></a>
+</h3>
+<p>Before diving in, here’s how <code>import-tidy</code> fits into the full <code>plate2N</code> pipeline — click any step to jump to its vignette.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p>
+<figure class=""><p></p>
+<div>
+<pre class="mermaid mermaid-js"> flowchart TD
+   A(Import &amp;amp; tidy) --&gt; B(Handle outliers)
+   B --&gt; C1(Blank correction: std curve)
+   B --&gt; C2(Blank correction: samples)
+   C1 --&gt; D(Regression &amp;amp; concentration)
+   C2 --&gt; D
+   B -.-&gt; M(MicroResp variant):::sideThing
+
+   click A "articles/import-tidy.html" "import-tidy"
+   click B "articles/handling-outliers.html" "handling-outliers"
+   click C1 "articles/blank-correction.html" "blank-correction"
+   click C2 "articles/blank-correction.html" "blank-correction"
+   click D "articles/abs-to-conc.html" "abs-to-conc"
+   click M "articles/microresp.html" "microresp"
+
+%% color = font color
+
+   classDef sideThing fill:#f8fafc,stroke:#cbd5e1,color:#64748b,stroke-width:1px;
+   linkStyle 5 stroke:#cbd5e1,stroke-width:1px;
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
 <p>The goal of <code>plate2N</code> is to facilitate data wrangling and data analysis for raw data that originates from absorbance readings with a 96-well plate reader (spectrophotometry).</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="downlit sourceCode r">
@@ -101,7 +136,7 @@
 <span><span class="co">#&gt; 10 A     1      A1      M1       A1_M1          expe1   Std0865 0.9254</span></span>
 <span><span class="co">#&gt; # ℹ 950 more rows</span></span></code></pre></div>
 </div>
-<section class="level2"><h3 id="the-whole-game">The Whole Game<a class="anchor" aria-label="anchor" href="#the-whole-game"></a>
+</section><section class="level2"><h3 id="the-whole-game">The Whole Game<a class="anchor" aria-label="anchor" href="#the-whole-game"></a>
 </h3>
 <p>Before we dig into the specifics of each individual step, here is a glimpse of the whole pipeline. Once you’ve understood the principle of each indivual step as detailed in the sections below, it only takes 6 lines of code to import, join and tidy 2 datasets that could contain data from an indefinite number of 96-well plates. No worries though if this feels cryptic, we’ll explain it all underneath.</p>
 <div class="cell">
