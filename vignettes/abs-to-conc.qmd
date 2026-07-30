@@ -18,20 +18,6 @@ library(plate2N)
 library(patchwork)
 ```
 
-# TODO
-
-- Consider creating a function for the multiple-curve QC (+ explain idea why it is relevant to look at it)
-
-- For conversion: explain well difference btw mg N-sp/L and mg N/L, and how it relates to molar masses
-
-- Consider using ggplot to build the residuals plots, evtl. make it a function (or even make a function of the whole comparison plotting process (4 plots given from the data of one curve)
-
-- in epilogue: **add examples of downstream steps: correct dilutions, per sample average and outlier removal, conversion to ppm, etc.**
-
-- **make a function out of the concentration inference step**
-
-- update relevant functions (qc_raw_abs, maybe plot_st...) to have an additional argument: how is "abs" called. Sometimes abs, sometimes abs_corrected, but with MR i see that it can take many more forms, something with a default like `abs_column = "abs"`. Maybe even have the option of using tidyselect's helper functions, which could be revelant for datasets with numerous layers
-
 ::: callout-caution
 ## Work in progress
 
