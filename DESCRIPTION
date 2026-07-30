@@ -37,6 +37,7 @@ Imports:
     tidyr,
     tidyselect
 Suggests: 
+    ggridges,
     knitr,
     quarto,
     rmarkdown,
