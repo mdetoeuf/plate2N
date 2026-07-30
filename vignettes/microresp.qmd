@@ -347,8 +347,7 @@ MR_co2_g_h |>
 
 ## 6.1 - Compute preliminary average (pre-outlier removal)
 
-MicroResp plates commonly show edge effects — sometimes marginal when the kit was well sealed, but often visible even to the naked eye along one or more edges of the plate. This is the same underlying issue already addressed for columns 1 and 12 in [Remove "empty" and NAs](#sec-remove-empty), and it applies to rows as well: a preliminary run of the steps below showed that wells in row A and row H are outliers on many plates, often a majority of them. Following both this expectation and the recommendation of our colleagues at FiBL, we therefore exclude rows A and H from the subset below before computing the average, rather than treating them case-by-case as ordinary outliers. If you'd like to check the unfiltered data, simply comment out the filtering line.
-We then compute coefficient of variation which will serve as a threshold to identify potential outliers
+MicroResp plates commonly show edge effects — sometimes marginal when the kit was well sealed, but often visible even to the naked eye along one or more edges of the plate. This is the same underlying issue already addressed for columns 1 and 12 in [Remove "empty" and NAs](#sec-remove-empty), and it applies to rows as well: a preliminary run of the steps below showed that wells in row A and row H are outliers on many plates, often a majority of them. Following both this expectation and the recommendation of our colleagues at FiBL, we therefore exclude rows A and H from the subset below before computing the average, rather than treating them case-by-case as ordinary outliers. If you'd like to check the unfiltered data, simply comment out the filtering line. We then compute coefficient of variation which will serve as a threshold to identify potential outliers
 
 ```{r}
 #| output: false
@@ -389,4 +388,340 @@ suspicious_MR <- MR_co2_g_h |>
 
 Now, with a threshold of 8% as max coef of variation, we are left with only 6 combinations of plate x substrate to look at (instead of 50).
 
-## 
+!! This means we are ok with not looking at all data !!
+
+## 6.2 - create QC plots
+
+Create one list of QC plots per dataset.
+
+Notice that we get a list with 1 plot per substrate (but not all bc not all had outliers in this reduced dataset)
+
+--\> TO DO: update microresp data to get more plate, maybe include plates 11-15, so we have 10 total, and 2 runs, so that using the run_id parameter makes sense visually here
+
+```{r}
+qc_plots <- plot_list_qc_microresp(
+  suspicious_MR, 
+  map_col = "map",
+  run_id_col = "run_id")
+
+names(qc_plots)
+```
+
+For the sake of illustration, we just plot 2 of the plots (one per dataset per substrate): it facets the plots per run, and only displays data that is suspicious (coefficient of variation above threshold defined above). - H2O: i'd remove B3 - Glu: i'd remove nothing Notice that - the nb of plate changes between plots, only suspicious plates are displayed
+
+```{r}
+qc_plots$Std_H2O
+qc_plots$Glu
+```
+
+To get general idea, plot it all in one go - **briefly** explain the rationale behind using `patchwork::wrap_elements` here (keep title) - But say that in real datasets, depending on substrates, more plates are displayed, so this patchworking might make things unreadable anyway
+
+```{r}
+(patchwork::wrap_elements(full = qc_plots$gABA) +
+ patchwork::wrap_elements(full = qc_plots$Glu) +
+ patchwork::wrap_elements(full = qc_plots$NAG)) /
+(patchwork::wrap_elements(full = qc_plots$OA) +
+ patchwork::wrap_elements(full = qc_plots$Std_H2O))
+
+```
+
+Save QC plots for review outside R (optional), in a loop. Notice that because plots are named in the list, they can be easily accessed by name (= substrate), and this can then serve as filenaming for export
+
+```{r}
+#| eval: false
+#| include: true
+
+for (i in 1:length(qc_plots)) {
+  
+  plot <- qc_plots[[i]]
+  
+  filepath <- paste0(
+      "output/figures/QC/microresp/",
+      names(plot), "_", Sys.Date(), ".pdf")
+  
+  ggplot2::ggsave(
+    filename = filepath, 
+    plot = plot, width = 18, height = 10)
+}
+```
+
+## 6.3 - identifying outliers + removal
+
+Then, by visual assessment of the plots one by one, we create a table of wells to remove, and clean the dataset from obvious outliers
+
+Starting with greenhouse outliers
+
+```{r}
+to_remove <- tibble::tribble(
+  ~ plate_id, ~well_id, 
+  # gABA
+  "P01", "F9",   
+  # NAG
+  "P01", "E8",
+  # Std-H2O
+  "P01", "B3",      
+) |> 
+  dplyr::mutate(dataset = "MR")
+
+to_remove
+```
+
+In a real dataset with hundreds of plates, this can take a while, and we recommand a second reading of those plots after "sleeping on it", and seeing if we still agree with ourselves, and didn't make any mistake
+
+Remove those outliers
+
+```{r}
+MR_wash1 <- MR_co2_g_h |> 
+  remove_wells(to_remove) 
+```
+
+It is possible to run once more through the quality check before deciding to move on, and possibly create a "wash2", "wash3", etc. version, though we never needed it so far. But it might become relevant, for example, in the case of one single really extreme value, that would "squeeze" the rest of the data for all plates of the same panel in a plot too tight to discern patterns. In such cases, a removal of the extreme outlier first, followed by re-plotting, allows the unfolding of squeezed plots
+
+Store last version in a new variable (easier for edits...)
+
+--\> To Do: check, I feel that MR_clean is created twice. If that's the case, this could lead to confusions –\> rename one
+
+```{r}
+MR_clean <- MR_wash1
+```
+
+# 7 - Average per plate per substrate
+
+## 7.1 - Compute sample\*substrate average
+
+Now that outliers are removed, we can compute the average value per plate per substrate.
+
+Note that we create a new column where we store, for each substrate, whether the well contained "sample soil" or "standard soil" (this will be needed for downstream analysis)
+
+```{r}
+#| output: false
+MR_avg <- MR_clean |> 
+  dplyr::group_by(dataset, plate_id, map) |> 
+  dplyr::summarize(
+    co2_g_h_avg = mean(co2_g_h)) |> 
+  # attribute sample soil or std soil
+  dplyr::mutate(std_sample = dplyr::case_when(
+      map %in% c("Std_H2O", "Std_Glu") ~ "std_soil",
+      .default = "sample"
+    )) 
+
+# Check it out
+MR_avg
+```
+
+Plot distribution of values
+
+```{r}
+#| message: false
+distrib_uncorrected <- MR_avg |> 
+  ggplot2::ggplot(ggplot2::aes(x = co2_g_h_avg)) +
+  ggplot2::theme_minimal() +
+  ggplot2::geom_histogram() +
+  ggplot2::labs(
+    title = "Distribution of per plate per substrate average\nof CO2 emission rate",
+    x = "CO2 emission rate [gCO2 / g dry soil / hour]") + 
+  ggplot2::facet_wrap(~dataset)
+
+distrib_uncorrected
+```
+
+## 7.2 - Correction of averages - remove basal respiration
+
+[@bongiorno2020] write: *Thereafter, we corrected for the average respiration rate of soil to which the deionized water was added.*
+
+Although not explicit, I believe that what they say if that they consider that substrate-induced respirations as computed so far are indeed the sum of basal respiration + the "real" part of the respiration that is substrate induced. So probably they do a subtraction?
+
+So, now we correct SIR's for basal respiration (subtract H2O-resp from substrate-induced resp)
+
+First, extract basal respiration and keep only H2O rows, so that we have, separately, the basal respiration of the samples vs the standard soil
+
+```{r}
+# Extract basal resp data only
+basal_resp <- MR_avg |> 
+  dplyr::filter(map %in% c("H2O", "Std_H2O")) |> 
+  dplyr::select(dataset, plate_id, std_sample, co2_g_h_avg) |> 
+  dplyr::rename(basal_resp = co2_g_h_avg)
+
+# Check it out
+basal_resp
+```
+
+Now we can join this info to the rest of the data and compute H2O-corrected data
+
+```{r}
+#| output: false
+H2O_corrected <- MR_avg |> 
+  dplyr::left_join(basal_resp) |> 
+  dplyr::mutate(H2O_corrected = dplyr::case_when(
+    map %in% c("H2O", "Std_H2O") ~ basal_resp,
+    .default = co2_g_h_avg - basal_resp
+  ))
+```
+
+Check it out
+
+```{r}
+H2O_corrected
+```
+
+In the following sections, I follow computations as in [@bongiorno2020a], i.e.:
+
+- Compute MSIR, MBC, metabolic quotient
+
+- Compute relative contributions of SIR's (SIR / MSIR), refered to as rSIR's
+
+- Derive from this relative contribution an intermediary value needed for Shanon (x\*ln(x)), refered to as sSIR's
+
+- Compute the Shannon index
+
+Then, we can still discuss some N-based index
+
+# 8 - MBC, basal respiration, metabolic quotient, MSIR
+
+Now, we compute the MBC, qCO2 and MSIR (here, we use H2O-corrected data, and don't keep water in the computation. So it is only a sum of non-H2O substrates. Also, we don't keep std soil data from here on, so we start by storing it somewhere (it will be needed for QC)
+
+[**!! TO DO: check where computation of MBC and qCO2 come from + units !!**]{.underline}
+
+```{r}
+# pivot to get one column per substrate
+wider_data <- H2O_corrected |> 
+  tidyr::pivot_wider(
+    names_from = map, 
+    values_from = H2O_corrected, id_cols = c(dataset, plate_id))
+
+# extract std_soil_data and store it in an object
+std_soil_data <- wider_data |> dplyr::select(dataset, plate_id, tidyselect::starts_with("Std"))
+
+# compute first round of indicators
+MSIR <- wider_data |> 
+  # exclude std soil data
+  dplyr::select(!tidyselect::starts_with("Std")) |> 
+  # compute Basal resp, MBC, metabolic quotient
+  dplyr::rename(basal_resp = "H2O") |> dplyr::relocate(basal_resp, .after = tidyselect::everything()) |> 
+  dplyr::mutate(
+    MBC = (Glu * 40.04) + 0.37, # not sure where those numbers come from!
+    qCO2 = basal_resp * 1000 / MBC # same here
+  ) |> 
+  # compute MSIR
+  dplyr::rowwise() |> dplyr::mutate(MSIR = sum(dplyr::c_across(Ala:gABA)))
+```
+
+# 9 - Shannon index
+
+Now, we re-pivot longer to compute on a per-substrate basis again, and directly compute relative SIRs (rSIR) and -x\*ln(x) intermediary value
+
+```{r}
+rSIRs <- MSIR |> 
+  tidyr::pivot_longer(cols = c(Ala:gABA), names_to = "substrate", values_to = "SIR") |> 
+  dplyr::mutate(
+    rSIR = SIR / MSIR,
+    sSIR = -rSIR * log(rSIR))
+```
+
+! There is still one warning: we are loosing one data point (possibly still a negative or null value given to the log?)
+
+[**!! TODO : Deal with this later !!**]{.underline}
+
+Still, check out the output
+
+```{r}
+rSIRs
+```
+
+Now, we can pivot wider again to sum sSIRs on a per sample basis
+
+```{r}
+shannon <- rSIRs |> 
+  tidyr::pivot_wider(
+    names_from = substrate, names_prefix = "sSIR_",
+    values_from = sSIR,
+    id_cols = c(dataset, plate_id, basal_resp, MBC, qCO2, MSIR)
+  ) |> 
+  dplyr::rowwise() |> dplyr::mutate(shannon = sum(dplyr::c_across(sSIR_Ala:sSIR_gABA)))
+
+# Check it out
+shannon
+```
+
+Gather all data (except std soil data)
+
+--\> to do: reevaluate selection of variables to keep (more readibility if less)
+
+```{r}
+#| output: false
+MR_indices <- MR_clean |> 
+  #take relevant categorical variables (no quantitative data)
+  dplyr::select(dataset, plate_id, run_id:sample_name) |> 
+  # reduce it to one row per plate
+  unique() |> 
+  # join it to the quantitative, plate-wise (=sample-wise) agregated quantitative data
+  dplyr::left_join(shannon) |> 
+  # give it a better order for readability
+  dplyr::relocate(plate_id, sample_id, soil, basal_resp, MBC, qCO2, MSIR, shannon)
+```
+
+Check it out
+
+```{r}
+MR_indices 
+```
+
+We lost
+
+- the data on raw SIR and relative SIR (rSIR), which is stored in rSIRs (just in case)
+
+- and std soil data
+
+```{r}
+rSIRs
+std_soil_data
+```
+
+# 10 - QC - check standard soils
+
+I'm actually not sooo happy about this. FYI: here, I took H2O-corrected data for the glucose
+
+--\> To Do: again, we have only one run, so... not displaying as it could
+
+```{r}
+# prepare data for the graph
+std_soil_longer <- std_soil_data |> 
+  tidyr::pivot_longer(
+    values_to = "SIR", 
+    names_to = "substrate", 
+    cols = tidyselect::starts_with("Std")) |> 
+  # add categorical data
+  dplyr::left_join(
+    MR_clean |> 
+      dplyr::select(dataset, plate_id, run_id, detection_plate_id) |> 
+      unique(),
+    by = dplyr::join_by(dataset, plate_id))
+
+# plot it
+std_soil_longer |> 
+  ggplot2::ggplot(ggplot2::aes(x = run_id, y = SIR)) +
+  ggplot2::theme_minimal() + 
+  ggplot2::geom_boxplot() +
+  ggplot2::facet_wrap(~substrate, scales = "free")
+```
+
+# 11 - Last data wrangling
+
+For our Field experiment, some modalities are to be removed: Bloc 1 is not a real bloc, and the faba bean did not take in the Ref treatment, so we removed it from MR data. Not relevant to write it out here though (didn't make it into plates 1 to 5), but nice to mention that some more post analysis might me relevant
+
+Plot the indices
+
+--\> make this into a loop, fo each variable between basal_resp and shannon
+
+```{r}
+MR_indices |> 
+  ggplot2::ggplot(ggplot2::aes(x = soil, y = basal_resp)) + 
+  ggplot2::theme_minimal() +
+  ggplot2::geom_boxplot()
+```
+
+# 12 - Next steps
+
+Can be exported with `MR_indices |> write_rds("path/to/the/file.rds")` or as a csv with `MR_indices |> write_csv("path/to/the/file.csv")`
+
+Now would come: plotting, modelling, etc. –\> "usual data analysis"
