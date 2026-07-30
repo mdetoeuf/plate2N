@@ -120,6 +120,10 @@ The function `csv_to_tibble()` imports plate data from a csv file where data is 
 
 In that sense, the function `csv_to_tibble()` constitutes the simplest import option and takes advantage of the `readr` package (part of the `tidyverse`), by using either the function `read_csv()` or `read_csv2()`, for comma-separated or semi-colon separated values, respectively. Value separators can be modulated in `csv_to_tibble()` by the parameter `delim`, which defaults with the value `","` (`read_csv()`), but accepts `";"` (`read_csv2()`).
 
+| Argument | Purpose | Typical values to change |
+|------------------------|------------------------|------------------------|
+| `delim` | Value separator used in the raw csv file | `","` (default, comma-separated) or `";"` (semicolon-separated) |
+
 Here is an example of how to call the `csv_to_tibble()` function.
 
 ```{r}
