@@ -205,7 +205,7 @@ join_abs_map <- function(
 ) {
 
   # If length of coerce_numeric is 1, apply to all
-  if (length(coerce_numeric == 1)) {
+  if (length(coerce_numeric) == 1) {
     coerce_numeric <- rep(coerce_numeric, length(tibble_list))
   }
 
