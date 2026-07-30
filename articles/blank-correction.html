@@ -341,6 +341,7 @@
 <span><span class="co">#&gt; 10 A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  Std_3_t1 0.167</span></span>
 <span><span class="co">#&gt; # ℹ 470 more rows</span></span></code></pre></div>
 </div>
+<p>Alongside the plate absorbance data itself, most analyses also require <strong>metadata</strong>: information that describes each <em>physical plate</em> as a whole, rather than each individual well. Aside from the standard curve concentrations (needed for this pipeline), nothing about metadata’s content is fixed — it’s a per-study container for whatever happens at the plate level and matters for your downstream analysis<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;This can include experimental design information (treatments, factorial design blocks), the sample name for designs that dedicate one plate per sample (as in the &lt;code&gt;microresp&lt;/code&gt; vignette), or bookkeeping details a plate reader often records automatically — wavelength, date and time, protocol name, experimenter name, etc.&lt;/p&gt;"><sup>2</sup></a>. Unlike <code>tidy_plates</code> (one row per well), metadata has one row per plate.</p>
 <p>For quality checking of the standard curve, we will require some metadata for each 96-well plate containing</p>
 <ul>
 <li><p>at least the concentrations of the dilutions of the standard curve</p></li>
@@ -535,7 +536,7 @@
 </div>
 <ul>
 <li>
-<code>std_blank$untrusted</code> identifies expected blank wells that do not correspond to the lowest absorbance value of their standard curve<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;This quality check was added because, in case of top_down pipetting, A1 often will contain the standard blank, but it is also often the first well to be filled during pipetting. With automated pipettes, a small ejection of liquid has to occur before dispensing the first dose of solution. Failure to intentionally eject will result in the first well receiving the “ejection” dose, which is not the correct volume. This is not trivial because with big data sets containing hundreds of plates, it is not unlikely that this human error happens a coupls of times. This can end up in various responses in terms of absorbance, depending on which reagent has been wrongly pipetted.&lt;/p&gt;"><sup>2</sup></a>. This item may be empty</li>
+<code>std_blank$untrusted</code> identifies expected blank wells that do not correspond to the lowest absorbance value of their standard curve<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;This quality check was added because, in case of top_down pipetting, A1 often will contain the standard blank, but it is also often the first well to be filled during pipetting. With automated pipettes, a small ejection of liquid has to occur before dispensing the first dose of solution. Failure to intentionally eject will result in the first well receiving the “ejection” dose, which is not the correct volume. This is not trivial because with big data sets containing hundreds of plates, it is not unlikely that this human error happens a coupls of times. This can end up in various responses in terms of absorbance, depending on which reagent has been wrongly pipetted.&lt;/p&gt;"><sup>3</sup></a>. This item may be empty</li>
 </ul>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
@@ -609,7 +610,7 @@
 <li><p>either by keeping <code>std_blank$trusted</code> as is (all “untrusted” wells should indeed be removed)</p></li>
 <li><p>or by using <code><a href="../reference/remove_wells.html">remove_wells()</a></code> on <code>std_blank$all</code> to generate a better-adapted list of “trusted” standard blank wells (when you decide that some of the “untrusted” wells should be trusted).</p></li>
 </ul>
-<p>Either way, blank averages will then be computed on (really) trusted wells only. Of course, this only works if there were several standard curves on problematic plates, otherwise you will be removing the only <code>std_blank</code> of the plate<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;In such cases, you must consider your options. If the inter-plate variability of &lt;code&gt;std_blank&lt;/code&gt; is sufficiently small, taking an across-dataset or an across-batch mean might do the trick.&lt;/p&gt;"><sup>3</sup></a>. Here are 2 examples of how to compute average blanks, along the 2 options mentioned above. Both use the function <code><a href="../reference/std_blank_average.html">std_blank_average()</a></code> to compute the blank average.</p>
+<p>Either way, blank averages will then be computed on (really) trusted wells only. Of course, this only works if there were several standard curves on problematic plates, otherwise you will be removing the only <code>std_blank</code> of the plate<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;In such cases, you must consider your options. If the inter-plate variability of &lt;code&gt;std_blank&lt;/code&gt; is sufficiently small, taking an across-dataset or an across-batch mean might do the trick.&lt;/p&gt;"><sup>4</sup></a>. Here are 2 examples of how to compute average blanks, along the 2 options mentioned above. Both use the function <code><a href="../reference/std_blank_average.html">std_blank_average()</a></code> to compute the blank average.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Option 1 - We keep std_blank$trusted</span></span>
@@ -663,13 +664,13 @@
 <div>
 <blockquote>
 <p><strong>Outlier check of the whole curve comes later</strong></p>
-<p>Throughout this pipeline, we search for and remove outliers prior to critical aggregation steps that will not be trustworthy otherwise (see also vignette <code>handling-outliers</code>). With this logic in mind, the outlier removal of other wells<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;I.e., wells in the rows “B” to “H” (top-down pipetting) or “A” to “G” (bottom-up pipetting)&lt;/p&gt;"><sup>4</sup></a> of the standard curve will be done later on, before computing the regression between absorbance and concentration. This is shown in the next vignette, <code>abs-to-conc</code>.</p>
+<p>Throughout this pipeline, we search for and remove outliers prior to critical aggregation steps that will not be trustworthy otherwise (see also vignette <code>handling-outliers</code>). With this logic in mind, the outlier removal of other wells<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content='&lt;p&gt;If your standard curve and sample wells share the same blank, don’t exclude &lt;code&gt;"Std"&lt;/code&gt; from &lt;code&gt;map_to_exclude&lt;/code&gt; — include the standard curve wells in this same call so both are corrected together in one pass, rather than running the separate standard-curve blank-correction pipeline shown earlier in this vignette.&lt;/p&gt;'><sup>5</sup></a> of the standard curve will be done later on, before computing the regression between absorbance and concentration. This is shown in the next vignette, <code>abs-to-conc</code>.</p>
 </blockquote>
 </div>
 </section><section class="level2"><h3 id="blank-correction-of-standard-curve">2.5 - Blank-correction of Standard Curve<a class="anchor" aria-label="anchor" href="#blank-correction-of-standard-curve"></a>
 </h3>
 <p>Once we are confident in our <code>std_blank</code>s, we can use the <code>std_blank_avg</code> to blank-correct the raw absorbance values for the whole standard curves. This is done with the function <code><a href="../reference/blank_correct_abs.html">blank_correct_abs()</a></code>, which will also be used to correct sample absorbance data in the next section.</p>
-<p><code><a href="../reference/blank_correct_abs.html">blank_correct_abs()</a></code> is a function that works for standard data and for sample data (<a href="#sec-sample-blank" class="quarto-xref">Section 5</a>), so it’s arguments are named in a way that fits both cases. It takes 3 main arguments:</p>
+<p><code><a href="../reference/blank_correct_abs.html">blank_correct_abs()</a></code> is a function that works for standard data and for sample data (see <a href="#sec-sample-blank">Blank-correction of samples</a>), so it’s arguments are named in a way that fits both cases. It takes 3 main arguments:</p>
 <ul>
 <li><p><code>raw_wells_data</code> contains the data of the standard curves. It should be ungrouped within the call to <code><a href="../reference/blank_correct_abs.html">blank_correct_abs()</a></code> and contain only non-blank data (i.e., in the case of “top_down” pipetting, rows B to H)</p></li>
 <li><p><code>per_plate_avg_blank</code> takes blank averages (e.g., <code>std_blank_avg</code>)</p></li>
@@ -1258,12 +1259,45 @@
 <p><strong>TO DO: the last paragraph is confusing –&gt; change the raw data so that we can remove this bit and re-run the coefficient of variation as we should</strong></p>
 </section></section><section class="level2"><h3 id="blank-correction-of-sample-absorbance">3.4 - Blank-correction of sample absorbance<a class="anchor" aria-label="anchor" href="#blank-correction-of-sample-absorbance"></a>
 </h3>
-<p>Now that we are confident in the per-plate average value of raw absorbance of extractant wells, we can finally blank-correct all sample data. <code><a href="../reference/blank_correct_abs.html">blank_correct_abs()</a></code> takes 3 arguments:</p>
-<ul>
-<li><p><code>raw_wells_data</code> containing the absorbance data that needs blank-correcting</p></li>
-<li><p><code>per_plate_avg_blank</code> which contains absorbance data of the extractant, averaged per plate (one row per plate), based on trusted extractant wells</p></li>
-<li><p><code>map_to_exclude</code>, a vector of the strings representing non-sample data under the column <code>map</code> within <code>raw_wells_data</code>, i.e., blanks, standard curves and empty wells. It defaults to <code>c("empty","Std","extr")</code>. The output will thus only contain blank-corrected sample data. This means that for (linear) modelling of the standard curve, <code>std_corrected</code> will still be needed.</p></li>
-</ul>
+<p>Now that we are confident in the per-plate average value of raw absorbance of extractant wells, we can finally blank-correct all sample data. <code><a href="../reference/blank_correct_abs.html">blank_correct_abs()</a></code> takes 4 arguments:</p>
+<table class="table caption-top">
+<caption>Key arguments for <code><a href="../reference/blank_correct_abs.html">blank_correct_abs()</a></code>
+</caption>
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead><tr class="header">
+<th>Argument</th>
+<th>Purpose</th>
+<th>Typical values to change</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>raw_wells_data</code></td>
+<td>The data to blank-correct</td>
+<td>Your own tidied plate data</td>
+</tr>
+<tr class="even">
+<td><code>per_plate_avg_blank</code></td>
+<td>A table of blank averages — one row per plate (or per plate + extractant, if you have more than one blank per plate) — not raw well-level data</td>
+<td>Output of <code><a href="../reference/std_blank_average.html">std_blank_average()</a></code> or <code><a href="../reference/extractant_average.html">extractant_average()</a></code>
+</td>
+</tr>
+<tr class="odd">
+<td><code>extr_def</code></td>
+<td>String(s) identifying extractant wells in the <code>map</code> column</td>
+<td>Default <code>"extr"</code>; change to a vector (e.g. <code>c("extr_1", "extr_2")</code>) if you have more than one extractant per plate</td>
+</tr>
+<tr class="even">
+<td><code>map_to_exclude</code></td>
+<td>Which <code>map</code> values to drop from the output</td>
+<td>Default <code>c("empty", "Std", "extr")</code>; adjust to match your own mapping strings</td>
+</tr>
+</tbody>
+</table>
+<p>The output will thus only contain blank-corrected sample data. This means that for (linear) modelling of the standard curve, <code>std_corrected</code> will still be needed.</p>
 <div>
 <blockquote>
 <p><strong>An assumption worth noting: spatial uniformity of the blank</strong></p>
@@ -1292,7 +1326,7 @@
 <span><span class="co">#&gt; Joining with `by = join_by(row, column, well_id, unique_well_id, dataset,</span></span>
 <span><span class="co">#&gt; plate_id, map, extr_id)`</span></span></code></pre></div>
 </div>
-<p>Let’s have a look at the output and notice the absence of the value <code>1</code> in the column <code>column</code> (no data for standard curve<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content='&lt;p&gt;In case the blanks are the same for sample wells and standard curve wells, this blank-correction should also be applied on Standard curve data. In this case, remove &lt;code&gt;"Std"&lt;/code&gt; from the call to &lt;code&gt;map_to_exclude&lt;/code&gt;.&lt;/p&gt;'><sup>5</sup></a>), and of the value <code>extr</code> in the column <code>map</code> (though it was present in <code>raw_meta</code> and still can be found under <code>extr_id</code> in the case of 2 extractants per plate, which we kept in case the info is relevant for downstream analysis.</p>
+<p>Let’s have a look at the output and notice the absence of the value <code>1</code> in the column <code>column</code> (no data for standard curve<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content='&lt;p&gt;In case the blanks are the same for sample wells and standard curve wells, this blank-correction should also be applied on Standard curve data. In this case, remove &lt;code&gt;"Std"&lt;/code&gt; from the call to &lt;code&gt;map_to_exclude&lt;/code&gt;.&lt;/p&gt;'><sup>6</sup></a>), and of the value <code>extr</code> in the column <code>map</code> (though it was present in <code>raw_meta</code> and still can be found under <code>extr_id</code> in the case of 2 extractants per plate, which we kept in case the info is relevant for downstream analysis.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Check it out</span></span>

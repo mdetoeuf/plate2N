@@ -248,6 +248,10 @@ separated values, respectively. Value separators can be modulated in
 by the parameter `delim`, which defaults with the value `","`
 (`read_csv()`), but accepts `";"` (`read_csv2()`).
 
+| Argument | Purpose | Typical values to change |
+|----|----|----|
+| `delim` | Value separator used in the raw csv file | `","` (default, comma-separated) or `";"` (semicolon-separated) |
+
 Here is an example of how to call the
 [`csv_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/csv_to_tibble.md)
 function.
@@ -807,6 +811,17 @@ of the list given to the argument `tibble_list`.
   name, even if you only work with data from a single experiment.
 - The “abs/map” prefixes can be modulated by adapting the default value
   of the argument `abs_map = c("abs-", "map-")`
+
+| Argument | Purpose | Typical values to change |
+|----|----|----|
+| `tibble_list` | The tibbles to join, in order (2 or more) | Your imported tibbles, in the same order as `abs_map`’s prefixes |
+| `dataset` | Prefix recorded in all column names | Give it a name even for a single-dataset study — needed for several downstream steps |
+| `abs_map` | Prefixes added per tibble (i.e., per layer) in `tibble_list` | Default `c("abs-", "map-")`; extend to more elements for more layers (e.g. MicroResp-style data), or set to `c("", "")` to disable prefixing |
+| `coerce_numeric` | Whether each tibble’s data is coerced to numeric during verticalization | Default `FALSE`; avoid mixing `TRUE`/`FALSE` across tibbles, since later pivoting can misbehave with inconsistent types |
+
+Key arguments for
+[`join_abs_map()`](https://mdetoeuf.github.io/plate2N/reference/join_abs_map.md)
+{.table .caption-top}
 
 Additional info can be found under `?join_abs_map()`.
 

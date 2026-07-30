@@ -12,6 +12,7 @@
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="abs-to-conc_files/libs/quarto-html/popper.min.js"></script><script src="abs-to-conc_files/libs/quarto-html/tippy.umd.min.js"></script><link href="abs-to-conc_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="abs-to-conc_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<script src="abs-to-conc_files/libs/quarto-diagram/mermaid.min.js"></script><script src="abs-to-conc_files/libs/quarto-diagram/mermaid-init.js"></script><link href="abs-to-conc_files/libs/quarto-diagram/mermaid.css" rel="stylesheet">
 <!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="abs-to-conc">
 </head>
 <body>
@@ -80,24 +81,130 @@
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mdetoeuf.github.io/plate2N/">plate2N</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com" class="external-link">patchwork</a></span><span class="op">)</span></span></code></pre></div>
 </div>
-<section class="section level2"><h2 id="todo">TODO<a class="anchor" aria-label="anchor" href="#todo"></a>
-</h2>
-<ul>
-<li><p>Consider creating a function for the multiple-curve QC (+ explain idea why it is relevant to look at it)</p></li>
-<li><p>For conversion: explain well difference btw mg N-sp/L and mg N/L, and how it relates to molar masses</p></li>
-<li><p>Consider using ggplot to build the residuals plots, evtl. make it a function (or even make a function of the whole comparison plotting process (4 plots given from the data of one curve)</p></li>
-<li><p>in epilogue: <strong>add examples of downstream steps: correct dilutions, per sample average and outlier removal, conversion to ppm, etc.</strong></p></li>
-<li><p><strong>make a function out of the concentration inference step</strong></p></li>
-</ul>
 <div>
 <blockquote>
 <p><strong>Work in progress</strong></p>
 <p>This vignette is still under development, bugs are to be expected</p>
 </blockquote>
 </div>
-</section><section class="section level2"><h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
+<section class="section level2"><h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
 <p>In this vignette, we cover the steps from blank-corrected absorbance to concentration in nitrogen [mg N / L], although this can easily be used for dosing other molecules<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;To adapt to other compounds, you may need to add molar masses into the data ‘molar_masses’, see later.&lt;/p&gt;"><sup>1</sup></a>, as long as the the relationship between absorbance and concentration is linear or polynomial.</p>
+<section class="level2"><h3 id="the-whole-game">The Whole Game<a class="anchor" aria-label="anchor" href="#the-whole-game"></a>
+</h3>
+<p>This pipeline picks up where <code>blank-correction</code> left off (<code>std_corrected</code> and <code>sample_corrected</code>), decides between a linear or polynomial model based on how your standard curves fit, computes the regression, and infers sample concentrations:</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p>
+<figure class=""><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TD
+  A(std_corrected + sample_corrected) --&gt; B{Choose model}
+  B --&gt;|Linear| C1(Compute linear model)
+  C1 --&gt; O1{{QC / outlier removal}}
+  O1 --&gt; C1
+  C1 --&gt; D1(Infer concentration)
+  B --&gt;|Polynomial| C2(Compute polynomial model)
+  C2 --&gt; O2{{QC / outlier removal}}
+  O2 --&gt; C2
+  C2 --&gt; D2(Infer concentration)
+  D1 --&gt; E(Epilogue: downstream steps):::sideThing
+  D2 --&gt; E
+
+  classDef sideThing fill:#f8fafc,stroke:#cbd5e1,color:#64748b,stroke-width:1px;
+   linkStyle 9 stroke:#cbd5e1,stroke-width:1px;
+   linkStyle 10 stroke:#cbd5e1,stroke-width:1px;
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<p>As with <code>blank-correction</code>, there’s no honest one-shot snippet that skips outlier removal, since checking your standard curves is a manual, visual step. Here’s the fast path for the linear model, assuming clean curves (no outlier) with one dilution per plate (no averaging needed):</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># compute linear model</span></span>
+<span><span class="va">lm_table_raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lm_std_curve.html">lm_std_curve</a></span><span class="op">(</span><span class="va">std_corrected</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">plate_id</span>, <span class="va">column</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">#** HERE COMES USER-DECISION ON OUTLIER REMOVAL / PER-DILUTION AVERAGING - ITERATIVE PROCESS *</span></span>
+<span></span>
+<span><span class="co"># infer concentration</span></span>
+<span><span class="va">data_mg_N_L</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/reg_join_abs.html">reg_join_abs</a></span><span class="op">(</span><span class="va">lm_table_raw</span>, <span class="va">sample_corrected</span>, target_sp <span class="op">=</span> <span class="st">"N"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>conc_mgNsp_L <span class="op">=</span> <span class="va">abs_corrected</span> <span class="op">/</span> <span class="va">slope</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="../reference/convert_molec.html">convert_molec</a></span><span class="op">(</span>masses <span class="op">=</span> <span class="va">molar_masses</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>For the polynomial model, the steps follow the same overall pattern, just with a different model formula — see <a href="#sec-polynomial">Polynomial model</a> for the specifics.</p>
+</section><section class="level2"><h3 id="the-cheat-sheet">The Cheat Sheet<a class="anchor" aria-label="anchor" href="#the-cheat-sheet"></a>
+</h3>
+<table class="table caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead><tr class="header">
+<th>Step</th>
+<th>Function(s)</th>
+<th>Purpose</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Compute model</td>
+<td>
+<code><a href="../reference/lm_std_curve.html">lm_std_curve()</a></code> (add <code>model = "poly"</code> for the polynomial model)</td>
+<td>Fit a per-curve regression (linear or polynomial) through the origin</td>
+</tr>
+<tr class="even">
+<td>QC &amp; visualize</td>
+<td>
+<code><a href="../reference/suspicious_lm.html">suspicious_lm()</a></code>, <code><a href="../reference/plot_list_lm.html">plot_list_lm()</a></code>, <code><a href="../reference/density_lm_param.html">density_lm_param()</a></code>
+</td>
+<td>Identify and visualize curves that don’t fit well <em>(see the upcoming plotting vignette)</em>
+</td>
+</tr>
+<tr class="odd">
+<td>Remove outlier wells</td>
+<td><code><a href="../reference/remove_wells.html">remove_wells()</a></code></td>
+<td>Drop wells identified as outliers — explained in detail in <code>handling-outliers</code>
+</td>
+</tr>
+<tr class="even">
+<td>Per-dilution average</td>
+<td><code><a href="../reference/std_dilution_average.html">std_dilution_average()</a></code></td>
+<td>Average multiple curves per plate into one</td>
+</tr>
+<tr class="odd">
+<td>Join model to sample data</td>
+<td><code><a href="../reference/reg_join_abs.html">reg_join_abs()</a></code></td>
+<td>Attach the fitted regression (linear or polynomial) to sample absorbance data</td>
+</tr>
+<tr class="even">
+<td>Infer concentration</td>
+<td>manual formula (linear) or quadratic solve (polynomial)</td>
+<td>Convert absorbance to concentration using the fitted model</td>
+</tr>
+<tr class="odd">
+<td>Convert units</td>
+<td><code><a href="../reference/convert_molec.html">convert_molec()</a></code></td>
+<td>Convert between mg <em>molecule</em> / L and mg <em>element</em> / L using <code>molar_masses</code>
+</td>
+</tr>
+</tbody>
+</table></section><section class="level2"><h3 id="overview-of-abs-to-conc">Overview of abs-to-conc<a class="anchor" aria-label="anchor" href="#overview-of-abs-to-conc"></a>
+</h3>
+<ul>
+<li><p>Decide which model to use (linear or polynomial) based on how well your standard curves fit a straight line</p></li>
+<li>
+<p>Compute the model</p>
+<ul>
+<li><p>if suspicious curves are flagged: identify and remove outliers, recompute</p></li>
+<li><p>if there’s more than one standard blank per plate (e.g. several curves per plate, or several blank wells within a single curve): compute the per-dilution average, recompute the model</p></li>
+</ul>
+</li>
+<li><p>Join the fitted model to sample data and infer concentration</p></li>
+<li><p>Convert to the units relevant to your study (e.g. mg N/L, later ppm — see Epilogue)</p></li>
+</ul>
 <div>
 <blockquote>
 <p><strong>Prerequisites</strong></p>
@@ -108,11 +215,11 @@
 </ul>
 </blockquote>
 </div>
-</section><section class="section level2"><h2 id="get-blank-corrected-data">1 - Get blank-corrected data<a class="anchor" aria-label="anchor" href="#get-blank-corrected-data"></a>
+</section></section><section class="section level2"><h2 id="get-blank-corrected-data">1 - Get blank-corrected data<a class="anchor" aria-label="anchor" href="#get-blank-corrected-data"></a>
 </h2>
 <p>Here is what the blank-corrected data looks like (see prerequisites)</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sample_corrected</span></span>
 <span><span class="co">#&gt; # A tibble: 264 × 25</span></span>
 <span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id map      abs_corrected</span></span>
@@ -170,7 +277,7 @@
 </div>
 <p>We will illustrate the choice of model on another data set called <code>tidy_TDN</code> (equivalent in structure to the <code>tidy_plates</code> we had at the beginning of the vignette <code>blank-correction</code>):</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tidy_TDN</span></span>
 <span><span class="co">#&gt; # A tibble: 3,072 × 8</span></span>
 <span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id   abs   map  </span></span>
@@ -189,7 +296,7 @@
 </div>
 <p>To illustrate the polynomial vs the linear model, we extract standard data for a single curve from that dataset. We chose here the 9th curve because it illustrates the purpose nicely. But to base a model decision at the dataset scale, you would have to repeat this on several curves, e.g., by sampling a random number of curves, then plotting them in a loop.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># take data for a single curve and format it for the plotting</span></span>
 <span><span class="va">curve</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="va">std_corrected_TDN</span> <span class="op">|&gt;</span> </span>
 <span>            <span class="co"># whatever steps are required to isolate a single curve</span></span>
@@ -223,14 +330,14 @@
 <p>The linear model takes <code>abs_corrected ~ 0 + std_conc</code> as a formula, which is the equivalent to say: <code>y = mx + p</code> with y = absorbance and x = concentration. m is the slope, and because we blank-corrected the data already, we are constraining the model to fit through the origin, i.e., p = 0, which justifies the <code>0 + std_conc</code> in the model call.</p>
 <p>The polynomial model takes <code>abs_corrected ~ 0 + std_conc + I(std_conc^2)</code> as a formula, which is the equivalent to say: <code>y = ax^2 + bx + c</code>. With the same logic as above, y = absorbance, x = concentration and c = 0 (blank-corrected data).</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># compute both models</span></span>
 <span><span class="va">lm_linear</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">abs_corrected</span> <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">std_conc</span>, data <span class="op">=</span> <span class="va">curve</span><span class="op">)</span></span>
 <span><span class="va">lm_poly</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">abs_corrected</span> <span class="op">~</span> <span class="fl">0</span> <span class="op">+</span> <span class="va">std_conc</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I</a></span><span class="op">(</span><span class="va">std_conc</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">curve</span><span class="op">)</span></span></code></pre></div>
 </div>
 <p>While both models return p-values corresponding to highly significant models (see next chunk), and very high adjusted R-squared, we will see with the plots that, indeed, the polynomial model is a much better fit in this case</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">sum_linear</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">lm_linear</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Call:</span></span>
@@ -273,7 +380,7 @@
 <p>Seeing the summary of both models: both are significant, but the p-value of the coefficient for the second degree term (a in ax^2) in the polynomial model is &lt;&lt;0.05, which indicates that that term significantly contributes to the model.</p>
 <p>Now, we build the 2 plots. In the call to the plot below, we rename abs_corrected with abs, as that is the argument that the function <code><a href="../reference/plot_std.html">plot_std()</a></code> takes.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># build the linear model plot</span></span>
 <span><span class="va">p_linear</span> <span class="op">&lt;-</span> </span>
 <span>  <span class="fu"><a href="../reference/plot_std.html">plot_std</a></span><span class="op">(</span></span>
@@ -296,7 +403,7 @@
 <span><span class="va">p_linear</span> <span class="op">+</span> <span class="va">p_poly</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-7-1.png" width="672"></p>
+<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-9-1.png" width="672"></p>
 </figure>
 </div>
 </div>
@@ -304,7 +411,7 @@
 <p>Indeed, the polynomial model fits a lot better</p>
 <p>Let’s look at the Residual plot to confirm this intuition</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Extract residual data from the 2 models</span></span>
 <span><span class="va">res_linear</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">sum_linear</span><span class="op">)</span></span>
 <span><span class="va">res_poly</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/residuals.html" class="external-link">residuals</a></span><span class="op">(</span><span class="va">sum_poly</span><span class="op">)</span></span>
@@ -324,7 +431,7 @@
 <span><span class="fu">graphics</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/graphics/text.html" class="external-link">text</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">6</span>, y <span class="op">=</span> <span class="op">-</span><span class="fl">0.15</span>, labels <span class="op">=</span> <span class="st">"polynomial\nmodel"</span>, col <span class="op">=</span> <span class="st">"magenta"</span>, adj <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-8-1.png" width="672"></p>
+<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-10-1.png" width="672"></p>
 </figure>
 </div>
 </div>
@@ -337,7 +444,7 @@
 </h3>
 <p><code><a href="../reference/lm_std_curve.html">lm_std_curve()</a></code> defines a curve based on the groups (defined by <code><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">dplyr::group_by()</a></code>) of the data given as input (<code>std_corrected</code> in the example below). Additionally to the columns <code>abs_corrected</code> and <code>std_conc</code> (numeric), the function also requires the column <code>unique_curve_id</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># compute the model and store model details</span></span>
 <span><span class="op">(</span><span class="va">lm_table_raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lm_std_curve.html">lm_std_curve</a></span><span class="op">(</span></span>
 <span>  <span class="va">std_corrected</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">plate_id</span>, <span class="va">column</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
@@ -378,7 +485,7 @@
 <p>The function <code><a href="../reference/suspicious_lm.html">suspicious_lm()</a></code> extracts from an <code>lm_table</code> as produced above all plates where the linear model is not optimal, i.e., either the p-value of the model is above 0.05, or its residuals are not normally distributed, or there is heteroscedasticity of residuals. <code>lm_table_suspicious</code> can serve for the identification of outlier wells.</p>
 <p>In this simplified data set, there is only one suspicious curve:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># extract all plates where "something" is not perfect </span></span>
 <span><span class="op">(</span><span class="va">lm_table_suspicious</span> <span class="op">&lt;-</span> <span class="va">lm_table_raw</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/suspicious_lm.html">suspicious_lm</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 12</span></span>
@@ -391,7 +498,7 @@
 <p>For visual aid (useful for larger data sets), <code><a href="../reference/plot_list_lm.html">plot_list_lm()</a></code> creates a <u>list</u> of plots of each curve given as argument. This means that it can be used to store plots any subset of curves, or for the whole dataset. Calling individual plots from this list can help spotting possible outlier wells, which can be removed with similar steps as shown above.</p>
 <p>Each element of the list is one plot, so that calling <code>suspicious_lm_plotlist[[i]]</code> will return the i-th plot. The plots are named in the list, so that you can also access any plot by calling the <code>unique_curve_id</code>, e.g., with <code>suspicious_lm_plotlist$NO3_1F1_col12</code></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># here, we create a list of plots from only the suspicious curve</span></span>
 <span><span class="va">suspicious_lm_plotlist</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plot_list_lm.html">plot_list_lm</a></span><span class="op">(</span></span>
 <span>  lm_data <span class="op">=</span> <span class="va">lm_table_suspicious</span>,</span>
@@ -405,24 +512,24 @@
 <span><span class="va">suspicious_lm_plotlist</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-11-1.png" width="672"></p>
+<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-13-1.png" width="672"></p>
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># or by name</span></span>
 <span><span class="va">suspicious_lm_plotlist</span><span class="op">$</span><span class="va">NO3_1F1_col12</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-11-2.png" width="672"></p>
+<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-13-2.png" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>When there are numerous (suspicious) curves, we can take advantage of the package <code>patchwork</code> to display multiple plots (example hereunder with the whole lm_table)</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">full_plotlist</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plot_list_lm.html">plot_list_lm</a></span><span class="op">(</span></span>
 <span>  lm_data <span class="op">=</span> <span class="va">lm_table_raw</span>,</span>
 <span>  std_data <span class="op">=</span> <span class="va">std_corrected</span><span class="op">)</span></span>
@@ -432,7 +539,7 @@
 <span>     <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_annotation.html" class="external-link">plot_annotation</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Plots of suspicious Standard curves"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-12-1.png" width="672"></p>
+<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-14-1.png" width="672"></p>
 </figure>
 </div>
 </div>
@@ -442,7 +549,7 @@
 <p>At this point, you may want to remove obvious outlier wells. Follow steps as shown in vignettes from prerequisites to <code><a href="../reference/remove_wells.html">remove_wells()</a></code>.</p>
 <p>Let’s say that we want to remove well E12 from plate NO3_1F1 in dataset Nmin:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">to_remove</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
 <span>  dataset <span class="op">=</span> <span class="st">"Nmin"</span>,</span>
 <span>  plate_id <span class="op">=</span> <span class="st">"NO3_1F1"</span>,</span>
@@ -465,7 +572,7 @@
 <p><code><a href="../reference/std_dilution_average.html">std_dilution_average()</a></code> does that and creates an artificial “column 13”.</p>
 <p>Notice that the average reduced the number of rows ~ 2-fold, and notice unique curve ids ending with <code>_col13</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">std_dilution_avg</span> <span class="op">&lt;-</span> <span class="va">std_corrected_wash1</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/std_dilution_average.html">std_dilution_average</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Check it out (notice )</span></span>
@@ -495,7 +602,7 @@
 </h3>
 <p>We can now rerun the linear model on the cleaned and (if required) per-dilution averaged curve, by repeating the same steps as above: computation of linear model, identification of suspicious curves and plotting</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Generate linear model data</span></span>
 <span><span class="op">(</span><span class="va">lm_std_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lm_std_curve.html">lm_std_curve</a></span><span class="op">(</span></span>
 <span>  <span class="va">std_dilution_avg</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename</a></span><span class="op">(</span>abs_corrected <span class="op">=</span> <span class="va">abs_mean</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
@@ -521,7 +628,7 @@
 <p>Good news, there are no more suspicious linear models anymore. Should there be any, one more round of QC as described above can still be helpful in some cases (<code><a href="../reference/plot_list_lm.html">plot_list_lm()</a></code>). However, one should not expect to always reach normality of residuals with only 7 points. If the curve fits and the p-value of the model if very low, non-normality and heteroscedasticity can be accepted. They are used as tools to “flag” suspicious curves, but should not be used as too strict criteria.</p>
 <p>Let’s store the last correction into a clean variable name to reduce possible confusion, and let’s compute all the plots in a big list, for storage purposes. We could then export this as one output data in a single list with <code><a href="https://readr.tidyverse.org/reference/read_rds.html" class="external-link">readr::write_rds()</a></code>, or save the plots with <code>ggsave()</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># save the last wash in a clean variable name</span></span>
 <span><span class="va">std_data_clean</span> <span class="op">&lt;-</span> <span class="va">std_dilution_avg</span></span>
 <span><span class="va">lm_table_clean</span> <span class="op">&lt;-</span> <span class="va">lm_std_mean</span></span>
@@ -546,7 +653,7 @@
 <p>The function <code><a href="../reference/density_lm_param.html">density_lm_param()</a></code> plots the density curve of either p-values or adjusted R^2 of the model (parameter <code>p_or_r</code>). See also <code>?density_lm_param()</code> for details and examples.</p>
 <p>First, let’s look at the distribution of p-values of the std curve regressions</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/density_lm_param.html">density_lm_param</a></span><span class="op">(</span></span>
 <span>  <span class="va">lm_table_clean</span>, </span>
 <span>  p_or_r <span class="op">=</span> <span class="st">"p"</span>, threshold <span class="op">=</span> <span class="fl">0.05</span>, </span>
@@ -555,14 +662,14 @@
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>caption <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"n = "</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">lm_table_clean</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-17-1.png" width="672"></p>
+<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-19-1.png" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>Then, same with R_squared (or adjusted?)</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/density_lm_param.html">density_lm_param</a></span><span class="op">(</span></span>
 <span>  <span class="va">lm_table_clean</span>, </span>
 <span>  p_or_r <span class="op">=</span> <span class="st">"adjR2"</span>, threshold <span class="op">=</span> <span class="fl">0.95</span>, </span>
@@ -571,14 +678,20 @@
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>caption <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"n = "</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">lm_table_clean</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> </span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-18-1.png" width="672"></p>
+<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-20-1.png" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
+<div>
+<blockquote>
+<p><strong>A note on R² thresholds for regression through the origin</strong></p>
+<p>Both the linear and polynomial models throughout this pipeline are constrained to pass through zero (<code>abs_corrected ~ 0 + std_conc</code>, since blank-corrected absorbance should read zero at zero concentration). R² for this kind of model is calculated differently than for a standard intercept model — relative to zero rather than the mean of the response — which tends to produce higher values than an equivalent intercept-model R² would. The 0.95 threshold used here (and again in Section 4.4 for the polynomial model) should be read as a practical guideline calibrated for this specific class of model, not as directly comparable to R² thresholds you might see quoted elsewhere for ordinary regression.</p>
+</blockquote>
+</div>
 <p>Now we plot all curves on same plot. Here we only have 5 curves. But it can be useful to visualize the multi-curve plot to spot plates where something possibly went wrong.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">#colors &lt;- c("#7FC97F", "#BEAED4", "#FDC086")</span></span>
 <span></span>
 <span><span class="va">lm_output</span><span class="op">$</span><span class="va">std_data_clean</span> <span class="op">|&gt;</span> </span>
@@ -592,7 +705,7 @@
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span> </span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-19-1.png" width="672"></p>
+<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-21-1.png" width="672"></p>
 </figure>
 </div>
 </div>
@@ -602,7 +715,7 @@
 </h3>
 <p>Check that we are now left with only one curve per plate (i.e., we indeed took a per-dilution average)</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span></span>
 <span>  <span class="op">(</span><span class="va">lm_output</span><span class="op">$</span><span class="va">std_data_clean</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">plate_id</span><span class="op">)</span> <span class="op">|&gt;</span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_data.html" class="external-link">n_groups</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">==</span> </span>
 <span>  <span class="op">(</span><span class="va">lm_output</span><span class="op">$</span><span class="va">std_data_clean</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">unique_curve_id</span><span class="op">)</span> <span class="op">|&gt;</span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_data.html" class="external-link">n_groups</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
@@ -614,7 +727,7 @@
 <p>The regression equation is Abs = slope * Concentration</p>
 <p>There is a default vector containing relevant molar masses. Make sure to append it with values that are relevant for your study. This is needed to convert concentrations from mg <em>molecule</em> per L to mg <em>element</em> per L (e.g., mg NO3/L to mg N/L)</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">molar_masses</span></span>
 <span><span class="co">#&gt;       N     NO3     NO2     NH4 </span></span>
 <span><span class="co">#&gt; 14.0069 62.0051 46.0057 36.0775</span></span></code></pre></div>
@@ -626,7 +739,7 @@
 <li><p>convert unit to mg N per L using <code>molar_masses</code> and <code><a href="../reference/convert_molec.html">convert_molec()</a></code>.</p></li>
 </ul>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">data_mg_N_L</span> <span class="op">&lt;-</span> </span>
 <span>  <span class="co"># add slope + info regression (p-val and R2) to absorbance data</span></span>
 <span>  <span class="fu"><a href="../reference/reg_join_abs.html">reg_join_abs</a></span><span class="op">(</span><span class="va">lm_output</span><span class="op">$</span><span class="va">lm_table_clean</span>, <span class="va">lm_output</span><span class="op">$</span><span class="va">sample_corrected</span>, target_sp <span class="op">=</span> <span class="st">"N"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
@@ -653,10 +766,16 @@
 <span><span class="co">#&gt; # ℹ 4 more variables: adj_r_squared &lt;dbl&gt;, lm_p &lt;dbl&gt;, conc_mgNsp_L &lt;dbl&gt;,</span></span>
 <span><span class="co">#&gt; #   conc_mgN_L &lt;dbl&gt;</span></span></code></pre></div>
 </div>
-<p>We finally have our computed concentration for each well, expressed in mg N per L. This is not the end of the data pipeline, but it is the end of what really belongs in this vignette. Downstream steps are different for each study. However, we propose below, in <a href="#sec-epilogue" class="quarto-xref">Section 7</a>, a few examples of further data transformation.</p>
+<p>We finally have our computed concentration for each well, expressed in mg N per L. This is not the end of the data pipeline, but it is the end of what really belongs in this vignette. Downstream steps are different for each study. However, we propose below, in <a href="#sec-epilogue">Epilogue</a>, a few examples of further data transformation.</p>
 </section></section><section class="section level2"><h2 id="sec-polynomial">4 - Polynomial model<a class="anchor" aria-label="anchor" href="#sec-polynomial"></a>
 </h2>
 <p>In this section, we cover the sames steps as in the previous 2 sections, but implementing a polynomial, rather than linear, model. This was necessary, for example, when dosing total dissolved nitrogen, i.e., dosing nitrate after a total oxidation of all N-compounds to nitrate. For this experiment, standard curve concentrations have been increased ten-fold. This resulted in highly concentrated solutions generating absorbance values above 3. It appears that a polynomial model is more appropriate in this case, as can be seen in the next chunks (example of a single curve).</p>
+<div>
+<blockquote>
+<p><strong>Don’t need a polynomial model?</strong></p>
+<p>If your standard curves fit a straight line well (see <a href="#sec-choice">Tips for choosing the model</a>), you can skip this section entirely — jump to <a href="#sec-epilogue">Epilogue</a> once you’ve finished the linear model in Section 3.</p>
+</blockquote>
+</div>
 <div>
 <blockquote>
 <p><strong>Does a polynomial model change blank correction?</strong></p>
@@ -665,7 +784,7 @@
 </div>
 <div>
 <blockquote>
-<p><strong>Only polynomial model - specific steps are reviewed in detail</strong></p>
+<p><strong>Only polynomial model-specific steps are reviewed in detail</strong></p>
 <p>In theory, applying a polynomial model would go through the same logic as the linear model:</p>
 <ul>
 <li><p>1st computation of the model + plotting suspicious curves</p></li>
@@ -676,12 +795,12 @@
 <li><p>Infering sample concentration</p></li>
 </ul>
 <p>In this section, we mainly focus on steps that differ from the linear model. If it appears too cryptic here, go and check the linear model-equivalent section.</p>
-<p>For tips on choice of model, see <a href="#sec-choice" class="quarto-xref">Section 4</a></p>
+<p>For tips on choice of model, see <a href="#sec-choice">Tips for choosing the model</a></p>
 </blockquote>
 </div>
 <p>The dataset for Total Dissolved Nitrogen data (TDN), and its standard curve data look like this (very similar to what we have seen with other data sets before)</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">std_corrected_TDN</span></span>
 <span><span class="co">#&gt; # A tibble: 224 × 13</span></span>
 <span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id   unique_curve_id map  </span></span>
@@ -720,10 +839,10 @@
 </div>
 <section class="level2"><h3 id="compute-polynomial-model-on-standard-curves">4.1 - Compute polynomial model on Standard curves<a class="anchor" aria-label="anchor" href="#compute-polynomial-model-on-standard-curves"></a>
 </h3>
-<p>These steps follow the same steps as in section <a href="#sec-linear" class="quarto-xref">Section 5</a> , with some adaptations.</p>
+<p>These steps follow the same steps as in section <a href="#sec-linear">Linear model from Standard Curves</a>, with some adaptations.</p>
 <p>First, we perform a polynomial model on each NO3 curve individually. In the background, the function <code><a href="../reference/lm_std_curve.html">lm_std_curve()</a></code> performs the model <code>stats::lm(abs_corrected ~ 0 + std_conc + I(std_conc^2), data = curve)</code> on each individual curve from the data</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Compute the polynomial model</span></span>
 <span><span class="va">lm_TDN_raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lm_std_curve.html">lm_std_curve</a></span><span class="op">(</span></span>
 <span>  grouped_data <span class="op">=</span> <span class="va">std_corrected_TDN</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">unique_curve_id</span><span class="op">)</span>, </span>
@@ -761,7 +880,7 @@
 <p>Then we take a subset to examine individually. The function <code><a href="../reference/suspicious_lm.html">suspicious_lm()</a></code> allows the subsetting of those curves where the linear model doesn’t seem to perform ideally. i.e., either non-significant model (p-value &gt; 0.05), residuals not normally distributed, heteroscedasticity, or p-value of one of the coefficients &gt; 0.05.</p>
 <p>In our case, this concerns 7 curves (from 32)</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># extract all plates where "something" is not perfect </span></span>
 <span><span class="op">(</span><span class="va">lm_suspicious</span> <span class="op">&lt;-</span> <span class="va">lm_TDN_raw</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/suspicious_lm.html">suspicious_lm</a></span><span class="op">(</span>model <span class="op">=</span> <span class="st">"poly"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 7 × 15</span></span>
@@ -780,7 +899,7 @@
 </div>
 <p>We can visually evaluate those plates. For visual support, we create with <code><a href="../reference/plot_list_lm.html">plot_list_lm()</a></code> a list of plots where we store each individual plot of “suspicious” standard curves.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">suspicious_plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plot_list_lm.html">plot_list_lm</a></span><span class="op">(</span></span>
 <span>  <span class="va">lm_suspicious</span>, </span>
 <span>  std_data <span class="op">=</span> <span class="va">std_corrected_TDN</span>, </span>
@@ -790,19 +909,19 @@
 <span><span class="va">suspicious_plots</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-26-1.png" width="672"></p>
+<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-28-1.png" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>Then we plot them together. Notice that the “problem” of each curve is displayed on the plots. In this case, non-normality of the residuals is always the issue. Should p-values (model or coefficients) be above 0.05 or the residuals be heteroscedastic, this would be displayed as well.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span><span class="va">suspicious_plots</span>, axis_titles <span class="op">=</span> <span class="st">"keep"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>     <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_annotation.html" class="external-link">plot_annotation</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Plots of suspicious Standard curves"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-27-1.png" width="672"></p>
+<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-29-1.png" width="672"></p>
 </figure>
 </div>
 </div>
@@ -821,7 +940,7 @@
 </h3>
 <p>First, let’s look at the distribution of p-values and adjusted R^2 of the std curve regressions</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">TDN_p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/density_lm_param.html">density_lm_param</a></span><span class="op">(</span></span>
 <span>  <span class="va">lm_TDN_raw</span>, </span>
 <span>  p_or_r <span class="op">=</span> <span class="st">"p"</span>, threshold <span class="op">=</span> <span class="fl">0.05</span>, </span>
@@ -834,14 +953,14 @@
 <span><span class="va">TDN_p</span> <span class="op">/</span> <span class="va">TDN_adjR2</span> <span class="op">+</span> <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_annotation.html" class="external-link">plot_annotation</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Multiple-curve QC of the\npolynomial model for TDN data"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-28-1.png" width="672"></p>
+<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-30-1.png" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>Now we plot all curves on a single plot. Here, we check for batch-effects by assigning the date to the color aesthetics, this should be adapted as needed.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">annotation</span> <span class="op">&lt;-</span> <span class="va">std_corrected_TDN</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">plate_id</span>, <span class="va">abs_corrected</span>, <span class="va">std_conc</span>, <span class="va">date</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/slice.html" class="external-link">slice_max</a></span><span class="op">(</span><span class="va">std_conc</span>, with_ties <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
@@ -884,7 +1003,7 @@
 <span>  <span class="op">)</span> </span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-29-1.png" width="672"></p>
+<figure><p><img src="abs-to-conc_files/figure-html/unnamed-chunk-31-1.png" width="672"></p>
 </figure>
 </div>
 </div>
@@ -894,7 +1013,7 @@
 <p>Here we use the last version of the polynomial model data (starts with “lm”). In this case, no outlier removal or per-dilution average computation was necessary, therefore we are still working with <code>lm_TDN_raw</code>.</p>
 <p>First, we join the polynomial-model data (on a per-plate basis) to the sample absorbance data, i.e., each row (= sample-containing well) of the sample data receives additional columns containing polynomial model data. That is what the function <code><a href="../reference/reg_join_abs.html">reg_join_abs()</a></code> does (it recognizes which model is given as input, so it works either way)</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="va">lm_TDN_raw</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="../reference/reg_join_abs.html">reg_join_abs</a></span><span class="op">(</span></span>
 <span>    <span class="va">samples_corrected_TDN</span>, </span>
@@ -923,7 +1042,7 @@
 <p>In the script below, we take the smallest value of the solutions to the 2nd degree equation <code>a*x^2 + b*x - y = 0</code>. See <a href="#cau-parable" class="quarto-xref">Caution 1</a> for more details on when to adapt this choice, which you can do by changing <code><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min()</a></code> to <code><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max()</a></code>.</p>
 <p><strong>TO DO: make a function out of the concentration inference step</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Check out molar_masses</span></span>
 <span><span class="va">molar_masses</span></span>
 <span><span class="co">#&gt;       N     NO3     NO2     NH4 </span></span>
@@ -967,8 +1086,16 @@
 </section></section><section class="section level2"><h2 id="sec-epilogue">5 - Epilogue<a class="anchor" aria-label="anchor" href="#sec-epilogue"></a>
 </h2>
 <p>We now have clean and tidy concentration data, which can be exported for further downstream analysis, for example using <code>data_mg_N_L |&gt; write_rds("path/to/my/output/TDN_data_mg_N_L")</code>.</p>
-<p>Notice that so far we still have 4 data points per sample (in our example data sets, they were pipetted in 4 replicates in the 96-well plates). A pipeline for spotting and removing sample-outliers and computing per-sample average is under development and may arrive later.</p>
-<p><strong>TO DO: add examples of downstream steps: correct dilutions, per sample average and outlier removal, conversion to ppm, etc.</strong></p>
+<p>It’s worth being explicit about what this concentration represents: <code>conc_mgN_L</code> is the concentration <strong>in the well as measured</strong> — one value per well, not yet a final, per-sample or publication-ready number. Depending on your experimental design, one or more further steps are typically still needed, and which ones apply is study-specific. For example, in our own soil dataset:</p>
+<ul>
+<li>
+<strong>Correcting for dilution.</strong> Any sample that was diluted before reading needs its concentration multiplied back by the dilution factor to reflect the original sample, e.g. <code>data_mg_N_L |&gt; dplyr::mutate(conc_corrected = conc_mgN_L * dilution_factor)</code>.</li>
+<li>
+<strong>Per-sample averaging.</strong> So far we still have 4 data points per sample (in our example data sets, they were pipetted in 4 replicates in the 96-well plates) — these typically need to be averaged, with outliers checked for, to get one value per sample.</li>
+<li>
+<strong>Unit conversion.</strong> In our case, this means converting to ppm, i.e. mg N / kg dry soil. This requires bringing in external data collected in the lab, not part of the plate-reader pipeline itself: the fresh soil weight used in the extraction, the water content of that fresh soil, and the soil-to-extractant ratio used.</li>
+</ul>
+<p>A pipeline for spotting and removing sample-outliers and computing per-sample averages is under development and may arrive later. In the meantime, these downstream steps depend on your specific experimental design and aren’t something this vignette can fully generalize.</p>
 </section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);

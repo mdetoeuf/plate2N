@@ -81,15 +81,22 @@
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com" class="external-link">patchwork</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://wilkelab.org/ggridges/" class="external-link">ggridges</a></span><span class="op">)</span></span></code></pre></div>
 </div>
-<section class="section level2"><h2 id="sec-microresp">1 - Introduction<a class="anchor" aria-label="anchor" href="#sec-microresp"></a>
+<section class="section level2"><h2 id="to-do">TO DO<a class="anchor" aria-label="anchor" href="#to-do"></a>
 </h2>
-<p>This vignette shows a variation of the import pipeline described in <code><a href="../articles/import-tidy.html">vignette("import-tidy", package = "plate2N")</a></code>, adapted to the case where more than 2 layers of data are recorded for each physical plate (see the tip on multiple data layers in <code>import-tidy</code>).</p>
+<ul>
+<li>Add index computations at the end of the pipeline (not yet written)</li>
+<li>Explain the choice of absorbance thresholds used in the QC step (Section 4.1)</li>
+<li>Double-check the µg CO2-C conversion formula (Section 5.3) against the MicroResp manual — currently taken from an Excel document</li>
+</ul></section><section class="section level2"><h2 id="sec-microresp">1 - Introduction<a class="anchor" aria-label="anchor" href="#sec-microresp"></a>
+</h2>
+<p>This vignette walks through the full analysis pipeline for a MicroResp experiment, from raw plate import to substrate-level CO2 respiration values. It follows the same overall logic as the main N-dosage pipeline (<code>import-tidy</code>, <code>blank-correction</code>, <code>abs-to-conc</code>), but MicroResp experiments differ enough — more data layers per plate, no standard curve, and a different final unit (a respiration rate rather than a concentration) — that they’re covered here as their own self-contained walkthrough rather than split across the main vignettes.</p>
+<p>We start, as in <code>import-tidy</code>, with importing and tidying data recorded with more than 2 layers per plate (see the tip on multiple data layers there) — then move on to the MicroResp-specific steps: joining sample metadata, quality-checking and cleaning raw absorbance, normalizing across plates, converting to %CO2 and then to a respiration rate, and finally checking for and removing per-sample outliers.</p>
 <p>Here, we quickly go through the import pipeline with an example of data from a <a href="https://www.hutton.ac.uk/scientific-services/analytical/analytical-services/microresp/" class="external-link">MicroResp</a> experiment. To understand what this means: here plates are incubated for 5h. An absorbance reading is done at t = 0h (<code>t0</code>) and t = 5h (<code>t5</code>). There is also mapping data, containing the info on which substrate has been added in which well. Substrates are, in this experiment: glucose (Glu), water (H2O), oxalic acid (OA), lignin (Lgn), N-acetylglucosamine (NAG), gamma-acetylbutyric acid (gABA), alanine (Ala) and urea (Urea).</p>
 <p>So, the 3 layers of data are referred to as <code>abs_t0</code>, <code>abs_t5</code>, and <code>map</code>.</p>
 <div>
 <blockquote>
 <p><strong>More layers of data are possible</strong></p>
-<p>in theory, any number of data layers are possible, you just need to extend the logic displayed here, with additional elements to some arguments that are vectors (e.g., <code>abs_map = c("abs_t0", "abs_t5", "map")</code> and others that are lists of all data sets (one per layer).</p>
+<p>In theory, any number of data layers are possible, you just need to extend the logic displayed here, with additional elements to some arguments that are vectors (e.g., <code>abs_map = c("abs_t0", "abs_t5", "map")</code> and others that are lists of all data sets (one per layer).</p>
 </blockquote>
 </div>
 </section><section class="section level2"><h2 id="import-and-tidy-with-2-layers">2 - Import and tidy with 2+ layers<a class="anchor" aria-label="anchor" href="#import-and-tidy-with-2-layers"></a>
@@ -281,9 +288,13 @@
 <span><span class="co">#&gt; 10 A     2      A2      A2_P05         MR      P05      Std_Glu 1.25   0.47  </span></span>
 <span><span class="co">#&gt; # ℹ 470 more rows</span></span></code></pre></div>
 </div>
-</section></section><section class="section level2"><h2 id="from-here-on-under-development-technically-working-but-not-ready-yet">°°° ! FROM HERE ON: under development, technically working but not ready yet ! °°°<a class="anchor" aria-label="anchor" href="#from-here-on-under-development-technically-working-but-not-ready-yet"></a>
-</h2>
-</section><section class="section level2"><h2 id="join-metadata-to-plate-data">3 - Join metadata to plate data<a class="anchor" aria-label="anchor" href="#join-metadata-to-plate-data"></a>
+<div>
+<blockquote>
+<p><strong>Work in progress from here on</strong></p>
+<p>Everything from Section 3 onward is functional, but still being refined — expect rough edges, and expect this section to keep growing (an index-computation step is still to be added at the end).</p>
+</blockquote>
+</div>
+</section></section><section class="section level2"><h2 id="join-metadata-to-plate-data">3 - Join metadata to plate data<a class="anchor" aria-label="anchor" href="#join-metadata-to-plate-data"></a>
 </h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
@@ -337,7 +348,6 @@
 </h3>
 <p><code><a href="../reference/qc_raw_abs.html">plate2N::qc_raw_abs()</a></code> checks whether absorbance data is within a user-defined range or not. Check the documentation on this function for more details.</p>
 <p>Here, we run the quality check to see if there is any really abnormal absorbance reading. The plots are saved in the working environment as objects <code>abs_t0_distrib</code> and <code>abs_t5_distrib</code>, which can be called on later.</p>
-<p>–&gt; add a comment about why we choose those thresholds</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Check for t0</span></span>
@@ -379,7 +389,7 @@
 </div>
 </div>
 </div>
-</section><section class="level2"><h3 id="remove-empty-and-nas">4.2 - Remove “empty” and NAs<a class="anchor" aria-label="anchor" href="#remove-empty-and-nas"></a>
+</section><section class="level2"><h3 id="sec-remove-empty">4.2 - Remove “empty” and NAs<a class="anchor" aria-label="anchor" href="#sec-remove-empty"></a>
 </h3>
 <p>With MicroResp experiments, edge effects are not rare, so we exclude any data from columns 1 and 12 of the 96-well plate. Those have been encoded in the mapping as “empty” (though they were not physically).</p>
 <p>We also change data format so that all absorbance data becomes numeric (until now stored as character)</p>
@@ -551,7 +561,6 @@
 </div>
 </section><section class="level2"><h3 id="convert-to-µg-co2-c-g-dry-soil-h">5.3 - Convert to µg CO2-C / g dry soil / h<a class="anchor" aria-label="anchor" href="#convert-to-%C2%B5g-co2-c-g-dry-soil-h"></a>
 </h3>
-<p><u><strong>!! TODO: this is taken from Excel document –&gt; check again in Manual that it is the right version</strong></u></p>
 <p>co2_emitted = (((percent_co2/100)x850x(44/22.4)x<em>(12/44)x</em>(273/(273+25)))/(soil_per_well_gx(soil_dw/100)))/5</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb18"><pre class="downlit sourceCode r">
@@ -610,8 +619,7 @@
 </h2>
 <section class="level2"><h3 id="compute-preliminary-average-pre-outlier-removal">6.1 - Compute preliminary average (pre-outlier removal)<a class="anchor" aria-label="anchor" href="#compute-preliminary-average-pre-outlier-removal"></a>
 </h3>
-<p>!! A preliminary run of the following chunks (up to saving the plots) showed that while they are not the only outliers, wells from row A and H are outliers on many plates, possibly a majority of plates. So I choose to follow the recommendation of our colleagues from the FiBL and remove those wells already in the subset hereunder, before computation of the average. If needed, just “comment” the filtering line to check out plots with all data again.</p>
-<p>We then compute coefficient of variation which will serve as a threshold to identify potential outliers</p>
+<p>MicroResp plates commonly show edge effects — sometimes marginal when the kit was well sealed, but often visible even to the naked eye along one or more edges of the plate. This is the same underlying issue already addressed for columns 1 and 12 in <a href="#sec-remove-empty">Remove “empty” and NAs</a>, and it applies to rows as well: a preliminary run of the steps below showed that wells in row A and row H are outliers on many plates, often a majority of them. Following both this expectation and the recommendation of our colleagues at FiBL, we therefore exclude rows A and H from the subset below before computing the average, rather than treating them case-by-case as ordinary outliers. If you’d like to check the unfiltered data, simply comment out the filtering line. We then compute coefficient of variation which will serve as a threshold to identify potential outliers</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">MR_avg_prelim</span> <span class="op">&lt;-</span> <span class="va">MR_co2_g_h</span> <span class="op">|&gt;</span> </span>

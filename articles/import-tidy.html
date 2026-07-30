@@ -277,6 +277,24 @@
 </h3>
 <p>The function <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code> imports plate data from a csv file where data is structured in a specific way (see hereunder). For other csv formats, see sections below about “skanit csv” and “other formats”. The required data structure is strictly the same as in the outputted tibble (see <code>tibble_example</code> hereabove).</p>
 <p>In that sense, the function <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code> constitutes the simplest import option and takes advantage of the <code>readr</code> package (part of the <code>tidyverse</code>), by using either the function <code>read_csv()</code> or <code>read_csv2()</code>, for comma-separated or semi-colon separated values, respectively. Value separators can be modulated in <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code> by the parameter <code>delim</code>, which defaults with the value <code>","</code> (<code>read_csv()</code>), but accepts <code>";"</code> (<code>read_csv2()</code>).</p>
+<table class="table caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead><tr class="header">
+<th>Argument</th>
+<th>Purpose</th>
+<th>Typical values to change</th>
+</tr></thead>
+<tbody><tr class="odd">
+<td><code>delim</code></td>
+<td>Value separator used in the raw csv file</td>
+<td>
+<code>","</code> (default, comma-separated) or <code>";"</code> (semicolon-separated)</td>
+</tr></tbody>
+</table>
 <p>Here is an example of how to call the <code><a href="../reference/csv_to_tibble.html">csv_to_tibble()</a></code> function.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="downlit sourceCode r">
@@ -673,6 +691,43 @@
 <li>The “abs/map” prefixes can be modulated by adapting the default value of the argument <code>abs_map = c("abs-", "map-")</code>
 </li>
 </ul>
+<table class="table caption-top">
+<caption>Key arguments for <code><a href="../reference/join_abs_map.html">join_abs_map()</a></code>
+</caption>
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead><tr class="header">
+<th>Argument</th>
+<th>Purpose</th>
+<th>Typical values to change</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>tibble_list</code></td>
+<td>The tibbles to join, in order (2 or more)</td>
+<td>Your imported tibbles, in the same order as <code>abs_map</code>’s prefixes</td>
+</tr>
+<tr class="even">
+<td><code>dataset</code></td>
+<td>Prefix recorded in all column names</td>
+<td>Give it a name even for a single-dataset study — needed for several downstream steps</td>
+</tr>
+<tr class="odd">
+<td><code>abs_map</code></td>
+<td>Prefixes added per tibble (i.e., per layer) in <code>tibble_list</code>
+</td>
+<td>Default <code>c("abs-", "map-")</code>; extend to more elements for more layers (e.g. MicroResp-style data), or set to <code>c("", "")</code> to disable prefixing</td>
+</tr>
+<tr class="even">
+<td><code>coerce_numeric</code></td>
+<td>Whether each tibble’s data is coerced to numeric during verticalization</td>
+<td>Default <code>FALSE</code>; avoid mixing <code>TRUE</code>/<code>FALSE</code> across tibbles, since later pivoting can misbehave with inconsistent types</td>
+</tr>
+</tbody>
+</table>
 <p>Additional info can be found under <code>?join_abs_map()</code>.</p>
 <div>
 <blockquote>

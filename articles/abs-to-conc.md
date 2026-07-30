@@ -6,23 +6,6 @@ library(plate2N)
 library(patchwork)
 ```
 
-## TODO
-
-- Consider creating a function for the multiple-curve QC (+ explain idea
-  why it is relevant to look at it)
-
-- For conversion: explain well difference btw mg N-sp/L and mg N/L, and
-  how it relates to molar masses
-
-- Consider using ggplot to build the residuals plots, evtl. make it a
-  function (or even make a function of the whole comparison plotting
-  process (4 plots given from the data of one curve)
-
-- in epilogue: **add examples of downstream steps: correct dilutions,
-  per sample average and outlier removal, conversion to ppm, etc.**
-
-- **make a function out of the concentration inference step**
-
 > **Work in progress**
 >
 > This vignette is still under development, bugs are to be expected
@@ -33,6 +16,85 @@ In this vignette, we cover the steps from blank-corrected absorbance to
 concentration in nitrogen \[mg N / L\], although this can easily be used
 for dosing other molecules[^1], as long as the the relationship between
 absorbance and concentration is linear or polynomial.
+
+### The Whole Game
+
+This pipeline picks up where `blank-correction` left off
+(`std_corrected` and `sample_corrected`), decides between a linear or
+polynomial model based on how your standard curves fit, computes the
+regression, and infers sample concentrations:
+
+``` mermaid
+flowchart TD
+  A(std_corrected + sample_corrected) --> B{Choose model}
+  B -->|Linear| C1(Compute linear model)
+  C1 --> O1{{QC / outlier removal}}
+  O1 --> C1
+  C1 --> D1(Infer concentration)
+  B -->|Polynomial| C2(Compute polynomial model)
+  C2 --> O2{{QC / outlier removal}}
+  O2 --> C2
+  C2 --> D2(Infer concentration)
+  D1 --> E(Epilogue: downstream steps):::sideThing
+  D2 --> E
+
+  classDef sideThing fill:#f8fafc,stroke:#cbd5e1,color:#64748b,stroke-width:1px;
+   linkStyle 9 stroke:#cbd5e1,stroke-width:1px;
+   linkStyle 10 stroke:#cbd5e1,stroke-width:1px;
+```
+
+As with `blank-correction`, there’s no honest one-shot snippet that
+skips outlier removal, since checking your standard curves is a manual,
+visual step. Here’s the fast path for the linear model, assuming clean
+curves (no outlier) with one dilution per plate (no averaging needed):
+
+``` r
+
+# compute linear model
+lm_table_raw <- lm_std_curve(std_corrected |> dplyr::group_by(plate_id, column))
+
+#** HERE COMES USER-DECISION ON OUTLIER REMOVAL / PER-DILUTION AVERAGING - ITERATIVE PROCESS *
+
+# infer concentration
+data_mg_N_L <- reg_join_abs(lm_table_raw, sample_corrected, target_sp = "N") |> 
+  dplyr::mutate(conc_mgNsp_L = abs_corrected / slope) |> 
+  convert_molec(masses = molar_masses)
+```
+
+For the polynomial model, the steps follow the same overall pattern,
+just with a different model formula — see [Polynomial
+model](#sec-polynomial) for the specifics.
+
+### The Cheat Sheet
+
+| Step | Function(s) | Purpose |
+|----|----|----|
+| Compute model | [`lm_std_curve()`](https://mdetoeuf.github.io/plate2N/reference/lm_std_curve.md) (add `model = "poly"` for the polynomial model) | Fit a per-curve regression (linear or polynomial) through the origin |
+| QC & visualize | [`suspicious_lm()`](https://mdetoeuf.github.io/plate2N/reference/suspicious_lm.md), [`plot_list_lm()`](https://mdetoeuf.github.io/plate2N/reference/plot_list_lm.md), [`density_lm_param()`](https://mdetoeuf.github.io/plate2N/reference/density_lm_param.md) | Identify and visualize curves that don’t fit well *(see the upcoming plotting vignette)* |
+| Remove outlier wells | [`remove_wells()`](https://mdetoeuf.github.io/plate2N/reference/remove_wells.md) | Drop wells identified as outliers — explained in detail in `handling-outliers` |
+| Per-dilution average | [`std_dilution_average()`](https://mdetoeuf.github.io/plate2N/reference/std_dilution_average.md) | Average multiple curves per plate into one |
+| Join model to sample data | [`reg_join_abs()`](https://mdetoeuf.github.io/plate2N/reference/reg_join_abs.md) | Attach the fitted regression (linear or polynomial) to sample absorbance data |
+| Infer concentration | manual formula (linear) or quadratic solve (polynomial) | Convert absorbance to concentration using the fitted model |
+| Convert units | [`convert_molec()`](https://mdetoeuf.github.io/plate2N/reference/convert_molec.md) | Convert between mg *molecule* / L and mg *element* / L using `molar_masses` |
+
+### Overview of abs-to-conc
+
+- Decide which model to use (linear or polynomial) based on how well
+  your standard curves fit a straight line
+
+- Compute the model
+
+  - if suspicious curves are flagged: identify and remove outliers,
+    recompute
+
+  - if there’s more than one standard blank per plate (e.g. several
+    curves per plate, or several blank wells within a single curve):
+    compute the per-dilution average, recompute the model
+
+- Join the fitted model to sample data and infer concentration
+
+- Convert to the units relevant to your study (e.g. mg N/L, later ppm —
+  see Epilogue)
 
 > **Prerequisites**
 >
@@ -291,7 +353,7 @@ p_poly <-
 p_linear + p_poly
 ```
 
-![](abs-to-conc_files/figure-html/unnamed-chunk-7-1.png)
+![](abs-to-conc_files/figure-html/unnamed-chunk-9-1.png)
 
 Indeed, the polynomial model fits a lot better
 
@@ -318,7 +380,7 @@ graphics::points(0, y = -0.15, col = "magenta", pch = 15)
 graphics::text(x = 6, y = -0.15, labels = "polynomial\nmodel", col = "magenta", adj = 0)
 ```
 
-![](abs-to-conc_files/figure-html/unnamed-chunk-8-1.png)
+![](abs-to-conc_files/figure-html/unnamed-chunk-10-1.png)
 
 Whereas this quick approach suffices to convince us that a polynomial
 model is a better fit for this particular curve, one should evaluate
@@ -434,7 +496,7 @@ names(suspicious_lm_plotlist)
 suspicious_lm_plotlist[[1]]
 ```
 
-![](abs-to-conc_files/figure-html/unnamed-chunk-11-1.png)
+![](abs-to-conc_files/figure-html/unnamed-chunk-13-1.png)
 
 ``` r
 
@@ -443,7 +505,7 @@ suspicious_lm_plotlist[[1]]
 suspicious_lm_plotlist$NO3_1F1_col12
 ```
 
-![](abs-to-conc_files/figure-html/unnamed-chunk-11-2.png)
+![](abs-to-conc_files/figure-html/unnamed-chunk-13-2.png)
 
 When there are numerous (suspicious) curves, we can take advantage of
 the package `patchwork` to display multiple plots (example hereunder
@@ -460,7 +522,7 @@ patchwork::wrap_plots(full_plotlist, axis_titles = "collect_y") +
      patchwork::plot_annotation(title = "Plots of suspicious Standard curves")
 ```
 
-![](abs-to-conc_files/figure-html/unnamed-chunk-12-1.png)
+![](abs-to-conc_files/figure-html/unnamed-chunk-14-1.png)
 
 ### 3.3 - outlier removal
 
@@ -630,7 +692,7 @@ density_lm_param(
   ggplot2::labs(caption = paste0("n = ", nrow(lm_table_clean)))
 ```
 
-![](abs-to-conc_files/figure-html/unnamed-chunk-17-1.png)
+![](abs-to-conc_files/figure-html/unnamed-chunk-19-1.png)
 
 Then, same with R_squared (or adjusted?)
 
@@ -644,7 +706,21 @@ density_lm_param(
   ggplot2::labs(caption = paste0("n = ", nrow(lm_table_clean))) 
 ```
 
-![](abs-to-conc_files/figure-html/unnamed-chunk-18-1.png)
+![](abs-to-conc_files/figure-html/unnamed-chunk-20-1.png)
+
+> **A note on R² thresholds for regression through the origin**
+>
+> Both the linear and polynomial models throughout this pipeline are
+> constrained to pass through zero (`abs_corrected ~ 0 + std_conc`,
+> since blank-corrected absorbance should read zero at zero
+> concentration). R² for this kind of model is calculated differently
+> than for a standard intercept model — relative to zero rather than the
+> mean of the response — which tends to produce higher values than an
+> equivalent intercept-model R² would. The 0.95 threshold used here (and
+> again in Section 4.4 for the polynomial model) should be read as a
+> practical guideline calibrated for this specific class of model, not
+> as directly comparable to R² thresholds you might see quoted elsewhere
+> for ordinary regression.
 
 Now we plot all curves on same plot. Here we only have 5 curves. But it
 can be useful to visualize the multi-curve plot to spot plates where
@@ -665,7 +741,7 @@ lm_output$std_data_clean |>
   ggplot2::geom_point() 
 ```
 
-![](abs-to-conc_files/figure-html/unnamed-chunk-19-1.png)
+![](abs-to-conc_files/figure-html/unnamed-chunk-21-1.png)
 
 Now, finally, we decide that we are happy with our standard curves, so
 we can move on to apply the equations on the data
@@ -743,9 +819,8 @@ data_mg_N_L
 We finally have our computed concentration for each well, expressed in
 mg N per L. This is not the end of the data pipeline, but it is the end
 of what really belongs in this vignette. Downstream steps are different
-for each study. However, we propose below, in
-[Section 7](#sec-epilogue), a few examples of further data
-transformation.
+for each study. However, we propose below, in [Epilogue](#sec-epilogue),
+a few examples of further data transformation.
 
 ## 4 - Polynomial model
 
@@ -759,6 +834,13 @@ absorbance values above 3. It appears that a polynomial model is more
 appropriate in this case, as can be seen in the next chunks (example of
 a single curve).
 
+> **Don’t need a polynomial model?**
+>
+> If your standard curves fit a straight line well (see [Tips for
+> choosing the model](#sec-choice)), you can skip this section entirely
+> — jump to [Epilogue](#sec-epilogue) once you’ve finished the linear
+> model in Section 3.
+
 > **Does a polynomial model change blank correction?**
 >
 > No. Blank correction (see the `blank-correction` vignette) was already
@@ -770,7 +852,7 @@ a single curve).
 > separate questions. Nothing about using a polynomial model here
 > requires revisiting the earlier blank-correction step.
 
-> **Only polynomial model - specific steps are reviewed in detail**
+> **Only polynomial model-specific steps are reviewed in detail**
 >
 > In theory, applying a polynomial model would go through the same logic
 > as the linear model:
@@ -794,7 +876,8 @@ a single curve).
 > model. If it appears too cryptic here, go and check the linear
 > model-equivalent section.
 >
-> For tips on choice of model, see [Section 4](#sec-choice)
+> For tips on choice of model, see [Tips for choosing the
+> model](#sec-choice)
 
 The dataset for Total Dissolved Nitrogen data (TDN), and its standard
 curve data look like this (very similar to what we have seen with other
@@ -841,8 +924,8 @@ samples_corrected_TDN
 
 ### 4.1 - Compute polynomial model on Standard curves
 
-These steps follow the same steps as in section [Section 5](#sec-linear)
-, with some adaptations.
+These steps follow the same steps as in section [Linear model from
+Standard Curves](#sec-linear), with some adaptations.
 
 First, we perform a polynomial model on each NO3 curve individually. In
 the background, the function
@@ -946,7 +1029,7 @@ suspicious_plots <- plot_list_lm(
 suspicious_plots[[1]]
 ```
 
-![](abs-to-conc_files/figure-html/unnamed-chunk-26-1.png)
+![](abs-to-conc_files/figure-html/unnamed-chunk-28-1.png)
 
 Then we plot them together. Notice that the “problem” of each curve is
 displayed on the plots. In this case, non-normality of the residuals is
@@ -959,7 +1042,7 @@ patchwork::wrap_plots(suspicious_plots, axis_titles = "keep") +
      patchwork::plot_annotation(title = "Plots of suspicious Standard curves")
 ```
 
-![](abs-to-conc_files/figure-html/unnamed-chunk-27-1.png)
+![](abs-to-conc_files/figure-html/unnamed-chunk-29-1.png)
 
 Whereas the shapiro test that is run in the background by
 [`lm_std_curve()`](https://mdetoeuf.github.io/plate2N/reference/lm_std_curve.md)
@@ -1013,7 +1096,7 @@ TDN_adjR2 <- density_lm_param(
 TDN_p / TDN_adjR2 + patchwork::plot_annotation(title = "Multiple-curve QC of the\npolynomial model for TDN data")
 ```
 
-![](abs-to-conc_files/figure-html/unnamed-chunk-28-1.png)
+![](abs-to-conc_files/figure-html/unnamed-chunk-30-1.png)
 
 Now we plot all curves on a single plot. Here, we check for
 batch-effects by assigning the date to the color aesthetics, this should
@@ -1063,7 +1146,7 @@ std_corrected_TDN |>
   ) 
 ```
 
-![](abs-to-conc_files/figure-html/unnamed-chunk-29-1.png)
+![](abs-to-conc_files/figure-html/unnamed-chunk-31-1.png)
 
 ### 4.5 - Infer sample concentration from regression equation
 
@@ -1172,13 +1255,31 @@ We now have clean and tidy concentration data, which can be exported for
 further downstream analysis, for example using
 `data_mg_N_L |> write_rds("path/to/my/output/TDN_data_mg_N_L")`.
 
-Notice that so far we still have 4 data points per sample (in our
-example data sets, they were pipetted in 4 replicates in the 96-well
-plates). A pipeline for spotting and removing sample-outliers and
-computing per-sample average is under development and may arrive later.
+It’s worth being explicit about what this concentration represents:
+`conc_mgN_L` is the concentration **in the well as measured** — one
+value per well, not yet a final, per-sample or publication-ready number.
+Depending on your experimental design, one or more further steps are
+typically still needed, and which ones apply is study-specific. For
+example, in our own soil dataset:
 
-**TO DO: add examples of downstream steps: correct dilutions, per sample
-average and outlier removal, conversion to ppm, etc.**
+- **Correcting for dilution.** Any sample that was diluted before
+  reading needs its concentration multiplied back by the dilution factor
+  to reflect the original sample,
+  e.g. `data_mg_N_L |> dplyr::mutate(conc_corrected = conc_mgN_L * dilution_factor)`.
+- **Per-sample averaging.** So far we still have 4 data points per
+  sample (in our example data sets, they were pipetted in 4 replicates
+  in the 96-well plates) — these typically need to be averaged, with
+  outliers checked for, to get one value per sample.
+- **Unit conversion.** In our case, this means converting to ppm,
+  i.e. mg N / kg dry soil. This requires bringing in external data
+  collected in the lab, not part of the plate-reader pipeline itself:
+  the fresh soil weight used in the extraction, the water content of
+  that fresh soil, and the soil-to-extractant ratio used.
+
+A pipeline for spotting and removing sample-outliers and computing
+per-sample averages is under development and may arrive later. In the
+meantime, these downstream steps depend on your specific experimental
+design and aren’t something this vignette can fully generalize.
 
 [^1]: To adapt to other compounds, you may need to add molar masses into
     the data ‘molar_masses’, see later.

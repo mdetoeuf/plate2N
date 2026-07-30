@@ -228,6 +228,14 @@ tidy_plates
 #> # ℹ 470 more rows
 ```
 
+Alongside the plate absorbance data itself, most analyses also require
+**metadata**: information that describes each *physical plate* as a
+whole, rather than each individual well. Aside from the standard curve
+concentrations (needed for this pipeline), nothing about metadata’s
+content is fixed — it’s a per-study container for whatever happens at
+the plate level and matters for your downstream analysis[^2]. Unlike
+`tidy_plates` (one row per well), metadata has one row per plate.
+
 For quality checking of the standard curve, we will require some
 metadata for each 96-well plate containing
 
@@ -478,7 +486,7 @@ nrow(std_data) ; nrow(std_blank$all)
 ```
 
 - `std_blank$untrusted` identifies expected blank wells that do not
-  correspond to the lowest absorbance value of their standard curve[^2].
+  correspond to the lowest absorbance value of their standard curve[^3].
   This item may be empty
 
 ``` r
@@ -581,7 +589,7 @@ are 2 options to do so:
 Either way, blank averages will then be computed on (really) trusted
 wells only. Of course, this only works if there were several standard
 curves on problematic plates, otherwise you will be removing the only
-`std_blank` of the plate[^3]. Here are 2 examples of how to compute
+`std_blank` of the plate[^4]. Here are 2 examples of how to compute
 average blanks, along the 2 options mentioned above. Both use the
 function
 [`std_blank_average()`](https://mdetoeuf.github.io/plate2N/reference/std_blank_average.md)
@@ -654,7 +662,7 @@ std_blank_avg <- std_blank_avg_1
 > Throughout this pipeline, we search for and remove outliers prior to
 > critical aggregation steps that will not be trustworthy otherwise (see
 > also vignette `handling-outliers`). With this logic in mind, the
-> outlier removal of other wells[^4] of the standard curve will be done
+> outlier removal of other wells[^5] of the standard curve will be done
 > later on, before computing the regression between absorbance and
 > concentration. This is shown in the next vignette, `abs-to-conc`.
 
@@ -668,9 +676,9 @@ which will also be used to correct sample absorbance data in the next
 section.
 
 [`blank_correct_abs()`](https://mdetoeuf.github.io/plate2N/reference/blank_correct_abs.md)
-is a function that works for standard data and for sample data
-([Section 5](#sec-sample-blank)), so it’s arguments are named in a way
-that fits both cases. It takes 3 main arguments:
+is a function that works for standard data and for sample data (see
+[Blank-correction of samples](#sec-sample-blank)), so it’s arguments are
+named in a way that fits both cases. It takes 3 main arguments:
 
 - `raw_wells_data` contains the data of the standard curves. It should
   be ungrouped within the call to
@@ -1420,21 +1428,22 @@ Now that we are confident in the per-plate average value of raw
 absorbance of extractant wells, we can finally blank-correct all sample
 data.
 [`blank_correct_abs()`](https://mdetoeuf.github.io/plate2N/reference/blank_correct_abs.md)
-takes 3 arguments:
+takes 4 arguments:
 
-- `raw_wells_data` containing the absorbance data that needs
-  blank-correcting
+| Argument | Purpose | Typical values to change |
+|----|----|----|
+| `raw_wells_data` | The data to blank-correct | Your own tidied plate data |
+| `per_plate_avg_blank` | A table of blank averages — one row per plate (or per plate + extractant, if you have more than one blank per plate) — not raw well-level data | Output of [`std_blank_average()`](https://mdetoeuf.github.io/plate2N/reference/std_blank_average.md) or [`extractant_average()`](https://mdetoeuf.github.io/plate2N/reference/extractant_average.md) |
+| `extr_def` | String(s) identifying extractant wells in the `map` column | Default `"extr"`; change to a vector (e.g. `c("extr_1", "extr_2")`) if you have more than one extractant per plate |
+| `map_to_exclude` | Which `map` values to drop from the output | Default `c("empty", "Std", "extr")`; adjust to match your own mapping strings |
 
-- `per_plate_avg_blank` which contains absorbance data of the
-  extractant, averaged per plate (one row per plate), based on trusted
-  extractant wells
+Key arguments for
+[`blank_correct_abs()`](https://mdetoeuf.github.io/plate2N/reference/blank_correct_abs.md)
+{.table .caption-top}
 
-- `map_to_exclude`, a vector of the strings representing non-sample data
-  under the column `map` within `raw_wells_data`, i.e., blanks, standard
-  curves and empty wells. It defaults to `c("empty","Std","extr")`. The
-  output will thus only contain blank-corrected sample data. This means
-  that for (linear) modelling of the standard curve, `std_corrected`
-  will still be needed.
+The output will thus only contain blank-corrected sample data. This
+means that for (linear) modelling of the standard curve, `std_corrected`
+will still be needed.
 
 > **An assumption worth noting: spatial uniformity of the blank**
 >
@@ -1473,7 +1482,7 @@ sample_corrected_dbl <-
 ```
 
 Let’s have a look at the output and notice the absence of the value `1`
-in the column `column` (no data for standard curve[^5]), and of the
+in the column `column` (no data for standard curve[^6]), and of the
 value `extr` in the column `map` (though it was present in `raw_meta`
 and still can be found under `extr_id` in the case of 2 extractants per
 plate, which we kept in case the info is relevant for downstream
@@ -1568,7 +1577,13 @@ detailed in vignette **`abs-to-conc`** **(under development)**
     absorbance and concentration — `extr` can be whatever solution
     serves as the blank for your own sample matrix.
 
-[^2]: This quality check was added because, in case of top_down
+[^2]: This can include experimental design information (treatments,
+    factorial design blocks), the sample name for designs that dedicate
+    one plate per sample (as in the `microresp` vignette), or
+    bookkeeping details a plate reader often records automatically —
+    wavelength, date and time, protocol name, experimenter name, etc.
+
+[^3]: This quality check was added because, in case of top_down
     pipetting, A1 often will contain the standard blank, but it is also
     often the first well to be filled during pipetting. With automated
     pipettes, a small ejection of liquid has to occur before dispensing
@@ -1580,14 +1595,17 @@ detailed in vignette **`abs-to-conc`** **(under development)**
     responses in terms of absorbance, depending on which reagent has
     been wrongly pipetted.
 
-[^3]: In such cases, you must consider your options. If the inter-plate
+[^4]: In such cases, you must consider your options. If the inter-plate
     variability of `std_blank` is sufficiently small, taking an
     across-dataset or an across-batch mean might do the trick.
 
-[^4]: I.e., wells in the rows “B” to “H” (top-down pipetting) or “A” to
-    “G” (bottom-up pipetting)
+[^5]: If your standard curve and sample wells share the same blank,
+    don’t exclude `"Std"` from `map_to_exclude` — include the standard
+    curve wells in this same call so both are corrected together in one
+    pass, rather than running the separate standard-curve
+    blank-correction pipeline shown earlier in this vignette.
 
-[^5]: In case the blanks are the same for sample wells and standard
+[^6]: In case the blanks are the same for sample wells and standard
     curve wells, this blank-correction should also be applied on
     Standard curve data. In this case, remove `"Std"` from the call to
     `map_to_exclude`.

@@ -7,13 +7,31 @@ library(patchwork)
 library(ggridges)
 ```
 
+## TO DO
+
+- Add index computations at the end of the pipeline (not yet written)
+- Explain the choice of absorbance thresholds used in the QC step
+  (Section 4.1)
+- Double-check the µg CO2-C conversion formula (Section 5.3) against the
+  MicroResp manual — currently taken from an Excel document
+
 ## 1 - Introduction
 
-This vignette shows a variation of the import pipeline described in
-[`vignette("import-tidy", package = "plate2N")`](https://mdetoeuf.github.io/plate2N/articles/import-tidy.md),
-adapted to the case where more than 2 layers of data are recorded for
-each physical plate (see the tip on multiple data layers in
-`import-tidy`).
+This vignette walks through the full analysis pipeline for a MicroResp
+experiment, from raw plate import to substrate-level CO2 respiration
+values. It follows the same overall logic as the main N-dosage pipeline
+(`import-tidy`, `blank-correction`, `abs-to-conc`), but MicroResp
+experiments differ enough — more data layers per plate, no standard
+curve, and a different final unit (a respiration rate rather than a
+concentration) — that they’re covered here as their own self-contained
+walkthrough rather than split across the main vignettes.
+
+We start, as in `import-tidy`, with importing and tidying data recorded
+with more than 2 layers per plate (see the tip on multiple data layers
+there) — then move on to the MicroResp-specific steps: joining sample
+metadata, quality-checking and cleaning raw absorbance, normalizing
+across plates, converting to %CO2 and then to a respiration rate, and
+finally checking for and removing per-sample outliers.
 
 Here, we quickly go through the import pipeline with an example of data
 from a
@@ -30,7 +48,7 @@ So, the 3 layers of data are referred to as `abs_t0`, `abs_t5`, and
 
 > **More layers of data are possible**
 >
-> in theory, any number of data layers are possible, you just need to
+> In theory, any number of data layers are possible, you just need to
 > extend the logic displayed here, with additional elements to some
 > arguments that are vectors (e.g.,
 > `abs_map = c("abs_t0", "abs_t5", "map")` and others that are lists of
@@ -273,7 +291,11 @@ MR_tidy |> dplyr::relocate(map, .before = abs_t0)
 #> # ℹ 470 more rows
 ```
 
-## °°° ! FROM HERE ON: under development, technically working but not ready yet ! °°°
+> **Work in progress from here on**
+>
+> Everything from Section 3 onward is functional, but still being
+> refined — expect rough edges, and expect this section to keep growing
+> (an index-computation step is still to be added at the end).
 
 ## 3 - Join metadata to plate data
 
@@ -342,8 +364,6 @@ Here, we run the quality check to see if there is any really abnormal
 absorbance reading. The plots are saved in the working environment as
 objects `abs_t0_distrib` and `abs_t5_distrib`, which can be called on
 later.
-
-–\> add a comment about why we choose those thresholds
 
 ``` r
 
@@ -576,9 +596,6 @@ MR_percent_co2
 
 ### 5.3 - Convert to µg CO2-C / g dry soil / h
 
-***!! TODO: this is taken from Excel document –\> check again in Manual
-that it is the right version***
-
 co2_emitted =
 (((percent_co2/100)x850x(44/22.4)x*(12/44)x*(273/(273+25)))/(soil_per_well_gx(soil_dw/100)))/5
 
@@ -638,16 +655,19 @@ MR_co2_g_h |>
 
 ### 6.1 - Compute preliminary average (pre-outlier removal)
 
-!! A preliminary run of the following chunks (up to saving the plots)
-showed that while they are not the only outliers, wells from row A and H
-are outliers on many plates, possibly a majority of plates. So I choose
-to follow the recommendation of our colleagues from the FiBL and remove
-those wells already in the subset hereunder, before computation of the
-average. If needed, just “comment” the filtering line to check out plots
-with all data again.
-
-We then compute coefficient of variation which will serve as a threshold
-to identify potential outliers
+MicroResp plates commonly show edge effects — sometimes marginal when
+the kit was well sealed, but often visible even to the naked eye along
+one or more edges of the plate. This is the same underlying issue
+already addressed for columns 1 and 12 in [Remove “empty” and
+NAs](#sec-remove-empty), and it applies to rows as well: a preliminary
+run of the steps below showed that wells in row A and row H are outliers
+on many plates, often a majority of them. Following both this
+expectation and the recommendation of our colleagues at FiBL, we
+therefore exclude rows A and H from the subset below before computing
+the average, rather than treating them case-by-case as ordinary
+outliers. If you’d like to check the unfiltered data, simply comment out
+the filtering line. We then compute coefficient of variation which will
+serve as a threshold to identify potential outliers
 
 ``` r
 
