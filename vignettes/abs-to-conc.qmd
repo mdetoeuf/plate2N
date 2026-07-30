@@ -30,6 +30,8 @@ library(patchwork)
 
 - **make a function out of the concentration inference step**
 
+- update relevant functions (qc_raw_abs, maybe plot_st...) to have an additional argument: how is "abs" called. Sometimes abs, sometimes abs_corrected, but with MR i see that it can take many more forms, something with a default like `abs_column = "abs"`. Maybe even have the option of using tidyselect's helper functions, which could be revelant for datasets with numerous layers
+
 ::: callout-caution
 ## Work in progress
 
@@ -407,6 +409,12 @@ density_lm_param(
   ggplot2::labs(caption = paste0("n = ", nrow(lm_table_clean))) 
 ```
 
+::: callout-note
+## A note on R² thresholds for regression through the origin
+
+Both the linear and polynomial models throughout this pipeline are constrained to pass through zero (`abs_corrected ~ 0 + std_conc`, since blank-corrected absorbance should read zero at zero concentration). R² for this kind of model is calculated differently than for a standard intercept model — relative to zero rather than the mean of the response — which tends to produce higher values than an equivalent intercept-model R² would. The 0.95 threshold used here (and again in Section 4.4 for the polynomial model) should be read as a practical guideline calibrated for this specific class of model, not as directly comparable to R² thresholds you might see quoted elsewhere for ordinary regression.
+:::
+
 Now we plot all curves on same plot. Here we only have 5 curves. But it can be useful to visualize the multi-curve plot to spot plates where something possibly went wrong.
 
 ```{r}
@@ -466,7 +474,7 @@ data_mg_N_L <-
 data_mg_N_L
 ```
 
-We finally have our computed concentration for each well, expressed in mg N per L. This is not the end of the data pipeline, but it is the end of what really belongs in this vignette. Downstream steps are different for each study. However, we propose below, in @sec-epilogue, a few examples of further data transformation.
+We finally have our computed concentration for each well, expressed in mg N per L. This is not the end of the data pipeline, but it is the end of what really belongs in this vignette. Downstream steps are different for each study. However, we propose below, in [Epilogue](#sec-epilogue), a few examples of further data transformation.
 
 # 4 - Polynomial model {#sec-polynomial}
 
@@ -479,7 +487,7 @@ No. Blank correction (see the `blank-correction` vignette) was already carried o
 :::
 
 ::: callout-warning
-## Only polynomial model - specific steps are reviewed in detail
+## Only polynomial model-specific steps are reviewed in detail
 
 In theory, applying a polynomial model would go through the same logic as the linear model:
 
@@ -497,7 +505,7 @@ In theory, applying a polynomial model would go through the same logic as the li
 
 In this section, we mainly focus on steps that differ from the linear model. If it appears too cryptic here, go and check the linear model-equivalent section.
 
-For tips on choice of model, see @sec-choice
+For tips on choice of model, see [Tips for choosing the model](#sec-choice)
 :::
 
 The dataset for Total Dissolved Nitrogen data (TDN), and its standard curve data look like this (very similar to what we have seen with other data sets before)
@@ -510,7 +518,7 @@ samples_corrected_TDN
 
 ## 4.1 - Compute polynomial model on Standard curves
 
-These steps follow the same steps as in section @sec-linear , with some adaptations.
+These steps follow the same steps as in section [Linear model from Standard Curves](#sec-linear), with some adaptations.
 
 First, we perform a polynomial model on each NO3 curve individually. In the background, the function `lm_std_curve()` performs the model `stats::lm(abs_corrected ~ 0 + std_conc + I(std_conc^2), data = curve)` on each individual curve from the data
 
