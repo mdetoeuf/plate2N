@@ -480,6 +480,12 @@ We finally have our computed concentration for each well, expressed in mg N per 
 
 In this section, we cover the sames steps as in the previous 2 sections, but implementing a polynomial, rather than linear, model. This was necessary, for example, when dosing total dissolved nitrogen, i.e., dosing nitrate after a total oxidation of all N-compounds to nitrate. For this experiment, standard curve concentrations have been increased ten-fold. This resulted in highly concentrated solutions generating absorbance values above 3. It appears that a polynomial model is more appropriate in this case, as can be seen in the next chunks (example of a single curve).
 
+::: callout-tip
+## Don't need a polynomial model?
+
+If your standard curves fit a straight line well (see [Tips for choosing the model](#sec-choice)), you can skip this section entirely — jump to [Epilogue](#sec-epilogue) once you've finished the linear model in Section 3.
+:::
+
 ::: callout-note
 ## Does a polynomial model change blank correction?
 
