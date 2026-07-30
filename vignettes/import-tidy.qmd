@@ -78,7 +78,7 @@ joined_vertical <- join_abs_map(
 ## The Cheat Sheet
 
 | Step | Function | Purpose |
-|------------------------|------------------------|------------------------|
+|----|----|----|
 | Import | `csv_to_tibble()`, `txt_to_tibble()`, `skanit_to_tibble()`, `tecan_to_tibble()` | Read raw plate-format files (csv/txt/skanit/Tecan) into a common tibble structure |
 | Verticalize only | `verticalize_plates()` | Reshape a single plate-format tibble into one column for the plate (use this alone if your data is already vertical/mapped and only needs one layer verticalized) |
 | Verticalize + join | `join_abs_map()` | Reshape plate-format tibbles into 96 rows and merge layers (e.g., absorbance & mapping) data, to get one column per plate and per layer |
@@ -121,7 +121,7 @@ The function `csv_to_tibble()` imports plate data from a csv file where data is 
 In that sense, the function `csv_to_tibble()` constitutes the simplest import option and takes advantage of the `readr` package (part of the `tidyverse`), by using either the function `read_csv()` or `read_csv2()`, for comma-separated or semi-colon separated values, respectively. Value separators can be modulated in `csv_to_tibble()` by the parameter `delim`, which defaults with the value `","` (`read_csv()`), but accepts `";"` (`read_csv2()`).
 
 | Argument | Purpose | Typical values to change |
-|------------------------|------------------------|------------------------|
+|----|----|----|
 | `delim` | Value separator used in the raw csv file | `","` (default, comma-separated) or `";"` (semicolon-separated) |
 
 Here is an example of how to call the `csv_to_tibble()` function.
@@ -286,6 +286,15 @@ We recognize the same verticalized structures, but now column names have been ad
 
 - Defining a dataset in the column names makes sense especially if several datasets will be joined down the line. The column dataset is needed for several downstream steps, so we recommend to give it some name, even if you only work with data from a single experiment.
 - The "abs/map" prefixes can be modulated by adapting the default value of the argument `abs_map = c("abs-", "map-")`
+
+| Argument | Purpose | Typical values to change |
+|----|----|----|
+| `tibble_list` | The tibbles to join, in order (2 or more) | Your imported tibbles, in the same order as `abs_map`'s prefixes |
+| `dataset` | Prefix recorded in all column names | Give it a name even for a single-dataset study — needed for several downstream steps |
+| `abs_map` | Prefixes added per tibble (i.e., per layer) in `tibble_list` | Default `c("abs-", "map-")`; extend to more elements for more layers (e.g. MicroResp-style data), or set to `c("", "")` to disable prefixing |
+| `coerce_numeric` | Whether each tibble's data is coerced to numeric during verticalization | Default `FALSE`; avoid mixing `TRUE`/`FALSE` across tibbles, since later pivoting can misbehave with inconsistent types |
+
+: Key arguments for `join_abs_map()`
 
 Additional info can be found under `?join_abs_map()`.
 
