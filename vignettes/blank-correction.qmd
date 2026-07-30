@@ -206,6 +206,10 @@ Tidy data as imported according to `import-tidy` should look something like this
 tidy_plates
 ```
 
+Alongside the plate absorbance data itself, most analyses also require **metadata**: information that describes each *physical plate* as a whole, rather than each individual well. Aside from the standard curve concentrations (needed for this pipeline), nothing about metadata's content is fixed — it's a per-study container for whatever happens at the plate level and matters for your downstream analysis[^metadata-examples]. Unlike `tidy_plates` (one row per well), metadata has one row per plate.
+
+[^metadata-examples]: This can include experimental design information (treatments, factorial design blocks), the sample name for designs that dedicate one plate per sample (as in the `microresp` vignette), or bookkeeping details a plate reader often records automatically — wavelength, date and time, protocol name, experimenter name, etc.
+
 For quality checking of the standard curve, we will require some metadata for each 96-well plate containing
 
 - at least the concentrations of the dilutions of the standard curve
