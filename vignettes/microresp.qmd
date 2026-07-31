@@ -57,6 +57,14 @@ flowchart TD
   classDef caseStudy fill:#f8fafc,stroke:#cbd5e1,color:#64748b,stroke-width:1px;
   classDef loopTarget fill:#f8fafc,stroke:#2563eb,color:#334155,stroke-width:1.5px,stroke-dasharray:4 2,font-weight:bold;
   
+  click A "#sec-import-tidy-metadata" "Section 2"
+  click C "#sec-clean-normalize-convert" "Section 3"
+  click D "#sec-average-outlier-removal" "Section 4"
+  click O "#sec-average-outlier-removal" "Section 4"
+  click F1 "#sec-basal-respiration" "Section 5"
+  click H "#sec-qc-std-soils" "Section 6"
+  click F2 "#sec-compute-indices" "Section 7"
+  
 ```
 
 Bold boxes use `plate2N` functions directly; the remaining boxes apply the tidyverse toolbox [@wickham2019] to MicroResp data.
@@ -71,7 +79,7 @@ Bold boxes use `plate2N` functions directly; the remaining boxes apply the tidyv
 
 [^1]: In the MicroResp experiment, one plate was attributed to each sample (with dedicated columns for comparison with the standard soil), so that "per-plate" really means "per-sample"
 
-# 2 - Import & tidy 2+ layers, then join metadata
+# 2 - Import & tidy 2+ layers, then join metadata {#sec-import-tidy-metadata}
 
 ## 2.1 - Importing 2 layers of absorbance data
 
@@ -183,12 +191,6 @@ MR_tidy
 MR_tidy |> dplyr::relocate(map, .before = abs_t0)
 ```
 
-::: callout-warning
-## Work in progress from here on
-
-Everything from Section 3 onward is functional, but still being refined — expect rough edges, and expect this section to keep growing (an index-computation step is still to be added at the end).
-:::
-
 ## 2.5 - Join metadata to plate data
 
 ```{r}
@@ -207,7 +209,7 @@ Now we can join it to the plate data
 (MR <- MR_tidy |> dplyr::left_join(MR_metadata, by = dplyr::join_by(plate_id)))
 ```
 
-# 3 - Clean data, normalize & convert to CO2 rate
+# 3 - Clean data, normalize & convert to CO2 rate {#sec-clean-normalize-convert}
 
 ## 3.1 - QC - suspicious wells
 
@@ -377,7 +379,7 @@ MR_co2_g_h |>
   ggplot2::facet_wrap(~dataset)
 ```
 
-# 4 - Average per plate & substrate / outlier removal
+# 4 - Average per plate & substrate / outlier removal {#sec-average-outlier-removal}
 
 ## 4.1 - Compute preliminary average (pre-outlier removal)
 
@@ -559,7 +561,7 @@ distrib_uncorrected <- MR_avg |>
 distrib_uncorrected
 ```
 
-# 5 - Correction of averages - remove basal respiration
+# 5 - Correction of averages - remove basal respiration {#sec-basal-respiration}
 
 [@bongiorno2020] write: *Thereafter, we corrected for the average respiration rate of soil to which the deionized water was added.*
 
@@ -637,7 +639,7 @@ std_soil_data |>
   ggplot2::facet_wrap(~substrate, scales = "free")
 ```
 
-# 7 - Compute indices & final wrangling
+# 7 - Compute indices & final wrangling {#sec-compute-indices}
 
 ## 7.1 - MBC, basal respiration, metabolic quotient and MSIR
 
