@@ -437,7 +437,7 @@ This kind of automated flagging is a trade-off: it saves you from manually revie
 
 Create one list of QC plots per dataset.
 
-Notice that we get a list with 1 plot per substrate (but not all bc not all had outliers in this reduced dataset)
+Notice that we get a list with 1 plot per substrate (but not all because not all had outliers in this reduced dataset)
 
 ```{r}
 qc_plots <- plot_list_qc_microresp(
@@ -450,28 +450,46 @@ names(qc_plots)
 
 For the sake of illustration, we just plot 2 of the plots (one per dataset per substrate): each facets by run, and only displays data that is suspicious (coefficient of variation above the threshold defined above).
 
-- H2O: we would remove B3
-- Glu: no wells to remove
-
 Notice that the number of plates differs between the two plots — only the plates flagged as suspicious for that particular substrate are shown.
 
 ```{r}
-qc_plots$Std_H2O
-qc_plots$Glu
+# qc_plots$Std_Glu
+  qc_plots$Std_H2O
+# qc_plots$H2O
+# qc_plots$OA
+# qc_plots$Glu
+# qc_plots$Lgn
+  qc_plots$NAG
+# qc_plots$gABA
 ```
 
-To get a general overview, we can plot all substrates together in a single figure. Each substrate's plot is itself already a `patchwork` composition (boxplot + ridgeline) with its own title — nesting one `patchwork` inside another normally drops that inner title, so we wrap each one with `patchwork::wrap_elements()` first, which "flattens" it into a single element that keeps its title intact when combined further. In a real dataset, depending on how many plates are flagged per substrate, this combined view can get crowded quickly — treat it as a quick overview, and fall back to inspecting substrates individually (as above, possibly in a loop) when there's a lot to look through.
+- For Std_H2O: we would remove B3 from P01
+- For NAG: E8 from P01
+
+For other substrates (not displayed here)
+- H2O: B4 from P02 and P12, F4 from P13
+- OA: B5 from P12
+- gABA: F9 from P01
+- Urea: F11 from P12
+- Std_Glu, Glu, Lgn, Ala: no wells to remove
+
+To get a general overview, we can plot several substrates together in a single figure. Each substrate's plot is itself already a `patchwork` composition (boxplot + ridgeline) with its own title — nesting one `patchwork` inside another normally drops that inner title, so we wrap each one with `patchwork::wrap_elements()` first, which "flattens" it into a single element that keeps its title intact when combined further. In a real dataset, depending on how many plates are flagged per substrate and per run, this combined view can get crowded quickly — treat it as a quick overview, and fall back to inspecting substrates individually, either interactively (as above) or by saving each plot to disk (see 2 chunks below) when there's a lot to look through.
 
 ```{r}
 #| fig-width: 14
 #| fig-height: 10
+(patchwork::wrap_elements(full = qc_plots$Std_Glu) +
+    patchwork::wrap_elements(full = qc_plots$Std_H2O)) /
+  (patchwork::wrap_elements(full = qc_plots$H2O) + 
+     patchwork::wrap_elements(full = qc_plots$OA))
 
-(patchwork::wrap_elements(full = qc_plots$gABA) +
- patchwork::wrap_elements(full = qc_plots$Glu) +
- patchwork::wrap_elements(full = qc_plots$NAG)) /
-(patchwork::wrap_elements(full = qc_plots$OA) +
- patchwork::wrap_elements(full = qc_plots$Std_H2O))
+(patchwork::wrap_elements(full = qc_plots$Glu) +
+    patchwork::wrap_elements(full = qc_plots$Lgn)) /
+  (patchwork::wrap_elements(full = qc_plots$NAG) +
+     patchwork::wrap_elements(full = qc_plots$gABA))
 
+patchwork::wrap_elements(full = qc_plots$Ala) /
+  patchwork::wrap_elements(full = qc_plots$Urea)
 ```
 
 Save QC plots for review outside R (optional), in a loop. Notice that because plots are named in the list, they can be easily accessed by name (= substrate), and this can then serve as filenaming for export
@@ -504,10 +522,16 @@ Starting with greenhouse outliers
 ```{r}
 to_remove <- tibble::tribble(
   ~ plate_id, ~well_id, 
+  # Urea
+  "P12", "F11",
   # gABA
   "P01", "F9",   
   # NAG
   "P01", "E8",
+  # OA
+  "P12", "B5",
+  # H2O
+  "P02", "B4",    "P12", "B4",    "P13", "F4",
   # Std-H2O
   "P01", "B3",      
 ) |> 
@@ -756,7 +780,7 @@ Plot the indices
 MR_indices |> 
   ggplot2::ggplot(ggplot2::aes(x = soil, y = basal_resp)) + 
   ggplot2::theme_minimal() +
-  ggplot2::geom_boxplot()
+  ggplot2::geom_boxplot(ggplot2::aes(fill = run_id)) 
 ```
 
 # 8 - Next steps
