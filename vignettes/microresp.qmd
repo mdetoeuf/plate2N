@@ -431,13 +431,14 @@ Save QC plots for review outside R (optional), in a loop. Notice that because pl
 #| eval: false
 #| include: true
 
-for (i in 1:length(qc_plots)) {
+for (i in seq_along(qc_plots)) {
   
   plot <- qc_plots[[i]]
+  plot_name <- names(qc_plots)[i]
   
   filepath <- paste0(
       "output/figures/QC/microresp/",
-      names(plot), "_", Sys.Date(), ".pdf")
+      plot_name, "_", Sys.Date(), ".pdf")
   
   ggplot2::ggsave(
     filename = filepath, 
@@ -482,7 +483,7 @@ Store last version in a new variable (easier for edits...)
 --\> To Do: check, I feel that MR_clean is created twice. If that's the case, this could lead to confusions –\> rename one
 
 ```{r}
-MR_clean <- MR_wash1
+MR_outliers_removed <- MR_wash1
 ```
 
 # 7 - Average per plate per substrate
@@ -495,7 +496,7 @@ Note that we create a new column where we store, for each substrate, whether the
 
 ```{r}
 #| output: false
-MR_avg <- MR_clean |> 
+MR_avg <- MR_outliers_removed |> 
   dplyr::group_by(dataset, plate_id, map) |> 
   dplyr::summarize(
     co2_g_h_avg = mean(co2_g_h)) |> 
@@ -649,7 +650,7 @@ Gather all data (except std soil data)
 
 ```{r}
 #| output: false
-MR_indices <- MR_clean |> 
+MR_indices <- MR_outliers_removed |> 
   #take relevant categorical variables (no quantitative data)
   dplyr::select(dataset, plate_id, run_id:sample_name) |> 
   # reduce it to one row per plate
@@ -692,7 +693,7 @@ std_soil_longer <- std_soil_data |>
     cols = tidyselect::starts_with("Std")) |> 
   # add categorical data
   dplyr::left_join(
-    MR_clean |> 
+    MR_outliers_removed |> 
       dplyr::select(dataset, plate_id, run_id, detection_plate_id) |> 
       unique(),
     by = dplyr::join_by(dataset, plate_id))
