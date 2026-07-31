@@ -463,6 +463,9 @@ qc_plots$Glu
 To get a general overview, we can plot all substrates together in a single figure. Each substrate's plot is itself already a `patchwork` composition (boxplot + ridgeline) with its own title — nesting one `patchwork` inside another normally drops that inner title, so we wrap each one with `patchwork::wrap_elements()` first, which "flattens" it into a single element that keeps its title intact when combined further. In a real dataset, depending on how many plates are flagged per substrate, this combined view can get crowded quickly — treat it as a quick overview, and fall back to inspecting substrates individually (as above, possibly in a loop) when there's a lot to look through.
 
 ```{r}
+#| fig-width: 14
+#| fig-height: 10
+
 (patchwork::wrap_elements(full = qc_plots$gABA) +
  patchwork::wrap_elements(full = qc_plots$Glu) +
  patchwork::wrap_elements(full = qc_plots$NAG)) /
