@@ -798,8 +798,8 @@ was too permissive costs much more.
 
 Create one list of QC plots per dataset.
 
-Notice that we get a list with 1 plot per substrate (but not all bc not
-all had outliers in this reduced dataset)
+Notice that we get a list with 1 plot per substrate (but not all because
+not all had outliers in this reduced dataset)
 
 ``` r
 
@@ -818,16 +818,14 @@ dataset per substrate): each facets by run, and only displays data that
 is suspicious (coefficient of variation above the threshold defined
 above).
 
-- H2O: we would remove B3
-- Glu: no wells to remove
-
 Notice that the number of plates differs between the two plots — only
 the plates flagged as suspicious for that particular substrate are
 shown.
 
 ``` r
 
-qc_plots$Std_H2O
+# qc_plots$Std_Glu
+  qc_plots$Std_H2O
 #> Picking joint bandwidth of 0.00232
 #> Picking joint bandwidth of 0.00258
 ```
@@ -836,13 +834,30 @@ qc_plots$Std_H2O
 
 ``` r
 
-qc_plots$Glu
-#> Picking joint bandwidth of 0.0235
+# qc_plots$H2O
+# qc_plots$OA
+# qc_plots$Glu
+# qc_plots$Lgn
+  qc_plots$NAG
+#> Picking joint bandwidth of 0.00678
+#> Picking joint bandwidth of 0.0159
 ```
 
 ![](microresp_files/figure-html/unnamed-chunk-24-2.png)
 
-To get a general overview, we can plot all substrates together in a
+``` r
+
+# qc_plots$gABA
+```
+
+- For Std_H2O: we would remove B3 from P01
+- For NAG: E8 from P01
+
+For other substrates (not displayed here) - H2O: B4 from P02 and P12, F4
+from P13 - OA: B5 from P12 - gABA: F9 from P01 - Urea: F11 from P12 -
+Std_Glu, Glu, Lgn, Ala: no wells to remove
+
+To get a general overview, we can plot several substrates together in a
 single figure. Each substrate’s plot is itself already a `patchwork`
 composition (boxplot + ridgeline) with its own title — nesting one
 `patchwork` inside another normally drops that inner title, so we wrap
@@ -850,30 +865,57 @@ each one with
 [`patchwork::wrap_elements()`](https://patchwork.data-imaginist.com/reference/wrap_elements.html)
 first, which “flattens” it into a single element that keeps its title
 intact when combined further. In a real dataset, depending on how many
-plates are flagged per substrate, this combined view can get crowded
-quickly — treat it as a quick overview, and fall back to inspecting
-substrates individually (as above, possibly in a loop) when there’s a
-lot to look through.
+plates are flagged per substrate and per run, this combined view can get
+crowded quickly — treat it as a quick overview, and fall back to
+inspecting substrates individually, either interactively (as above) or
+by saving each plot to disk (see 2 chunks below) when there’s a lot to
+look through.
 
 ``` r
 
-(patchwork::wrap_elements(full = qc_plots$gABA) +
- patchwork::wrap_elements(full = qc_plots$Glu) +
- patchwork::wrap_elements(full = qc_plots$NAG)) /
-(patchwork::wrap_elements(full = qc_plots$OA) +
- patchwork::wrap_elements(full = qc_plots$Std_H2O))
-#> Picking joint bandwidth of 0.00376
-#> Picking joint bandwidth of 0.0125
-#> Picking joint bandwidth of 0.0235
-#> Picking joint bandwidth of 0.00678
-#> Picking joint bandwidth of 0.0159
-#> Picking joint bandwidth of 0.0925
-#> Picking joint bandwidth of 0.0627
+(patchwork::wrap_elements(full = qc_plots$Std_Glu) +
+    patchwork::wrap_elements(full = qc_plots$Std_H2O)) /
+  (patchwork::wrap_elements(full = qc_plots$H2O) + 
+     patchwork::wrap_elements(full = qc_plots$OA))
+#> Picking joint bandwidth of 0.0428
 #> Picking joint bandwidth of 0.00232
 #> Picking joint bandwidth of 0.00258
+#> Picking joint bandwidth of 0.00243
+#> Picking joint bandwidth of 0.00215
+#> Picking joint bandwidth of 0.0925
+#> Picking joint bandwidth of 0.0627
 ```
 
 ![](microresp_files/figure-html/unnamed-chunk-25-1.png)
+
+``` r
+
+
+(patchwork::wrap_elements(full = qc_plots$Glu) +
+    patchwork::wrap_elements(full = qc_plots$Lgn)) /
+  (patchwork::wrap_elements(full = qc_plots$NAG) +
+     patchwork::wrap_elements(full = qc_plots$gABA))
+#> Picking joint bandwidth of 0.0235
+#> Picking joint bandwidth of 0.0073
+#> Picking joint bandwidth of 0.00678
+#> Picking joint bandwidth of 0.0159
+#> Picking joint bandwidth of 0.00376
+#> Picking joint bandwidth of 0.0125
+```
+
+![](microresp_files/figure-html/unnamed-chunk-25-2.png)
+
+``` r
+
+
+patchwork::wrap_elements(full = qc_plots$Ala) /
+  patchwork::wrap_elements(full = qc_plots$Urea)
+#> Picking joint bandwidth of 0.00752
+#> Picking joint bandwidth of 0.00329
+#> Picking joint bandwidth of 0.0293
+```
+
+![](microresp_files/figure-html/unnamed-chunk-25-3.png)
 
 Save QC plots for review outside R (optional), in a loop. Notice that
 because plots are named in the list, they can be easily accessed by name
@@ -907,22 +949,33 @@ Starting with greenhouse outliers
 
 to_remove <- tibble::tribble(
   ~ plate_id, ~well_id, 
+  # Urea
+  "P12", "F11",
   # gABA
   "P01", "F9",   
   # NAG
   "P01", "E8",
+  # OA
+  "P12", "B5",
+  # H2O
+  "P02", "B4",    "P12", "B4",    "P13", "F4",
   # Std-H2O
   "P01", "B3",      
 ) |> 
   dplyr::mutate(dataset = "MR")
 
 to_remove
-#> # A tibble: 3 × 3
+#> # A tibble: 8 × 3
 #>   plate_id well_id dataset
 #>   <chr>    <chr>   <chr>  
-#> 1 P01      F9      MR     
-#> 2 P01      E8      MR     
-#> 3 P01      B3      MR
+#> 1 P12      F11     MR     
+#> 2 P01      F9      MR     
+#> 3 P01      E8      MR     
+#> 4 P12      B5      MR     
+#> 5 P02      B4      MR     
+#> 6 P12      B4      MR     
+#> 7 P13      F4      MR     
+#> 8 P01      B3      MR
 ```
 
 In a real dataset with hundreds of plates, this can take a while, and we
@@ -1030,7 +1083,7 @@ basal_resp
 #>    <chr>   <chr>    <chr>           <dbl>
 #>  1 MR      P01      sample         0.0571
 #>  2 MR      P01      std_soil       0.0637
-#>  3 MR      P02      sample         0.0450
+#>  3 MR      P02      sample         0.0432
 #>  4 MR      P02      std_soil       0.0548
 #>  5 MR      P03      sample         0.0343
 #>  6 MR      P03      std_soil       0.0314
@@ -1040,9 +1093,9 @@ basal_resp
 #> 10 MR      P05      std_soil       0.0273
 #> 11 MR      P11      sample         0.0394
 #> 12 MR      P11      std_soil       0.0374
-#> 13 MR      P12      sample         0.0714
+#> 13 MR      P12      sample         0.0700
 #> 14 MR      P12      std_soil       0.0470
-#> 15 MR      P13      sample         0.0503
+#> 15 MR      P13      sample         0.0479
 #> 16 MR      P13      std_soil       0.0382
 #> 17 MR      P14      sample         0.0524
 #> 18 MR      P14      std_soil       0.0399
@@ -1198,9 +1251,9 @@ rSIRs
 #>  5 MR      P01      OA        sample         0.0571 1.66    2.59    0.383  15.7
 #>  6 MR      P01      Urea      sample         0.0571 0.0929  2.59    0.383  15.7
 #>  7 MR      P01      gABA      sample         0.0571 0.0625  2.59    0.383  15.7
-#>  8 MR      P02      Ala       sample         0.0450 0.141   2.70    0.430  17.6
-#>  9 MR      P02      Glu       sample         0.0450 0.430   2.70    0.430  17.6
-#> 10 MR      P02      Lgn       sample         0.0450 0.124   2.70    0.430  17.6
+#>  8 MR      P02      Ala       sample         0.0432 0.143   2.71    0.432  17.7
+#>  9 MR      P02      Glu       sample         0.0432 0.432   2.71    0.432  17.7
+#> 10 MR      P02      Lgn       sample         0.0432 0.126   2.71    0.432  17.7
 #> # ℹ 60 more rows
 #> # ℹ 3 more variables: qCO2 <dbl>, rSIR <dbl>, sSIR <dbl>
 ```
@@ -1229,13 +1282,13 @@ shannon
 #>    dataset plate_id shannon basal_resp   MBC  qCO2  MSIR
 #>    <chr>   <chr>      <dbl>      <dbl> <dbl> <dbl> <dbl>
 #>  1 MR      P01        1.23      0.0571 15.7   3.63  2.59
-#>  2 MR      P02        1.28      0.0450 17.6   2.56  2.70
+#>  2 MR      P02        1.28      0.0432 17.7   2.44  2.71
 #>  3 MR      P03        1.29      0.0343 21.0   1.63  2.87
 #>  4 MR      P04        1.10      0.0255 13.1   1.95  2.46
 #>  5 MR      P05        0.885     0.0153  7.60  2.01  2.03
 #>  6 MR      P11        1.84      0.0394 22.9   1.72  2.73
-#>  7 MR      P12        1.86      0.0714 40.7   1.75  4.37
-#>  8 MR      P13        1.81      0.0503 28.4   1.77  3.24
+#>  7 MR      P12        1.86      0.0700 40.8   1.72  4.31
+#>  8 MR      P13        1.81      0.0479 28.5   1.68  3.26
 #>  9 MR      P14        1.83      0.0524 37.6   1.39  4.00
 #> 10 MR      P15        1.78      0.0300 25.3   1.18  3.08
 ```
@@ -1261,13 +1314,13 @@ MR_indices
 #>    plate_id sample_id soil  basal_resp   MBC  qCO2  MSIR shannon dataset run_id
 #>    <chr>    <chr>     <chr>      <dbl> <dbl> <dbl> <dbl>   <dbl> <chr>   <chr> 
 #>  1 P01      t2_102_z1 Auto      0.0571 15.7   3.63  2.59   1.23  MR      R1    
-#>  2 P02      t2_103_z3 Auto      0.0450 17.6   2.56  2.70   1.28  MR      R1    
+#>  2 P02      t2_103_z3 Auto      0.0432 17.7   2.44  2.71   1.28  MR      R1    
 #>  3 P03      t2_86_z2  ABC       0.0343 21.0   1.63  2.87   1.29  MR      R1    
 #>  4 P04      t2_101_z3 Auto      0.0255 13.1   1.95  2.46   1.10  MR      R1    
 #>  5 P05      t2_84_z1  ABC       0.0153  7.60  2.01  2.03   0.885 MR      R1    
 #>  6 P11      t2_92_z2  Ref       0.0394 22.9   1.72  2.73   1.84  MR      R2    
-#>  7 P12      t2_82_z2  ABC       0.0714 40.7   1.75  4.37   1.86  MR      R2    
-#>  8 P13      t2_94_z3  Ref       0.0503 28.4   1.77  3.24   1.81  MR      R2    
+#>  7 P12      t2_82_z2  ABC       0.0700 40.8   1.72  4.31   1.86  MR      R2    
+#>  8 P13      t2_94_z3  Ref       0.0479 28.5   1.68  3.26   1.81  MR      R2    
 #>  9 P14      t2_87_z2  ABC       0.0524 37.6   1.39  4.00   1.83  MR      R2    
 #> 10 P15      t2_91_z3  Ref       0.0300 25.3   1.18  3.08   1.78  MR      R2    
 #> # ℹ 11 more variables: lab_id <chr>, detection_plate_id <chr>, expe <chr>,
@@ -1295,9 +1348,9 @@ rSIRs
 #>  5 MR      P01      OA        sample         0.0571 1.66    2.59    0.383  15.7
 #>  6 MR      P01      Urea      sample         0.0571 0.0929  2.59    0.383  15.7
 #>  7 MR      P01      gABA      sample         0.0571 0.0625  2.59    0.383  15.7
-#>  8 MR      P02      Ala       sample         0.0450 0.141   2.70    0.430  17.6
-#>  9 MR      P02      Glu       sample         0.0450 0.430   2.70    0.430  17.6
-#> 10 MR      P02      Lgn       sample         0.0450 0.124   2.70    0.430  17.6
+#>  8 MR      P02      Ala       sample         0.0432 0.143   2.71    0.432  17.7
+#>  9 MR      P02      Glu       sample         0.0432 0.432   2.71    0.432  17.7
+#> 10 MR      P02      Lgn       sample         0.0432 0.126   2.71    0.432  17.7
 #> # ℹ 60 more rows
 #> # ℹ 3 more variables: qCO2 <dbl>, rSIR <dbl>, sSIR <dbl>
 ```
@@ -1317,7 +1370,7 @@ Plot the indices
 MR_indices |> 
   ggplot2::ggplot(ggplot2::aes(x = soil, y = basal_resp)) + 
   ggplot2::theme_minimal() +
-  ggplot2::geom_boxplot()
+  ggplot2::geom_boxplot(ggplot2::aes(fill = run_id)) 
 ```
 
 ![](microresp_files/figure-html/unnamed-chunk-43-1.png)

@@ -737,7 +737,7 @@
 </section><section class="level2"><h3 id="create-qc-plots">4.2 - create QC plots<a class="anchor" aria-label="anchor" href="#create-qc-plots"></a>
 </h3>
 <p>Create one list of QC plots per dataset.</p>
-<p>Notice that we get a list with 1 plot per substrate (but not all bc not all had outliers in this reduced dataset)</p>
+<p>Notice that we get a list with 1 plot per substrate (but not all because not all had outliers in this reduced dataset)</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">qc_plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plot_list_qc_microresp.html">plot_list_qc_microresp</a></span><span class="op">(</span></span>
@@ -750,14 +750,11 @@
 <span><span class="co">#&gt;  [8] "gABA"    "Ala"     "Urea"</span></span></code></pre></div>
 </div>
 <p>For the sake of illustration, we just plot 2 of the plots (one per dataset per substrate): each facets by run, and only displays data that is suspicious (coefficient of variation above the threshold defined above).</p>
-<ul>
-<li>H2O: we would remove B3</li>
-<li>Glu: no wells to remove</li>
-</ul>
 <p>Notice that the number of plates differs between the two plots — only the plates flagged as suspicious for that particular substrate are shown.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">qc_plots</span><span class="op">$</span><span class="va">Std_H2O</span></span>
+<code class="sourceCode R"><span><span class="co"># qc_plots$Std_Glu</span></span>
+<span>  <span class="va">qc_plots</span><span class="op">$</span><span class="va">Std_H2O</span></span>
 <span><span class="co">#&gt; Picking joint bandwidth of 0.00232</span></span>
 <span><span class="co">#&gt; Picking joint bandwidth of 0.00258</span></span></code></pre></div>
 <div class="cell-output-display">
@@ -767,42 +764,82 @@
 </div>
 </div>
 <div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">qc_plots</span><span class="op">$</span><span class="va">Glu</span></span>
-<span><span class="co">#&gt; Picking joint bandwidth of 0.0235</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># qc_plots$H2O</span></span>
+<span><span class="co"># qc_plots$OA</span></span>
+<span><span class="co"># qc_plots$Glu</span></span>
+<span><span class="co"># qc_plots$Lgn</span></span>
+<span>  <span class="va">qc_plots</span><span class="op">$</span><span class="va">NAG</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.00678</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.0159</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="microresp_files/figure-html/unnamed-chunk-24-2.png" width="672"></p>
 </figure>
 </div>
 </div>
-</div>
-<p>To get a general overview, we can plot all substrates together in a single figure. Each substrate’s plot is itself already a <code>patchwork</code> composition (boxplot + ridgeline) with its own title — nesting one <code>patchwork</code> inside another normally drops that inner title, so we wrap each one with <code><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">patchwork::wrap_elements()</a></code> first, which “flattens” it into a single element that keeps its title intact when combined further. In a real dataset, depending on how many plates are flagged per substrate, this combined view can get crowded quickly — treat it as a quick overview, and fall back to inspecting substrates individually (as above, possibly in a loop) when there’s a lot to look through.</p>
-<div class="cell">
 <div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="op">(</span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">wrap_elements</a></span><span class="op">(</span>full <span class="op">=</span> <span class="va">qc_plots</span><span class="op">$</span><span class="va">gABA</span><span class="op">)</span> <span class="op">+</span></span>
-<span> <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">wrap_elements</a></span><span class="op">(</span>full <span class="op">=</span> <span class="va">qc_plots</span><span class="op">$</span><span class="va">Glu</span><span class="op">)</span> <span class="op">+</span></span>
-<span> <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">wrap_elements</a></span><span class="op">(</span>full <span class="op">=</span> <span class="va">qc_plots</span><span class="op">$</span><span class="va">NAG</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span></span>
-<span><span class="op">(</span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">wrap_elements</a></span><span class="op">(</span>full <span class="op">=</span> <span class="va">qc_plots</span><span class="op">$</span><span class="va">OA</span><span class="op">)</span> <span class="op">+</span></span>
-<span> <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">wrap_elements</a></span><span class="op">(</span>full <span class="op">=</span> <span class="va">qc_plots</span><span class="op">$</span><span class="va">Std_H2O</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Picking joint bandwidth of 0.00376</span></span>
-<span><span class="co">#&gt; Picking joint bandwidth of 0.0125</span></span>
-<span><span class="co">#&gt; Picking joint bandwidth of 0.0235</span></span>
-<span><span class="co">#&gt; Picking joint bandwidth of 0.00678</span></span>
-<span><span class="co">#&gt; Picking joint bandwidth of 0.0159</span></span>
-<span><span class="co">#&gt; Picking joint bandwidth of 0.0925</span></span>
-<span><span class="co">#&gt; Picking joint bandwidth of 0.0627</span></span>
+<code class="sourceCode R"><span><span class="co"># qc_plots$gABA</span></span></code></pre></div>
+</div>
+<ul>
+<li>For Std_H2O: we would remove B3 from P01</li>
+<li>For NAG: E8 from P01</li>
+</ul>
+<p>For other substrates (not displayed here) - H2O: B4 from P02 and P12, F4 from P13 - OA: B5 from P12 - gABA: F9 from P01 - Urea: F11 from P12 - Std_Glu, Glu, Lgn, Ala: no wells to remove</p>
+<p>To get a general overview, we can plot several substrates together in a single figure. Each substrate’s plot is itself already a <code>patchwork</code> composition (boxplot + ridgeline) with its own title — nesting one <code>patchwork</code> inside another normally drops that inner title, so we wrap each one with <code><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">patchwork::wrap_elements()</a></code> first, which “flattens” it into a single element that keeps its title intact when combined further. In a real dataset, depending on how many plates are flagged per substrate and per run, this combined view can get crowded quickly — treat it as a quick overview, and fall back to inspecting substrates individually, either interactively (as above) or by saving each plot to disk (see 2 chunks below) when there’s a lot to look through.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="op">(</span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">wrap_elements</a></span><span class="op">(</span>full <span class="op">=</span> <span class="va">qc_plots</span><span class="op">$</span><span class="va">Std_Glu</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">wrap_elements</a></span><span class="op">(</span>full <span class="op">=</span> <span class="va">qc_plots</span><span class="op">$</span><span class="va">Std_H2O</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span></span>
+<span>  <span class="op">(</span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">wrap_elements</a></span><span class="op">(</span>full <span class="op">=</span> <span class="va">qc_plots</span><span class="op">$</span><span class="va">H2O</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>     <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">wrap_elements</a></span><span class="op">(</span>full <span class="op">=</span> <span class="va">qc_plots</span><span class="op">$</span><span class="va">OA</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.0428</span></span>
 <span><span class="co">#&gt; Picking joint bandwidth of 0.00232</span></span>
-<span><span class="co">#&gt; Picking joint bandwidth of 0.00258</span></span></code></pre></div>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.00258</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.00243</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.00215</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.0925</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.0627</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="microresp_files/figure-html/unnamed-chunk-25-1.png" width="1344"></p>
 </figure>
 </div>
 </div>
+<div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="op">(</span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">wrap_elements</a></span><span class="op">(</span>full <span class="op">=</span> <span class="va">qc_plots</span><span class="op">$</span><span class="va">Glu</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">wrap_elements</a></span><span class="op">(</span>full <span class="op">=</span> <span class="va">qc_plots</span><span class="op">$</span><span class="va">Lgn</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span></span>
+<span>  <span class="op">(</span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">wrap_elements</a></span><span class="op">(</span>full <span class="op">=</span> <span class="va">qc_plots</span><span class="op">$</span><span class="va">NAG</span><span class="op">)</span> <span class="op">+</span></span>
+<span>     <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">wrap_elements</a></span><span class="op">(</span>full <span class="op">=</span> <span class="va">qc_plots</span><span class="op">$</span><span class="va">gABA</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.0235</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.0073</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.00678</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.0159</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.00376</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.0125</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="microresp_files/figure-html/unnamed-chunk-25-2.png" width="1344"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb29"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">wrap_elements</a></span><span class="op">(</span>full <span class="op">=</span> <span class="va">qc_plots</span><span class="op">$</span><span class="va">Ala</span><span class="op">)</span> <span class="op">/</span></span>
+<span>  <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">wrap_elements</a></span><span class="op">(</span>full <span class="op">=</span> <span class="va">qc_plots</span><span class="op">$</span><span class="va">Urea</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.00752</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.00329</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.0293</span></span></code></pre></div>
+<div class="cell-output-display">
+<div>
+<figure><p><img src="microresp_files/figure-html/unnamed-chunk-25-3.png" width="1344"></p>
+</figure>
+</div>
+</div>
 </div>
 <p>Save QC plots for review outside R (optional), in a loop. Notice that because plots are named in the list, they can be easily accessed by name (= substrate), and this can then serve as filenaming for export</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">qc_plots</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  </span>
 <span>  <span class="va">plot</span> <span class="op">&lt;-</span> <span class="va">qc_plots</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span></span>
@@ -822,37 +859,48 @@
 <p>Then, by visual assessment of the plots one by one, we create a table of wells to remove, and clean the dataset from obvious outliers</p>
 <p>Starting with greenhouse outliers</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">to_remove</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tribble.html" class="external-link">tribble</a></span><span class="op">(</span></span>
 <span>  <span class="op">~</span> <span class="va">plate_id</span>, <span class="op">~</span><span class="va">well_id</span>, </span>
+<span>  <span class="co"># Urea</span></span>
+<span>  <span class="st">"P12"</span>, <span class="st">"F11"</span>,</span>
 <span>  <span class="co"># gABA</span></span>
 <span>  <span class="st">"P01"</span>, <span class="st">"F9"</span>,   </span>
 <span>  <span class="co"># NAG</span></span>
 <span>  <span class="st">"P01"</span>, <span class="st">"E8"</span>,</span>
+<span>  <span class="co"># OA</span></span>
+<span>  <span class="st">"P12"</span>, <span class="st">"B5"</span>,</span>
+<span>  <span class="co"># H2O</span></span>
+<span>  <span class="st">"P02"</span>, <span class="st">"B4"</span>,    <span class="st">"P12"</span>, <span class="st">"B4"</span>,    <span class="st">"P13"</span>, <span class="st">"F4"</span>,</span>
 <span>  <span class="co"># Std-H2O</span></span>
 <span>  <span class="st">"P01"</span>, <span class="st">"B3"</span>,      </span>
 <span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>dataset <span class="op">=</span> <span class="st">"MR"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">to_remove</span></span>
-<span><span class="co">#&gt; # A tibble: 3 × 3</span></span>
+<span><span class="co">#&gt; # A tibble: 8 × 3</span></span>
 <span><span class="co">#&gt;   plate_id well_id dataset</span></span>
 <span><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;   &lt;chr&gt;  </span></span>
-<span><span class="co">#&gt; 1 P01      F9      MR     </span></span>
-<span><span class="co">#&gt; 2 P01      E8      MR     </span></span>
-<span><span class="co">#&gt; 3 P01      B3      MR</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 P12      F11     MR     </span></span>
+<span><span class="co">#&gt; 2 P01      F9      MR     </span></span>
+<span><span class="co">#&gt; 3 P01      E8      MR     </span></span>
+<span><span class="co">#&gt; 4 P12      B5      MR     </span></span>
+<span><span class="co">#&gt; 5 P02      B4      MR     </span></span>
+<span><span class="co">#&gt; 6 P12      B4      MR     </span></span>
+<span><span class="co">#&gt; 7 P13      F4      MR     </span></span>
+<span><span class="co">#&gt; 8 P01      B3      MR</span></span></code></pre></div>
 </div>
 <p>In a real dataset with hundreds of plates, this can take a while, and we recommend a second reading of those plots after “sleeping on it”, and seeing if we still agree with ourselves, and didn’t make any mistake</p>
 <p>Remove those outliers</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">MR_wash1</span> <span class="op">&lt;-</span> <span class="va">MR_co2_g_h</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="../reference/remove_wells.html">remove_wells</a></span><span class="op">(</span><span class="va">to_remove</span><span class="op">)</span> </span></code></pre></div>
 </div>
 <p>It is possible to run once more through the quality check before deciding to move on, and possibly create a “wash2”, “wash3”, etc. version, though we never needed it so far. But it might become relevant, for example, in the case of one single really extreme value, that would “squeeze” the rest of the data for all plates of the same panel in a plot too tight to discern patterns. In such cases, a removal of the extreme outlier first, followed by re-plotting, allows the unfolding of squeezed plots</p>
 <p>Store last version in a new variable (easier for edits…)</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">MR_outliers_removed</span> <span class="op">&lt;-</span> <span class="va">MR_wash1</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h3 id="compute-samplesubstrate-average">4.4 - Compute sample*substrate average<a class="anchor" aria-label="anchor" href="#compute-samplesubstrate-average"></a>
@@ -860,7 +908,7 @@
 <p>Now that outliers are removed, we can compute the average value per plate per substrate.</p>
 <p>Note that we create a new column where we store, for each substrate, whether the well contained “sample soil” or “standard soil” (this will be needed for downstream analysis)</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">MR_avg</span> <span class="op">&lt;-</span> <span class="va">MR_outliers_removed</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span>, <span class="va">map</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span></span>
@@ -876,7 +924,7 @@
 </div>
 <p>Plot distribution of values</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">distrib_uncorrected</span> <span class="op">&lt;-</span> <span class="va">MR_avg</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">co2_g_h_avg</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
@@ -901,7 +949,7 @@
 <p>So, now we correct SIR’s for basal respiration (subtract H2O-resp from substrate-induced resp)</p>
 <p>First, extract basal respiration and keep only H2O rows, so that we have, separately, the basal respiration of the samples vs the standard soil</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Extract basal resp data only</span></span>
 <span><span class="va">basal_resp</span> <span class="op">&lt;-</span> <span class="va">MR_avg</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">map</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"H2O"</span>, <span class="st">"Std_H2O"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
@@ -915,7 +963,7 @@
 <span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;           &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt;  1 MR      P01      sample         0.0571</span></span>
 <span><span class="co">#&gt;  2 MR      P01      std_soil       0.0637</span></span>
-<span><span class="co">#&gt;  3 MR      P02      sample         0.0450</span></span>
+<span><span class="co">#&gt;  3 MR      P02      sample         0.0432</span></span>
 <span><span class="co">#&gt;  4 MR      P02      std_soil       0.0548</span></span>
 <span><span class="co">#&gt;  5 MR      P03      sample         0.0343</span></span>
 <span><span class="co">#&gt;  6 MR      P03      std_soil       0.0314</span></span>
@@ -925,9 +973,9 @@
 <span><span class="co">#&gt; 10 MR      P05      std_soil       0.0273</span></span>
 <span><span class="co">#&gt; 11 MR      P11      sample         0.0394</span></span>
 <span><span class="co">#&gt; 12 MR      P11      std_soil       0.0374</span></span>
-<span><span class="co">#&gt; 13 MR      P12      sample         0.0714</span></span>
+<span><span class="co">#&gt; 13 MR      P12      sample         0.0700</span></span>
 <span><span class="co">#&gt; 14 MR      P12      std_soil       0.0470</span></span>
-<span><span class="co">#&gt; 15 MR      P13      sample         0.0503</span></span>
+<span><span class="co">#&gt; 15 MR      P13      sample         0.0479</span></span>
 <span><span class="co">#&gt; 16 MR      P13      std_soil       0.0382</span></span>
 <span><span class="co">#&gt; 17 MR      P14      sample         0.0524</span></span>
 <span><span class="co">#&gt; 18 MR      P14      std_soil       0.0399</span></span>
@@ -936,7 +984,7 @@
 </div>
 <p>Now we can join this info to the rest of the data and compute H2O-corrected data</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb34"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">H2O_corrected</span> <span class="op">&lt;-</span> <span class="va">MR_avg</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span></span>
 <span>    <span class="va">basal_resp</span>, </span>
@@ -948,7 +996,7 @@
 </div>
 <p>Check it out</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb35"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">H2O_corrected</span></span>
 <span><span class="co">#&gt; # A tibble: 100 × 7</span></span>
 <span><span class="co">#&gt; # Groups:   dataset, plate_id [10]</span></span>
@@ -978,7 +1026,7 @@
 </h2>
 <p>For this QC check, we use H2O-corrected data for the glucose standard.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb36"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Extract standard-soil data</span></span>
 <span><span class="va">std_soil_data</span> <span class="op">&lt;-</span> <span class="va">H2O_corrected</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">map</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Std_H2O"</span>, <span class="st">"Std_Glu"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
@@ -1011,7 +1059,7 @@
 </h3>
 <p>Now, we compute the MBC, qCO2 and MSIR. We use H2O-corrected data throughout, and exclude both the water (basal respiration) and the standard-soil rows from the MSIR sum, since it should only reflect the real substrates.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb37"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Extract Glu's own respiration value per plate (needed for MBC below)</span></span>
 <span><span class="va">glu_resp</span> <span class="op">&lt;-</span> <span class="va">H2O_corrected</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">map</span> <span class="op">==</span> <span class="st">"Glu"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
@@ -1032,7 +1080,7 @@
 </h3>
 <p>We can now join in each plate’s Glu respiration (needed for MBC) and directly compute relative SIRs (rSIR) and the -x*ln(x) intermediary value (sSIR), all while staying in the same long, per-substrate format.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb38"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb41"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Join in basal_resp and glu_resp, then compute MBC, qCO2, rSIR, sSIR -</span></span>
 <span><span class="co"># all still in long format</span></span>
 <span><span class="va">rSIRs</span> <span class="op">&lt;-</span> <span class="va">substrate_data</span> <span class="op">|&gt;</span> </span>
@@ -1048,7 +1096,7 @@
 <p>! There is still one warning: we are loosing one data point (possibly still a negative or null value given to the log?)</p>
 <p>Still, check out the output</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb39"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rSIRs</span></span>
 <span><span class="co">#&gt; # A tibble: 70 × 12</span></span>
 <span><span class="co">#&gt;    dataset plate_id substrate std_sample basal_resp    SIR  MSIR glu_resp   MBC</span></span>
@@ -1060,15 +1108,15 @@
 <span><span class="co">#&gt;  5 MR      P01      OA        sample         0.0571 1.66    2.59    0.383  15.7</span></span>
 <span><span class="co">#&gt;  6 MR      P01      Urea      sample         0.0571 0.0929  2.59    0.383  15.7</span></span>
 <span><span class="co">#&gt;  7 MR      P01      gABA      sample         0.0571 0.0625  2.59    0.383  15.7</span></span>
-<span><span class="co">#&gt;  8 MR      P02      Ala       sample         0.0450 0.141   2.70    0.430  17.6</span></span>
-<span><span class="co">#&gt;  9 MR      P02      Glu       sample         0.0450 0.430   2.70    0.430  17.6</span></span>
-<span><span class="co">#&gt; 10 MR      P02      Lgn       sample         0.0450 0.124   2.70    0.430  17.6</span></span>
+<span><span class="co">#&gt;  8 MR      P02      Ala       sample         0.0432 0.143   2.71    0.432  17.7</span></span>
+<span><span class="co">#&gt;  9 MR      P02      Glu       sample         0.0432 0.432   2.71    0.432  17.7</span></span>
+<span><span class="co">#&gt; 10 MR      P02      Lgn       sample         0.0432 0.126   2.71    0.432  17.7</span></span>
 <span><span class="co">#&gt; # ℹ 60 more rows</span></span>
 <span><span class="co">#&gt; # ℹ 3 more variables: qCO2 &lt;dbl&gt;, rSIR &lt;dbl&gt;, sSIR &lt;dbl&gt;</span></span></code></pre></div>
 </div>
 <p>Now, we sum sSIRs within each plate to get the Shannon index.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb40"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb43"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">shannon</span> <span class="op">&lt;-</span> <span class="va">rSIRs</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span></span>
@@ -1089,19 +1137,19 @@
 <span><span class="co">#&gt;    dataset plate_id shannon basal_resp   MBC  qCO2  MSIR</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;      &lt;dbl&gt;      &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt;  1 MR      P01        1.23      0.0571 15.7   3.63  2.59</span></span>
-<span><span class="co">#&gt;  2 MR      P02        1.28      0.0450 17.6   2.56  2.70</span></span>
+<span><span class="co">#&gt;  2 MR      P02        1.28      0.0432 17.7   2.44  2.71</span></span>
 <span><span class="co">#&gt;  3 MR      P03        1.29      0.0343 21.0   1.63  2.87</span></span>
 <span><span class="co">#&gt;  4 MR      P04        1.10      0.0255 13.1   1.95  2.46</span></span>
 <span><span class="co">#&gt;  5 MR      P05        0.885     0.0153  7.60  2.01  2.03</span></span>
 <span><span class="co">#&gt;  6 MR      P11        1.84      0.0394 22.9   1.72  2.73</span></span>
-<span><span class="co">#&gt;  7 MR      P12        1.86      0.0714 40.7   1.75  4.37</span></span>
-<span><span class="co">#&gt;  8 MR      P13        1.81      0.0503 28.4   1.77  3.24</span></span>
+<span><span class="co">#&gt;  7 MR      P12        1.86      0.0700 40.8   1.72  4.31</span></span>
+<span><span class="co">#&gt;  8 MR      P13        1.81      0.0479 28.5   1.68  3.26</span></span>
 <span><span class="co">#&gt;  9 MR      P14        1.83      0.0524 37.6   1.39  4.00</span></span>
 <span><span class="co">#&gt; 10 MR      P15        1.78      0.0300 25.3   1.18  3.08</span></span></code></pre></div>
 </div>
 <p>Gather all data (except std soil data)</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb41"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb44"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">MR_indices</span> <span class="op">&lt;-</span> <span class="va">MR_outliers_removed</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="co"># update this selection to what makes sense in your study</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span>, <span class="va">run_id</span><span class="op">:</span><span class="va">sample_name</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
@@ -1111,19 +1159,19 @@
 </div>
 <p>Check it out</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb42"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb45"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">MR_indices</span> </span>
 <span><span class="co">#&gt; # A tibble: 10 × 21</span></span>
 <span><span class="co">#&gt;    plate_id sample_id soil  basal_resp   MBC  qCO2  MSIR shannon dataset run_id</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;    &lt;chr&gt;     &lt;chr&gt;      &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt; </span></span>
 <span><span class="co">#&gt;  1 P01      t2_102_z1 Auto      0.0571 15.7   3.63  2.59   1.23  MR      R1    </span></span>
-<span><span class="co">#&gt;  2 P02      t2_103_z3 Auto      0.0450 17.6   2.56  2.70   1.28  MR      R1    </span></span>
+<span><span class="co">#&gt;  2 P02      t2_103_z3 Auto      0.0432 17.7   2.44  2.71   1.28  MR      R1    </span></span>
 <span><span class="co">#&gt;  3 P03      t2_86_z2  ABC       0.0343 21.0   1.63  2.87   1.29  MR      R1    </span></span>
 <span><span class="co">#&gt;  4 P04      t2_101_z3 Auto      0.0255 13.1   1.95  2.46   1.10  MR      R1    </span></span>
 <span><span class="co">#&gt;  5 P05      t2_84_z1  ABC       0.0153  7.60  2.01  2.03   0.885 MR      R1    </span></span>
 <span><span class="co">#&gt;  6 P11      t2_92_z2  Ref       0.0394 22.9   1.72  2.73   1.84  MR      R2    </span></span>
-<span><span class="co">#&gt;  7 P12      t2_82_z2  ABC       0.0714 40.7   1.75  4.37   1.86  MR      R2    </span></span>
-<span><span class="co">#&gt;  8 P13      t2_94_z3  Ref       0.0503 28.4   1.77  3.24   1.81  MR      R2    </span></span>
+<span><span class="co">#&gt;  7 P12      t2_82_z2  ABC       0.0700 40.8   1.72  4.31   1.86  MR      R2    </span></span>
+<span><span class="co">#&gt;  8 P13      t2_94_z3  Ref       0.0479 28.5   1.68  3.26   1.81  MR      R2    </span></span>
 <span><span class="co">#&gt;  9 P14      t2_87_z2  ABC       0.0524 37.6   1.39  4.00   1.83  MR      R2    </span></span>
 <span><span class="co">#&gt; 10 P15      t2_91_z3  Ref       0.0300 25.3   1.18  3.08   1.78  MR      R2    </span></span>
 <span><span class="co">#&gt; # ℹ 11 more variables: lab_id &lt;chr&gt;, detection_plate_id &lt;chr&gt;, expe &lt;chr&gt;,</span></span>
@@ -1132,7 +1180,7 @@
 </div>
 <p>This is per-plate aggregated data, meaning that we lost the per-substrate data, including raw <code>co2_g_h</code> and its corrected version <code>SIR</code>, as well as relative SIR (<code>rSIR</code>) and precomputed <code>sSIR</code>, which are stored in <code>rSIRs</code> (just in case). Standard-soil data is set aside too — it’s rebuilt directly from <code>H2O_corrected</code> in <a href="#sec-qc-std-soils">QC - check standard soils</a>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb43"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rSIRs</span></span>
 <span><span class="co">#&gt; # A tibble: 70 × 12</span></span>
 <span><span class="co">#&gt;    dataset plate_id substrate std_sample basal_resp    SIR  MSIR glu_resp   MBC</span></span>
@@ -1144,9 +1192,9 @@
 <span><span class="co">#&gt;  5 MR      P01      OA        sample         0.0571 1.66    2.59    0.383  15.7</span></span>
 <span><span class="co">#&gt;  6 MR      P01      Urea      sample         0.0571 0.0929  2.59    0.383  15.7</span></span>
 <span><span class="co">#&gt;  7 MR      P01      gABA      sample         0.0571 0.0625  2.59    0.383  15.7</span></span>
-<span><span class="co">#&gt;  8 MR      P02      Ala       sample         0.0450 0.141   2.70    0.430  17.6</span></span>
-<span><span class="co">#&gt;  9 MR      P02      Glu       sample         0.0450 0.430   2.70    0.430  17.6</span></span>
-<span><span class="co">#&gt; 10 MR      P02      Lgn       sample         0.0450 0.124   2.70    0.430  17.6</span></span>
+<span><span class="co">#&gt;  8 MR      P02      Ala       sample         0.0432 0.143   2.71    0.432  17.7</span></span>
+<span><span class="co">#&gt;  9 MR      P02      Glu       sample         0.0432 0.432   2.71    0.432  17.7</span></span>
+<span><span class="co">#&gt; 10 MR      P02      Lgn       sample         0.0432 0.126   2.71    0.432  17.7</span></span>
 <span><span class="co">#&gt; # ℹ 60 more rows</span></span>
 <span><span class="co">#&gt; # ℹ 3 more variables: qCO2 &lt;dbl&gt;, rSIR &lt;dbl&gt;, sSIR &lt;dbl&gt;</span></span></code></pre></div>
 </div>
@@ -1155,11 +1203,11 @@
 <p>For our Field experiment, some modalities are to be removed: Bloc 1 is not a real bloc, and the faba bean did not take in the Ref treatment, so we removed it from MR data. Not relevant to write it out here though (didn’t make it into plates 1 to 5), but nice to mention that some more post analysis might be relevant</p>
 <p>Plot the indices</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb44"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb47"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">MR_indices</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">soil</span>, y <span class="op">=</span> <span class="va">basal_resp</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_boxplot.html" class="external-link">geom_boxplot</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_boxplot.html" class="external-link">geom_boxplot</a></span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">run_id</span><span class="op">)</span><span class="op">)</span> </span></code></pre></div>
 <div class="cell-output-display">
 <div>
 <figure><p><img src="microresp_files/figure-html/unnamed-chunk-43-1.png" width="672"></p>
