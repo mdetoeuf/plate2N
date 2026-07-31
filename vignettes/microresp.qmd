@@ -10,6 +10,7 @@ knitr:
     comment: '#>'
 editor_options: 
   chunk_output_type: console
+bibliography: references.bib
 ---
 
 ```{r}
@@ -24,6 +25,12 @@ library(ggridges)
 - Add index computations at the end of the pipeline (not yet written)
 - Explain the choice of absorbance thresholds used in the QC step (Section 4.1)
 - Double-check the µg CO2-C conversion formula (Section 5.3) against the MicroResp manual — currently taken from an Excel document
+- Check where the MBC and qCO2 formulas (Section 8) come from, and confirm their units
+- Update the example dataset to include more plates (e.g. plates 11-15, for 10 total across 2 runs), so the `run_id` parameter demonstrates meaningfully rather than showing a single run
+- Reevaluate which variables `MR_indices` keeps, for readability (Section 9)
+- Section 10's standard-soil QC plot only shows one run currently — revisit once more run data is available
+- Turn Section 11's per-variable plotting into a loop over each index (basal_resp through shannon)
+- Investigate and resolve the one dropped data point warning in `rSIRs` (Section 9) — likely a negative-or-zero value going into `log()`
 
 # 1 - Introduction {#sec-microresp}
 
@@ -38,7 +45,7 @@ So, the 3 layers of data are referred to as `abs_t0`, `abs_t5`, and `map`.
 ::: callout-note
 ## More layers of data are possible
 
-In theory, any number of data layers are possible, you just need to extend the logic displayed here, with additional elements to some arguments that are vectors (e.g., `abs_map = c("abs_t0", "abs_t5", "map")` and others that are lists of all data sets (one per layer).
+In theory, any number of data layers are possible - you just need to extend the logic displayed here, with additional elements to some arguments that are vectors (e.g., `abs_map = c("abs_t0", "abs_t5", "map")`) and others that are lists of all data sets (one per layer).
 :::
 
 # 2 - Import and tidy with 2+ layers
@@ -388,15 +395,13 @@ suspicious_MR <- MR_co2_g_h |>
 
 Now, with a threshold of 8% as max coef of variation, we are left with only 6 combinations of plate x substrate to look at (instead of 50).
 
-!! This means we are ok with not looking at all data !!
+This kind of automated flagging is a trade-off: it saves you from manually reviewing every single well, but it also means you're trusting the threshold to actually catch what matters. When in doubt, err on the side of a stricter threshold — one that flags more plates than strictly necessary — rather than a looser one. Reviewing a few extra, ultimately fine plates costs little; missing a real outlier because the threshold was too permissive costs much more.
 
 ## 6.2 - create QC plots
 
 Create one list of QC plots per dataset.
 
 Notice that we get a list with 1 plot per substrate (but not all bc not all had outliers in this reduced dataset)
-
---\> TO DO: update microresp data to get more plate, maybe include plates 11-15, so we have 10 total, and 2 runs, so that using the run_id parameter makes sense visually here
 
 ```{r}
 qc_plots <- plot_list_qc_microresp(
@@ -407,14 +412,19 @@ qc_plots <- plot_list_qc_microresp(
 names(qc_plots)
 ```
 
-For the sake of illustration, we just plot 2 of the plots (one per dataset per substrate): it facets the plots per run, and only displays data that is suspicious (coefficient of variation above threshold defined above). - H2O: i'd remove B3 - Glu: i'd remove nothing Notice that - the nb of plate changes between plots, only suspicious plates are displayed
+For the sake of illustration, we just plot 2 of the plots (one per dataset per substrate): each facets by run, and only displays data that is suspicious (coefficient of variation above the threshold defined above).
+
+- H2O: we would remove B3
+- Glu: no wells to remove
+
+Notice that the number of plates differs between the two plots — only the plates flagged as suspicious for that particular substrate are shown.
 
 ```{r}
 qc_plots$Std_H2O
 qc_plots$Glu
 ```
 
-To get general idea, plot it all in one go - **briefly** explain the rationale behind using `patchwork::wrap_elements` here (keep title) - But say that in real datasets, depending on substrates, more plates are displayed, so this patchworking might make things unreadable anyway
+To get a general overview, we can plot all substrates together in a single figure. Each substrate's plot is itself already a `patchwork` composition (boxplot + ridgeline) with its own title — nesting one `patchwork` inside another normally drops that inner title, so we wrap each one with `patchwork::wrap_elements()` first, which "flattens" it into a single element that keeps its title intact when combined further. In a real dataset, depending on how many plates are flagged per substrate, this combined view can get crowded quickly — treat it as a quick overview, and fall back to inspecting substrates individually (as above, possibly in a loop) when there's a lot to look through.
 
 ```{r}
 (patchwork::wrap_elements(full = qc_plots$gABA) +
@@ -467,7 +477,7 @@ to_remove <- tibble::tribble(
 to_remove
 ```
 
-In a real dataset with hundreds of plates, this can take a while, and we recommand a second reading of those plots after "sleeping on it", and seeing if we still agree with ourselves, and didn't make any mistake
+In a real dataset with hundreds of plates, this can take a while, and we recommend a second reading of those plots after "sleeping on it", and seeing if we still agree with ourselves, and didn't make any mistake
 
 Remove those outliers
 
@@ -528,7 +538,7 @@ distrib_uncorrected
 
 [@bongiorno2020] write: *Thereafter, we corrected for the average respiration rate of soil to which the deionized water was added.*
 
-Although not explicit, I believe that what they say if that they consider that substrate-induced respirations as computed so far are indeed the sum of basal respiration + the "real" part of the respiration that is substrate induced. So probably they do a subtraction?
+Although not fully explicit in the paper, we read this as meaning that the substrate-induced respiration computed so far is the sum of basal respiration plus the "real," substrate-specific part — so correcting for it means subtracting the basal (H2O) respiration from each substrate's value.
 
 So, now we correct SIR's for basal respiration (subtract H2O-resp from substrate-induced resp)
 
@@ -564,7 +574,7 @@ Check it out
 H2O_corrected
 ```
 
-In the following sections, I follow computations as in [@bongiorno2020a], i.e.:
+In the following sections, we follow computations as in [@bongiorno2020], i.e.:
 
 - Compute MSIR, MBC, metabolic quotient
 
@@ -578,9 +588,7 @@ Then, we can still discuss some N-based index
 
 # 8 - MBC, basal respiration, metabolic quotient, MSIR
 
-Now, we compute the MBC, qCO2 and MSIR (here, we use H2O-corrected data, and don't keep water in the computation. So it is only a sum of non-H2O substrates. Also, we don't keep std soil data from here on, so we start by storing it somewhere (it will be needed for QC)
-
-[**!! TO DO: check where computation of MBC and qCO2 come from + units !!**]{.underline}
+Now, we compute the MBC, qCO2 and MSIR. We use H2O-corrected data throughout, and exclude both the water (basal respiration) and the standard-soil rows from the MSIR sum, since it should only reflect the real substrates.
 
 ```{r}
 # Extract Glu's own respiration value per plate (needed for MBC below)
@@ -604,7 +612,7 @@ substrate_data <- H2O_corrected |>
 
 # 9 - Shannon index
 
-Now, we re-pivot longer to compute on a per-substrate basis again, and directly compute relative SIRs (rSIR) and -x\*ln(x) intermediary value
+We can now join in each plate's Glu respiration (needed for MBC) and directly compute relative SIRs (rSIR) and the -x\*ln(x) intermediary value (sSIR), all while staying in the same long, per-substrate format.
 
 ```{r}
 # Join in basal_resp and glu_resp, then compute MBC, qCO2, rSIR, sSIR -
@@ -622,15 +630,13 @@ rSIRs <- substrate_data |>
 
 ! There is still one warning: we are loosing one data point (possibly still a negative or null value given to the log?)
 
-[**!! TODO : Deal with this later !!**]{.underline}
-
 Still, check out the output
 
 ```{r}
 rSIRs
 ```
 
-Now, we can pivot wider again to sum sSIRs on a per sample basis
+Now, we sum sSIRs within each plate to get the Shannon index.
 
 ```{r}
 shannon <- rSIRs |> 
@@ -653,8 +659,6 @@ shannon
 
 Gather all data (except std soil data)
 
---\> to do: reevaluate selection of variables to keep (more readibility if less)
-
 ```{r}
 #| output: false
 MR_indices <- MR_outliers_removed |> 
@@ -671,24 +675,18 @@ Check it out
 MR_indices 
 ```
 
-We lost
-
-- the data on raw SIR and relative SIR (rSIR), which is stored in rSIRs (just in case)
-
-- and std soil data
+This is per-plate aggregated data, meaning that we lost the per-substrate data, including raw `co2_g_h` and its corrected version `SIR`, as well as relative SIR (`rSIR`) and precomputed `sSIR`, which are stored in `rSIRs` (just in case). Standard-soil data is set aside too — it's rebuilt directly from `H2O_corrected` in [QC - check standard soils](#sec-qc-std-soils).
 
 ```{r}
 rSIRs
 ```
 
-# 10 - QC - check standard soils
+# 10 - QC - check standard soils {#sec-qc-std-soils}
 
-I'm actually not sooo happy about this. FYI: here, I took H2O-corrected data for the glucose
-
---\> To Do: again, we have only one run, so... not displaying as it could
+For this QC check, we use H2O-corrected data for the glucose standard.
 
 ```{r}
-# Extract standard-soil data (kept for QC in Section 10)
+# Extract standard-soil data
 std_soil_data <- H2O_corrected |> 
   dplyr::filter(map %in% c("Std_H2O", "Std_Glu")) |> 
   dplyr::rename(substrate = map, SIR = H2O_corrected_resp) |> 
@@ -711,11 +709,9 @@ std_soil_data |>
 
 # 11 - Last data wrangling
 
-For our Field experiment, some modalities are to be removed: Bloc 1 is not a real bloc, and the faba bean did not take in the Ref treatment, so we removed it from MR data. Not relevant to write it out here though (didn't make it into plates 1 to 5), but nice to mention that some more post analysis might me relevant
+For our Field experiment, some modalities are to be removed: Bloc 1 is not a real bloc, and the faba bean did not take in the Ref treatment, so we removed it from MR data. Not relevant to write it out here though (didn't make it into plates 1 to 5), but nice to mention that some more post analysis might be relevant
 
 Plot the indices
-
---\> make this into a loop, fo each variable between basal_resp and shannon
 
 ```{r}
 MR_indices |> 
