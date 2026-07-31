@@ -57,7 +57,7 @@ qc_raw_abs <- function(
   # initiate data frame that will contain suspicious well ids
   # i = 1
   suspicious_rows <- c()
-  for (i in 1:nrow(full)) {
+  for (i in seq_len(nrow(full))) {
     #  if (full$absorbance[i] < min_abs || full$absorbance[i] > max_abs) {
     if (full$abs[i] < min_abs | full$abs[i] > max_abs) {
       #print(full$absorbance[i])

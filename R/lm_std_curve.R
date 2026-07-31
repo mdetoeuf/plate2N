@@ -300,7 +300,7 @@ plot_list_lm <- function(
   plots <- list()
   #i = 1
   #for (i in 1:10) {
-  for (i in 1:nrow(lm_data)) {
+  for (i in seq_len(nrow(lm_data))) {
     # curve data
     lm_curve <- lm_data[i,]
     curve_id <- lm_data$unique_curve_id[i]

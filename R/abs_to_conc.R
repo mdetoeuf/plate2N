@@ -81,7 +81,7 @@ convert_molec <- function(
   target_data <- conc_data |> dplyr::filter_out() |> dplyr::mutate(conc_mgN_L = double())
   # Loop, once per combination of std-sp / target-sp
   #i = 1
-  for (i in 1:nrow(combos)) {
+  for (i in seq_len(nrow(combos))) {
 
     # get which compound and which target, and their molar masses
     comp_i <- combos$std_sp[i] ; M_comp <- molar_masses[comp_i]

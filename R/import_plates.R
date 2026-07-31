@@ -66,7 +66,7 @@ txt_to_tibble <- function(
   # initiate an empty list
   abs_data_list <- list()
   # i = 3
-  for (i in 1:length(all_txt_files)) {
+  for (i in seq_along(all_txt_files)) {
 
     # get name of file nb i
     file <- paste0(filepath, "/", all_txt_files[i])
@@ -214,13 +214,17 @@ skanit_to_tibble <- function(
 
   # Remove last row if contains something like "Autoloading..."
   if (stringr::str_split_i(file$row[nrow(file)], pattern = " ", i = 1) == "Autoloading") {
-    file <- file[1:(nrow(file)-1),]
+    file <- file[seq_len(nrow(file) - 1), ]
   }
 
 
   # extract first column
   file_col1 <- file[[1]]
   #file_col1
+
+  if (length(file_col1) < 3) {
+    stop("The imported file does not contain enough rows to represent even one plate (a minimum of 9 rows is expected: a plate-id row plus rows A-H). Check the file's structure and import.")
+    }
 
   # Replace cells with "Abs" by plate name, then erase original cell containing that plate name
   for (cell in 2:(length(file_col1)-1)) {
@@ -241,7 +245,7 @@ skanit_to_tibble <- function(
 
   # create a vector with all indices of rows containing map data
   seq <- c()
-  for (i in 1:length(nrow_sample)){
+  for (i in seq_along(nrow_sample)){
     seq <- append(seq,seq(nrow_sample[i],nrow_sample[i]+8,1))
   }
   #seq
@@ -256,7 +260,7 @@ skanit_to_tibble <- function(
 
   # If numbers formatted with commas, replace them with dots
   if (clean_file$X1[2] |> str_extract(pattern = "\\W") == ",") {
-    for (i in 1:ncol(clean_file)) {
+    for (i in seq_len(ncol(clean_file))) {
       replacement <- gsub("\\,", ".", clean_file[[i]])
       clean_file[i] <- replacement
     }
@@ -350,7 +354,7 @@ tecan_to_tibble <- function(
     tibble <- columns |> dplyr::filter(row != "row")
 
 # use read_tecan() to append the empty tibble in a loop, 1 iteration per file
-    for (i in 1:length(all_tecan_files)) {
+    for (i in seq_along(all_tecan_files)) {
       file <- all_tecan_files[i]
       path <- paste0(folderpath, "/", file)
       tibble_i <- read_tecan(path)

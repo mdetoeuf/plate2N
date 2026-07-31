@@ -54,7 +54,7 @@ verticalize_plates <- function(
 
   # loop (1 iteration per plate)
   #i = 1
-  for (i in 1:nrow(plates)) {
+  for (i in seq_len(nrow(plates))) {
     # store plate id
     plate_id <- plates$plate_id[i]
 
@@ -131,7 +131,7 @@ tibble_to_list <- function(tibble) {
 
   # in a loop: extract each plate and append the list
   # (1 file --> 1 plate --> 1 element of the list)
-  for (i in 1:nrow(plates)) {
+  for (i in seq_len(nrow(plates))) {
     # store plate id
     plate_id <- plates$plate_id[i]
 

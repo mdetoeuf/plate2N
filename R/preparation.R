@@ -76,7 +76,7 @@ map_1_plate <- function( #defaults: a whole column (or more) per std or blank
   if (!is.null(column_curves)) {
     col_std_names <- paste0(column_curves)
     col_std <- empty_plate |> dplyr::select(tidyselect::all_of(col_std_names))
-    for (i in 1:ncol(col_std)) {
+    for (i in seq_len(ncol(col_std))) {
       col_std[i] <- rep(std_def)
     }
   }
@@ -85,7 +85,7 @@ map_1_plate <- function( #defaults: a whole column (or more) per std or blank
   if (!is.null(column_blank)) {
     col_blank_names <- paste0(column_blank)
     col_blank <- empty_plate |> dplyr::select(tidyselect::all_of(col_blank_names))
-    for (i in 1:ncol(col_blank)) {
+    for (i in seq_len(ncol(col_blank))) {
       col_blank[i] <- rep(blank_def)
     }
   }
@@ -94,7 +94,7 @@ map_1_plate <- function( #defaults: a whole column (or more) per std or blank
   if (!is.null(column_empty)) {
     col_empty_names <- paste0(column_empty)
     col_empty <- empty_plate |> dplyr::select(tidyselect::all_of(col_empty_names))
-    for (i in 1:ncol(col_empty)) {
+    for (i in seq_len(ncol(col_empty))) {
       col_empty[i] <- rep(empty_def)
     }
   }
@@ -189,18 +189,18 @@ map_plates <- function(
 
   # prepare plate ids
   if (is.null(plate_ids)) {
-    plate_ids <- paste0("plate_", seq(1:n_plates))
+    plate_ids <- paste0("plate_", seq_len(n_plates))
   }
 
   # divide into smaller vectors
-  group_attribution <- seq(1:n_plates) |> rep(n_samples_per_plate) |> sort()
+  group_attribution <- seq_len(n_plates) |> rep(n_samples_per_plate) |> sort()
   sample_distribution <- samples |> split(f = group_attribution)
 
 
   # initiate empty tibble with correct column names
   tibble <- columns |> filter_out()
   # in a loop, add each plate mapping
-  for (plate in 1:length(sample_distribution)) {
+  for (plate in seq_along(sample_distribution)) {
 
     samples_plate <- sample_distribution[[plate]]
 
