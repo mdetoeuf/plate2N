@@ -538,8 +538,7 @@ First, extract basal respiration and keep only H2O rows, so that we have, separa
 # Extract basal resp data only
 basal_resp <- MR_avg |> 
   dplyr::filter(map %in% c("H2O", "Std_H2O")) |> 
-  dplyr::select(dataset, plate_id, std_sample, co2_g_h_avg) |> 
-  dplyr::rename(basal_resp = co2_g_h_avg)
+  dplyr::select(dataset, plate_id, std_sample, basal_resp = co2_g_h_avg)
 
 # Check it out
 basal_resp
@@ -550,8 +549,10 @@ Now we can join this info to the rest of the data and compute H2O-corrected data
 ```{r}
 #| output: false
 H2O_corrected <- MR_avg |> 
-  dplyr::left_join(basal_resp) |> 
-  dplyr::mutate(H2O_corrected = dplyr::case_when(
+  dplyr::left_join(
+    basal_resp, 
+    by = dplyr::join_by(dataset, plate_id, std_sample)) |> 
+  dplyr::mutate(H2O_corrected_resp = dplyr::case_when(
     map %in% c("H2O", "Std_H2O") ~ basal_resp,
     .default = co2_g_h_avg - basal_resp
   ))
@@ -582,27 +583,23 @@ Now, we compute the MBC, qCO2 and MSIR (here, we use H2O-corrected data, and don
 [**!! TO DO: check where computation of MBC and qCO2 come from + units !!**]{.underline}
 
 ```{r}
-# pivot to get one column per substrate
-wider_data <- H2O_corrected |> 
-  tidyr::pivot_wider(
-    names_from = map, 
-    values_from = H2O_corrected, id_cols = c(dataset, plate_id))
+# Extract Glu's own respiration value per plate (needed for MBC below)
+glu_resp <- H2O_corrected |> 
+  dplyr::filter(map == "Glu") |> 
+  dplyr::select(dataset, plate_id, glu_resp = H2O_corrected_resp)
 
-# extract std_soil_data and store it in an object
-std_soil_data <- wider_data |> dplyr::select(dataset, plate_id, tidyselect::starts_with("Std"))
+# Keep only real substrates (exclude basal/H2O and both std soils),
+# drop the now-redundant raw co2_g_h_avg, and compute MSIR as a
+# grouped sum - no pivot needed
+substrate_data <- H2O_corrected |> 
+  dplyr::filter_out(map %in% c("H2O", "Std_H2O", "Std_Glu")) |> 
+  dplyr::rename(substrate = map, SIR = H2O_corrected_resp) |> 
+  dplyr::select(!co2_g_h_avg) |> 
+  dplyr::group_by(dataset, plate_id) |> 
+  dplyr::mutate(MSIR = sum(SIR)) |> 
+  dplyr::ungroup()
 
-# compute first round of indicators
-MSIR <- wider_data |> 
-  # exclude std soil data
-  dplyr::select(!tidyselect::starts_with("Std")) |> 
-  # compute Basal resp, MBC, metabolic quotient
-  dplyr::rename(basal_resp = "H2O") |> dplyr::relocate(basal_resp, .after = tidyselect::everything()) |> 
-  dplyr::mutate(
-    MBC = (Glu * 40.04) + 0.37, # not sure where those numbers come from!
-    qCO2 = basal_resp * 1000 / MBC # same here
-  ) |> 
-  # compute MSIR
-  dplyr::rowwise() |> dplyr::mutate(MSIR = sum(dplyr::c_across(Ala:gABA)))
+
 ```
 
 # 9 - Shannon index
@@ -610,11 +607,17 @@ MSIR <- wider_data |>
 Now, we re-pivot longer to compute on a per-substrate basis again, and directly compute relative SIRs (rSIR) and -x\*ln(x) intermediary value
 
 ```{r}
-rSIRs <- MSIR |> 
-  tidyr::pivot_longer(cols = c(Ala:gABA), names_to = "substrate", values_to = "SIR") |> 
+# Join in basal_resp and glu_resp, then compute MBC, qCO2, rSIR, sSIR -
+# all still in long format
+rSIRs <- substrate_data |> 
+  dplyr::left_join(
+    glu_resp, by = dplyr::join_by(dataset, plate_id)) |> 
   dplyr::mutate(
+    MBC = (glu_resp * 40.04) + 0.37, # not sure where those numbers come from!
+    qCO2 = basal_resp * 1000 / MBC, # same here
     rSIR = SIR / MSIR,
-    sSIR = -rSIR * log(rSIR))
+    sSIR = -rSIR * log(rSIR)
+  )
 ```
 
 ! There is still one warning: we are loosing one data point (possibly still a negative or null value given to the log?)
@@ -631,12 +634,18 @@ Now, we can pivot wider again to sum sSIRs on a per sample basis
 
 ```{r}
 shannon <- rSIRs |> 
-  tidyr::pivot_wider(
-    names_from = substrate, names_prefix = "sSIR_",
-    values_from = sSIR,
-    id_cols = c(dataset, plate_id, basal_resp, MBC, qCO2, MSIR)
-  ) |> 
-  dplyr::rowwise() |> dplyr::mutate(shannon = sum(dplyr::c_across(sSIR_Ala:sSIR_gABA)))
+  dplyr::group_by(dataset, plate_id) |> 
+  dplyr::summarize(
+    shannon = sum(sSIR),
+    # basal_resp, MBC, qCO2, MSIR are already constant within each plate
+    # (computed once per plate, repeated across its substrate rows), so
+    # taking the first row's value is equivalent to taking "the" value
+    basal_resp = dplyr::first(basal_resp),
+    MBC = dplyr::first(MBC),
+    qCO2 = dplyr::first(qCO2),
+    MSIR = dplyr::first(MSIR),
+    .groups = "drop"
+  )
 
 # Check it out
 shannon
@@ -649,13 +658,10 @@ Gather all data (except std soil data)
 ```{r}
 #| output: false
 MR_indices <- MR_outliers_removed |> 
-  #take relevant categorical variables (no quantitative data)
+  # update this selection to what makes sense in your study
   dplyr::select(dataset, plate_id, run_id:sample_name) |> 
-  # reduce it to one row per plate
   unique() |> 
-  # join it to the quantitative, plate-wise (=sample-wise) agregated quantitative data
-  dplyr::left_join(shannon) |> 
-  # give it a better order for readability
+  dplyr::left_join(shannon, by = dplyr::join_by(dataset, plate_id)) |> 
   dplyr::relocate(plate_id, sample_id, soil, basal_resp, MBC, qCO2, MSIR, shannon)
 ```
 
@@ -673,7 +679,6 @@ We lost
 
 ```{r}
 rSIRs
-std_soil_data
 ```
 
 # 10 - QC - check standard soils
@@ -683,21 +688,21 @@ I'm actually not sooo happy about this. FYI: here, I took H2O-corrected data for
 --\> To Do: again, we have only one run, so... not displaying as it could
 
 ```{r}
-# prepare data for the graph
-std_soil_longer <- std_soil_data |> 
-  tidyr::pivot_longer(
-    values_to = "SIR", 
-    names_to = "substrate", 
-    cols = tidyselect::starts_with("Std")) |> 
-  # add categorical data
+# Extract standard-soil data (kept for QC in Section 10)
+std_soil_data <- H2O_corrected |> 
+  dplyr::filter(map %in% c("Std_H2O", "Std_Glu")) |> 
+  dplyr::rename(substrate = map, SIR = H2O_corrected_resp) |> 
+  dplyr::select(dataset, plate_id, substrate, SIR) |>
+  # joining MR_outliers_removed based on dataset and plate_id
+  # add columns as needed for your study (here: run_id and detection_plate_id)
   dplyr::left_join(
     MR_outliers_removed |> 
       dplyr::select(dataset, plate_id, run_id, detection_plate_id) |> 
-      unique(),
+      unique(), 
     by = dplyr::join_by(dataset, plate_id))
 
 # plot it
-std_soil_longer |> 
+std_soil_data |> 
   ggplot2::ggplot(ggplot2::aes(x = run_id, y = SIR)) +
   ggplot2::theme_minimal() + 
   ggplot2::geom_boxplot() +
