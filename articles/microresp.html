@@ -12,6 +12,7 @@
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="microresp_files/libs/quarto-html/popper.min.js"></script><script src="microresp_files/libs/quarto-html/tippy.umd.min.js"></script><link href="microresp_files/libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="microresp_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<script src="microresp_files/libs/quarto-diagram/mermaid.min.js"></script><script src="microresp_files/libs/quarto-diagram/mermaid-init.js"></script><link href="microresp_files/libs/quarto-diagram/mermaid.css" rel="stylesheet">
 <!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="microresp">
 </head>
 <body>
@@ -22,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,29 +85,74 @@
 <section class="section level2"><h2 id="to-do">TO DO<a class="anchor" aria-label="anchor" href="#to-do"></a>
 </h2>
 <ul>
-<li>Add index computations at the end of the pipeline (not yet written)</li>
+<li>test to test a push</li>
 <li>Explain the choice of absorbance thresholds used in the QC step (Section 4.1)</li>
 <li>Double-check the µg CO2-C conversion formula (Section 5.3) against the MicroResp manual — currently taken from an Excel document</li>
-<li>Check where the MBC and qCO2 formulas (Section 8) come from, and confirm their units</li>
-<li>Update the example dataset to include more plates (e.g. plates 11-15, for 10 total across 2 runs), so the <code>run_id</code> parameter demonstrates meaningfully rather than showing a single run</li>
-<li>Reevaluate which variables <code>MR_indices</code> keeps, for readability (Section 9)</li>
-<li>Section 10’s standard-soil QC plot only shows one run currently — revisit once more run data is available</li>
+<li>Check where the MBC and qCO2 formulas (Section 7.1) come from, and confirm their units</li>
+<li>Section 6’s standard-soil QC plot only shows one run currently — revisit once more run data is available</li>
 <li>Turn Section 11’s per-variable plotting into a loop over each index (basal_resp through shannon)</li>
-<li>Investigate and resolve the one dropped data point warning in <code>rSIRs</code> (Section 9) — likely a negative-or-zero value going into <code><a href="https://rdrr.io/r/base/Log.html" class="external-link">log()</a></code>
+<li>Investigate and resolve the one dropped data point warning in <code>rSIRs</code> (Section 7.2) — likely a negative-or-zero value going into <code><a href="https://rdrr.io/r/base/Log.html" class="external-link">log()</a></code>
 </li>
+<li>change ylim() in normalized / not normalized plot to reflect new data (5 plates added) so no points are out of range</li>
 </ul></section><section class="section level2"><h2 id="sec-microresp">1 - Introduction<a class="anchor" aria-label="anchor" href="#sec-microresp"></a>
 </h2>
 <p>This vignette walks through the full analysis pipeline for a MicroResp experiment, from raw plate import to substrate-level CO2 respiration values. It follows the same overall logic as the main N-dosage pipeline (<code>import-tidy</code>, <code>blank-correction</code>, <code>abs-to-conc</code>), but MicroResp experiments differ enough — more data layers per plate, no standard curve, and a different final unit (a respiration rate rather than a concentration) — that they’re covered here as their own self-contained walkthrough rather than split across the main vignettes.</p>
 <p>We start, as in <code>import-tidy</code>, with importing and tidying data recorded with more than 2 layers per plate (see the tip on multiple data layers there) — then move on to the MicroResp-specific steps: joining sample metadata, quality-checking and cleaning raw absorbance, normalizing across plates, converting to %CO2 and then to a respiration rate, and finally checking for and removing per-sample outliers.</p>
 <p>Here, we quickly go through the import pipeline with an example of data from a <a href="https://www.hutton.ac.uk/scientific-services/analytical/analytical-services/microresp/" class="external-link">MicroResp</a> experiment. To understand what this means: here plates are incubated for 5h. An absorbance reading is done at t = 0h (<code>t0</code>) and t = 5h (<code>t5</code>). There is also mapping data, containing the info on which substrate has been added in which well. Substrates are, in this experiment: glucose (Glu), water (H2O), oxalic acid (OA), lignin (Lgn), N-acetylglucosamine (NAG), gamma-acetylbutyric acid (gABA), alanine (Ala) and urea (Urea).</p>
 <p>So, the 3 layers of data are referred to as <code>abs_t0</code>, <code>abs_t5</code>, and <code>map</code>.</p>
+<section class="level2"><h3 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
+</h3>
+<p>This vignette runs through 12 sections in a single, mostly linear pipeline. Here’s the shape of it, grouped into the main phases:</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
 <div>
-<blockquote>
-<p><strong>More layers of data are possible</strong></p>
-<p>In theory, any number of data layers are possible - you just need to extend the logic displayed here, with additional elements to some arguments that are vectors (e.g., <code>abs_map = c("abs_t0", "abs_t5", "map")</code>) and others that are lists of all data sets (one per layer).</p>
-</blockquote>
+<p></p>
+<figure class=""><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TD
+  A[Import, tidy &amp; join metadata]:::contribution --&gt; C[Clean data, normalize &amp; convert to CO2 rate]:::caseStudy
+  C --&gt; D[Average per plate &amp; substrate]:::loopTarget
+  D --&gt; O{{QC / outlier removal}}:::contribution
+  O --&gt; D
+  D --&gt; F1[Correct for basal respiration]:::caseStudy
+  F1 --&gt; H[QC standard soils]:::caseStudy
+  F1 --&gt; F2[Compute indices: MBC, qCO2, Shannon + Final wrangling &amp; export]:::caseStudy
+
+  classDef contribution fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,stroke-width:1.5px,font-weight:bold;
+  classDef caseStudy fill:#f8fafc,stroke:#cbd5e1,color:#64748b,stroke-width:1px;
+  classDef loopTarget fill:#f8fafc,stroke:#2563eb,color:#334155,stroke-width:1.5px,stroke-dasharray:4 2,font-weight:bold;
+
+  click A "#sec-import-tidy-metadata" "Section 2"
+  click C "#sec-clean-normalize-convert" "Section 3"
+  click D "#sec-average-outlier-removal" "Section 4"
+  click O "#sec-average-outlier-removal" "Section 4"
+  click F1 "#sec-basal-respiration" "Section 5"
+  click H "#sec-qc-std-soils" "Section 6"
+  click F2 "#sec-compute-indices" "Section 7"
+
+</pre>
 </div>
-</section><section class="section level2"><h2 id="import-and-tidy-with-2-layers">2 - Import and tidy with 2+ layers<a class="anchor" aria-label="anchor" href="#import-and-tidy-with-2-layers"></a>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<p>Bold boxes use <code>plate2N</code> functions directly; the remaining boxes apply the tidyverse toolbox <span class="citation" data-cites="wickham2019">(<a href="#ref-wickham2019" role="doc-biblioref">Wickham et al. 2019</a>)</span> to MicroResp data.</p>
+<ul>
+<li>
+<strong>Sections 2</strong>: import raw plate files, tidy them, and join in sample metadata.</li>
+<li>
+<strong>Section 3</strong>: quality-check raw absorbance, remove empty/edge wells, normalize across plates, then convert to %CO2 and a respiration rate.</li>
+<li>
+<strong>Section 4</strong>: compute a preliminary average, then iteratively check for and remove per-plate<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content="&lt;p&gt;In the MicroResp experiment, one plate was attributed to each sample (with dedicated columns for comparison with the standard soil), so that “per-plate” really means “per-sample”&lt;/p&gt;"><sup>1</sup></a>/substrate outliers, and recompute the final average.</li>
+<li>
+<strong>Section 5</strong>: correct for basal respiration.</li>
+<li>
+<strong>Section 6</strong>: a QC check on the standard soils.</li>
+<li>
+<strong>Section 7</strong>: compute the summary indices (MBC, qCO2, MSIR, Shannon).</li>
+<li>
+<strong>Section 8</strong>: final study-specific wrangling and export.</li>
+</ul></section></section><section class="section level2"><h2 id="sec-import-tidy-metadata">2 - Import &amp; tidy 2+ layers, then join metadata<a class="anchor" aria-label="anchor" href="#sec-import-tidy-metadata"></a>
 </h2>
 <section class="level2"><h3 id="importing-2-layers-of-absorbance-data">2.1 - Importing 2 layers of absorbance data<a class="anchor" aria-label="anchor" href="#importing-2-layers-of-absorbance-data"></a>
 </h3>
@@ -122,7 +168,7 @@
 <span></span>
 <span><span class="co"># Check them out</span></span>
 <span><span class="va">MR_abs_t0</span>; <span class="va">MR_abs_t5</span></span>
-<span><span class="co">#&gt; # A tibble: 45 × 13</span></span>
+<span><span class="co">#&gt; # A tibble: 90 × 13</span></span>
 <span><span class="co">#&gt;    row      X1    X2    X3    X4    X5    X6    X7    X8    X9   X10   X11   X12</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt;  1 P01    1     2     3     4     5     6     7     8     9    10    11    12   </span></span>
@@ -135,8 +181,8 @@
 <span><span class="co">#&gt;  8 G      1.17  1.15  1.16  1.13  1.19  1.16  1.2   1.08  1.15  1.16  1.15  1.16</span></span>
 <span><span class="co">#&gt;  9 H      1.17  1.16  1.17  1.16  1.19  1.16  1.2   1.11  1.15  1.15  1.16  1.18</span></span>
 <span><span class="co">#&gt; 10 P02    1     2     3     4     5     6     7     8     9    10    11    12   </span></span>
-<span><span class="co">#&gt; # ℹ 35 more rows</span></span>
-<span><span class="co">#&gt; # A tibble: 45 × 13</span></span>
+<span><span class="co">#&gt; # ℹ 80 more rows</span></span>
+<span><span class="co">#&gt; # A tibble: 90 × 13</span></span>
 <span><span class="co">#&gt;    row      X1    X2    X3    X4    X5    X6    X7    X8    X9   X10   X11   X12</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt;  1 P01    1     2     3     4     5     6     7     8     9    10    11    12   </span></span>
@@ -149,7 +195,13 @@
 <span><span class="co">#&gt;  8 G      0.93  0.41  0.92  0.89  0.36  0.65  0.83  0.72  0.84  0.76  0.8   0.94</span></span>
 <span><span class="co">#&gt;  9 H      0.93  0.43  0.92  0.94  0.34  0.62  0.83  0.72  0.83  0.74  0.8   0.96</span></span>
 <span><span class="co">#&gt; 10 P02    1     2     3     4     5     6     7     8     9    10    11    12   </span></span>
-<span><span class="co">#&gt; # ℹ 35 more rows</span></span></code></pre></div>
+<span><span class="co">#&gt; # ℹ 80 more rows</span></span></code></pre></div>
+</div>
+<div>
+<blockquote>
+<p><strong>More layers of data are possible</strong></p>
+<p>In theory, any number of data layers are possible - you just need to extend the logic displayed here, with additional elements to some arguments that are vectors (e.g., <code>abs_map = c("abs_t0", "abs_t5", "map")</code>) and others that are lists of all data sets (one per layer).</p>
+</blockquote>
 </div>
 </section><section class="level2"><h3 id="being-creative-with-importing-mappings">2.2 - Being creative with importing mappings<a class="anchor" aria-label="anchor" href="#being-creative-with-importing-mappings"></a>
 </h3>
@@ -170,7 +222,7 @@
 <span><span class="op">(</span><span class="va">nb_plates</span> <span class="op">&lt;-</span> <span class="va">MR_abs_t0</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="op">(</span><span class="va">row</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">LETTERS</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 5</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 10</span></span></code></pre></div>
 </div>
 <p>Finally, run the mapping function with</p>
 <ul>
@@ -181,9 +233,15 @@
 </ul>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># compute the mapping</span></span>
+<code class="sourceCode R"><span><span class="co"># extract the real plate ids present in the raw data, in order</span></span>
+<span><span class="op">(</span><span class="va">plate_ids_used</span> <span class="op">&lt;-</span> <span class="va">MR_abs_t0</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="op">!</span><span class="op">(</span><span class="va">row</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">LETTERS</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/pull.html" class="external-link">pull</a></span><span class="op">(</span><span class="va">row</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;  [1] "P01" "P02" "P03" "P04" "P05" "P11" "P12" "P13" "P14" "P15"</span></span>
+<span></span>
+<span><span class="co"># compute the mapping</span></span>
 <span><span class="va">MR_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/map_plates.html">map_plates</a></span><span class="op">(</span></span>
-<span>  plate_ids <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"P"</span>, <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"%02d"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">nb_plates</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, </span>
+<span>  plate_ids <span class="op">=</span> <span class="va">plate_ids_used</span>, </span>
 <span>  samples <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">MR_columns</span>, <span class="va">nb_plates</span><span class="op">)</span>,</span>
 <span>  n_samples_per_plate <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  column_curves <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span>, column_blank <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">)</span>, column_empty <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">12</span><span class="op">)</span>,</span>
@@ -191,7 +249,7 @@
 <span></span>
 <span><span class="co"># Check it out</span></span>
 <span><span class="va">MR_map</span></span>
-<span><span class="co">#&gt; # A tibble: 45 × 13</span></span>
+<span><span class="co">#&gt; # A tibble: 90 × 13</span></span>
 <span><span class="co">#&gt;    row   X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12  </span></span>
 <span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;</span></span>
 <span><span class="co">#&gt;  1 P01   1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
@@ -204,7 +262,7 @@
 <span><span class="co">#&gt;  8 G     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty</span></span>
 <span><span class="co">#&gt;  9 H     empty Std_… Std_… H2O   OA    Glu   Lgn   NAG   gABA  Ala   Urea  empty</span></span>
 <span><span class="co">#&gt; 10 P02   1     2     3     4     5     6     7     8     9     10    11    12   </span></span>
-<span><span class="co">#&gt; # ℹ 35 more rows</span></span></code></pre></div>
+<span><span class="co">#&gt; # ℹ 80 more rows</span></span></code></pre></div>
 </div>
 <p>Such creative methods are particularly time-saving with large datasets. Here, we have only 5 plates &lt;=&gt; 45 rows in our tibble. But in a 100-plate dataset, this would correspond to 900 rows, quite time-consuming to encode by hand.</p>
 </section><section class="level2"><h3 id="verticalize-and-join-all-3-layers">2.3 - Verticalize and join all 3 layers<a class="anchor" aria-label="anchor" href="#verticalize-and-join-all-3-layers"></a>
@@ -221,7 +279,7 @@
 <span></span>
 <span><span class="co"># Check it out</span></span>
 <span><span class="va">MR_joined</span></span>
-<span><span class="co">#&gt; # A tibble: 96 × 17</span></span>
+<span><span class="co">#&gt; # A tibble: 96 × 32</span></span>
 <span><span class="co">#&gt;    row   column `MR-abs_t0-P01` `MR-abs_t0-P02` `MR-abs_t0-P03` `MR-abs_t0-P04`</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;           &lt;chr&gt;           &lt;chr&gt;           &lt;chr&gt;          </span></span>
 <span><span class="co">#&gt;  1 A     1      0.93            1.23            1.27            1.32           </span></span>
@@ -235,10 +293,12 @@
 <span><span class="co">#&gt;  9 A     9      1.17            1.21            1.25            1.28           </span></span>
 <span><span class="co">#&gt; 10 A     10     1.12            1.21            1.25            1.24           </span></span>
 <span><span class="co">#&gt; # ℹ 86 more rows</span></span>
-<span><span class="co">#&gt; # ℹ 11 more variables: `MR-abs_t0-P05` &lt;chr&gt;, `MR-abs_t5-P01` &lt;chr&gt;,</span></span>
-<span><span class="co">#&gt; #   `MR-abs_t5-P02` &lt;chr&gt;, `MR-abs_t5-P03` &lt;chr&gt;, `MR-abs_t5-P04` &lt;chr&gt;,</span></span>
-<span><span class="co">#&gt; #   `MR-abs_t5-P05` &lt;chr&gt;, `MR-map-P01` &lt;chr&gt;, `MR-map-P02` &lt;chr&gt;,</span></span>
-<span><span class="co">#&gt; #   `MR-map-P03` &lt;chr&gt;, `MR-map-P04` &lt;chr&gt;, `MR-map-P05` &lt;chr&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt; # ℹ 26 more variables: `MR-abs_t0-P05` &lt;chr&gt;, `MR-abs_t0-P11` &lt;chr&gt;,</span></span>
+<span><span class="co">#&gt; #   `MR-abs_t0-P12` &lt;chr&gt;, `MR-abs_t0-P13` &lt;chr&gt;, `MR-abs_t0-P14` &lt;chr&gt;,</span></span>
+<span><span class="co">#&gt; #   `MR-abs_t0-P15` &lt;chr&gt;, `MR-abs_t5-P01` &lt;chr&gt;, `MR-abs_t5-P02` &lt;chr&gt;,</span></span>
+<span><span class="co">#&gt; #   `MR-abs_t5-P03` &lt;chr&gt;, `MR-abs_t5-P04` &lt;chr&gt;, `MR-abs_t5-P05` &lt;chr&gt;,</span></span>
+<span><span class="co">#&gt; #   `MR-abs_t5-P11` &lt;chr&gt;, `MR-abs_t5-P12` &lt;chr&gt;, `MR-abs_t5-P13` &lt;chr&gt;,</span></span>
+<span><span class="co">#&gt; #   `MR-abs_t5-P14` &lt;chr&gt;, `MR-abs_t5-P15` &lt;chr&gt;, `MR-map-P01` &lt;chr&gt;, …</span></span></code></pre></div>
 </div>
 <p>Notice the names of the columns, that now received 3 options for the layer prefix: <code>abs_t0-</code>, <code>abs_t5-</code> and <code>map-</code>.</p>
 <div class="cell">
@@ -246,10 +306,13 @@
 <code class="sourceCode R"><span><span class="co"># Check out column names</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">MR_joined</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  [1] "row"           "column"        "MR-abs_t0-P01" "MR-abs_t0-P02"</span></span>
-<span><span class="co">#&gt;  [5] "MR-abs_t0-P03" "MR-abs_t0-P04" "MR-abs_t0-P05" "MR-abs_t5-P01"</span></span>
-<span><span class="co">#&gt;  [9] "MR-abs_t5-P02" "MR-abs_t5-P03" "MR-abs_t5-P04" "MR-abs_t5-P05"</span></span>
-<span><span class="co">#&gt; [13] "MR-map-P01"    "MR-map-P02"    "MR-map-P03"    "MR-map-P04"   </span></span>
-<span><span class="co">#&gt; [17] "MR-map-P05"</span></span></code></pre></div>
+<span><span class="co">#&gt;  [5] "MR-abs_t0-P03" "MR-abs_t0-P04" "MR-abs_t0-P05" "MR-abs_t0-P11"</span></span>
+<span><span class="co">#&gt;  [9] "MR-abs_t0-P12" "MR-abs_t0-P13" "MR-abs_t0-P14" "MR-abs_t0-P15"</span></span>
+<span><span class="co">#&gt; [13] "MR-abs_t5-P01" "MR-abs_t5-P02" "MR-abs_t5-P03" "MR-abs_t5-P04"</span></span>
+<span><span class="co">#&gt; [17] "MR-abs_t5-P05" "MR-abs_t5-P11" "MR-abs_t5-P12" "MR-abs_t5-P13"</span></span>
+<span><span class="co">#&gt; [21] "MR-abs_t5-P14" "MR-abs_t5-P15" "MR-map-P01"    "MR-map-P02"   </span></span>
+<span><span class="co">#&gt; [25] "MR-map-P03"    "MR-map-P04"    "MR-map-P05"    "MR-map-P11"   </span></span>
+<span><span class="co">#&gt; [29] "MR-map-P12"    "MR-map-P13"    "MR-map-P14"    "MR-map-P15"</span></span></code></pre></div>
 </div>
 </section><section class="level2"><h3 id="tidy-the-data-3-columns-for-3-layers">2.4 - Tidy the data, 3 columns for 3 layers<a class="anchor" aria-label="anchor" href="#tidy-the-data-3-columns-for-3-layers"></a>
 </h3>
@@ -263,46 +326,40 @@
 <span></span>
 <span><span class="co"># Check it out</span></span>
 <span><span class="va">MR_tidy</span></span>
-<span><span class="co">#&gt; # A tibble: 480 × 9</span></span>
-<span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id abs_t0 abs_t5 map    </span></span>
-<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;  &lt;chr&gt;  &lt;chr&gt;  </span></span>
-<span><span class="co">#&gt;  1 A     1      A1      A1_P01         MR      P01      0.93   0.67   empty  </span></span>
-<span><span class="co">#&gt;  2 A     1      A1      A1_P02         MR      P02      1.23   1      empty  </span></span>
-<span><span class="co">#&gt;  3 A     1      A1      A1_P03         MR      P03      1.27   1.04   empty  </span></span>
-<span><span class="co">#&gt;  4 A     1      A1      A1_P04         MR      P04      1.32   1.09   empty  </span></span>
-<span><span class="co">#&gt;  5 A     1      A1      A1_P05         MR      P05      1.32   1.13   empty  </span></span>
-<span><span class="co">#&gt;  6 A     2      A2      A2_P01         MR      P01      1.15   0.39   Std_Glu</span></span>
-<span><span class="co">#&gt;  7 A     2      A2      A2_P02         MR      P02      1.23   0.43   Std_Glu</span></span>
-<span><span class="co">#&gt;  8 A     2      A2      A2_P03         MR      P03      1.26   0.47   Std_Glu</span></span>
-<span><span class="co">#&gt;  9 A     2      A2      A2_P04         MR      P04      1.25   0.44   Std_Glu</span></span>
-<span><span class="co">#&gt; 10 A     2      A2      A2_P05         MR      P05      1.25   0.47   Std_Glu</span></span>
-<span><span class="co">#&gt; # ℹ 470 more rows</span></span>
+<span><span class="co">#&gt; # A tibble: 960 × 9</span></span>
+<span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id abs_t0 abs_t5 map  </span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;  &lt;chr&gt;  &lt;chr&gt;</span></span>
+<span><span class="co">#&gt;  1 A     1      A1      A1_P01         MR      P01      0.93   0.67   empty</span></span>
+<span><span class="co">#&gt;  2 A     1      A1      A1_P02         MR      P02      1.23   1      empty</span></span>
+<span><span class="co">#&gt;  3 A     1      A1      A1_P03         MR      P03      1.27   1.04   empty</span></span>
+<span><span class="co">#&gt;  4 A     1      A1      A1_P04         MR      P04      1.32   1.09   empty</span></span>
+<span><span class="co">#&gt;  5 A     1      A1      A1_P05         MR      P05      1.32   1.13   empty</span></span>
+<span><span class="co">#&gt;  6 A     1      A1      A1_P11         MR      P11      1.43   1.18   empty</span></span>
+<span><span class="co">#&gt;  7 A     1      A1      A1_P12         MR      P12      1.4    1.12   empty</span></span>
+<span><span class="co">#&gt;  8 A     1      A1      A1_P13         MR      P13      1.39   1.14   empty</span></span>
+<span><span class="co">#&gt;  9 A     1      A1      A1_P14         MR      P14      1.38   1.16   empty</span></span>
+<span><span class="co">#&gt; 10 A     1      A1      A1_P15         MR      P15      1.45   1.2    empty</span></span>
+<span><span class="co">#&gt; # ℹ 950 more rows</span></span>
 <span></span>
 <span><span class="co"># If you like to reorder columns to have mapping first, then absorbance</span></span>
 <span><span class="va">MR_tidy</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/relocate.html" class="external-link">relocate</a></span><span class="op">(</span><span class="va">map</span>, .before <span class="op">=</span> <span class="va">abs_t0</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 480 × 9</span></span>
-<span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id map     abs_t0 abs_t5</span></span>
-<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;   &lt;chr&gt;  &lt;chr&gt; </span></span>
-<span><span class="co">#&gt;  1 A     1      A1      A1_P01         MR      P01      empty   0.93   0.67  </span></span>
-<span><span class="co">#&gt;  2 A     1      A1      A1_P02         MR      P02      empty   1.23   1     </span></span>
-<span><span class="co">#&gt;  3 A     1      A1      A1_P03         MR      P03      empty   1.27   1.04  </span></span>
-<span><span class="co">#&gt;  4 A     1      A1      A1_P04         MR      P04      empty   1.32   1.09  </span></span>
-<span><span class="co">#&gt;  5 A     1      A1      A1_P05         MR      P05      empty   1.32   1.13  </span></span>
-<span><span class="co">#&gt;  6 A     2      A2      A2_P01         MR      P01      Std_Glu 1.15   0.39  </span></span>
-<span><span class="co">#&gt;  7 A     2      A2      A2_P02         MR      P02      Std_Glu 1.23   0.43  </span></span>
-<span><span class="co">#&gt;  8 A     2      A2      A2_P03         MR      P03      Std_Glu 1.26   0.47  </span></span>
-<span><span class="co">#&gt;  9 A     2      A2      A2_P04         MR      P04      Std_Glu 1.25   0.44  </span></span>
-<span><span class="co">#&gt; 10 A     2      A2      A2_P05         MR      P05      Std_Glu 1.25   0.47  </span></span>
-<span><span class="co">#&gt; # ℹ 470 more rows</span></span></code></pre></div>
+<span><span class="co">#&gt; # A tibble: 960 × 9</span></span>
+<span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id map   abs_t0 abs_t5</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt; </span></span>
+<span><span class="co">#&gt;  1 A     1      A1      A1_P01         MR      P01      empty 0.93   0.67  </span></span>
+<span><span class="co">#&gt;  2 A     1      A1      A1_P02         MR      P02      empty 1.23   1     </span></span>
+<span><span class="co">#&gt;  3 A     1      A1      A1_P03         MR      P03      empty 1.27   1.04  </span></span>
+<span><span class="co">#&gt;  4 A     1      A1      A1_P04         MR      P04      empty 1.32   1.09  </span></span>
+<span><span class="co">#&gt;  5 A     1      A1      A1_P05         MR      P05      empty 1.32   1.13  </span></span>
+<span><span class="co">#&gt;  6 A     1      A1      A1_P11         MR      P11      empty 1.43   1.18  </span></span>
+<span><span class="co">#&gt;  7 A     1      A1      A1_P12         MR      P12      empty 1.4    1.12  </span></span>
+<span><span class="co">#&gt;  8 A     1      A1      A1_P13         MR      P13      empty 1.39   1.14  </span></span>
+<span><span class="co">#&gt;  9 A     1      A1      A1_P14         MR      P14      empty 1.38   1.16  </span></span>
+<span><span class="co">#&gt; 10 A     1      A1      A1_P15         MR      P15      empty 1.45   1.2   </span></span>
+<span><span class="co">#&gt; # ℹ 950 more rows</span></span></code></pre></div>
 </div>
-<div>
-<blockquote>
-<p><strong>Work in progress from here on</strong></p>
-<p>Everything from Section 3 onward is functional, but still being refined — expect rough edges, and expect this section to keep growing (an index-computation step is still to be added at the end).</p>
-</blockquote>
-</div>
-</section></section><section class="section level2"><h2 id="join-metadata-to-plate-data">3 - Join metadata to plate data<a class="anchor" aria-label="anchor" href="#join-metadata-to-plate-data"></a>
-</h2>
+</section><section class="level2"><h3 id="join-metadata-to-plate-data">2.5 - Join metadata to plate data<a class="anchor" aria-label="anchor" href="#join-metadata-to-plate-data"></a>
+</h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Get path to metadata</span></span>
@@ -310,14 +367,19 @@
 <span></span>
 <span><span class="co"># import it</span></span>
 <span><span class="op">(</span><span class="va">MR_metadata</span> <span class="op">&lt;-</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">read_csv</a></span><span class="op">(</span><span class="va">metadata_csv</span>, show_col_types <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 5 × 20</span></span>
-<span><span class="co">#&gt;   plate_nb run_id sample_id plate_id lab_id detection_plate_id expe  cra_trial</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;  &lt;chr&gt;     &lt;chr&gt;    &lt;chr&gt;  &lt;chr&gt;              &lt;chr&gt; &lt;chr&gt;    </span></span>
-<span><span class="co">#&gt; 1 P01      R1     t2_102_z1 P01      MdT    M25                Field SyCBio   </span></span>
-<span><span class="co">#&gt; 2 P02      R1     t2_103_z3 P02      MdT    M26                Field SyCBio   </span></span>
-<span><span class="co">#&gt; 3 P03      R1     t2_86_z2  P03      MdT    M27                Field SyCBio   </span></span>
-<span><span class="co">#&gt; 4 P04      R1     t2_101_z3 P04      MdT    M28                Field SyCBio   </span></span>
-<span><span class="co">#&gt; 5 P05      R1     t2_84_z1  P05      MdT    M29                Field SyCBio   </span></span>
+<span><span class="co">#&gt; # A tibble: 10 × 20</span></span>
+<span><span class="co">#&gt;    plate_nb run_id sample_id plate_id lab_id detection_plate_id expe  cra_trial</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt;    &lt;chr&gt;  &lt;chr&gt;     &lt;chr&gt;    &lt;chr&gt;  &lt;chr&gt;              &lt;chr&gt; &lt;chr&gt;    </span></span>
+<span><span class="co">#&gt;  1 P01      R1     t2_102_z1 P01      MdT    M25                Field SyCBio   </span></span>
+<span><span class="co">#&gt;  2 P02      R1     t2_103_z3 P02      MdT    M26                Field SyCBio   </span></span>
+<span><span class="co">#&gt;  3 P03      R1     t2_86_z2  P03      MdT    M27                Field SyCBio   </span></span>
+<span><span class="co">#&gt;  4 P04      R1     t2_101_z3 P04      MdT    M28                Field SyCBio   </span></span>
+<span><span class="co">#&gt;  5 P05      R1     t2_84_z1  P05      MdT    M29                Field SyCBio   </span></span>
+<span><span class="co">#&gt;  6 P11      R2     t2_92_z2  P11      MdT    M25                Field SyCBio   </span></span>
+<span><span class="co">#&gt;  7 P12      R2     t2_82_z2  P12      MdT    M26                Field SyCBio   </span></span>
+<span><span class="co">#&gt;  8 P13      R2     t2_94_z3  P13      MdT    M27                Field SyCBio   </span></span>
+<span><span class="co">#&gt;  9 P14      R2     t2_87_z2  P14      MdT    M28                Field SyCBio   </span></span>
+<span><span class="co">#&gt; 10 P15      R2     t2_91_z3  P15      MdT    M29                Field SyCBio   </span></span>
 <span><span class="co">#&gt; # ℹ 12 more variables: sd_c &lt;chr&gt;, soil &lt;chr&gt;, crop_diversity &lt;chr&gt;,</span></span>
 <span><span class="co">#&gt; #   bloc &lt;chr&gt;, sampling_time &lt;chr&gt;, zone &lt;chr&gt;, date &lt;chr&gt;, sample_name &lt;chr&gt;,</span></span>
 <span><span class="co">#&gt; #   soil_dm_content_percent &lt;dbl&gt;, soil_well_g &lt;dbl&gt;,</span></span>
@@ -328,20 +390,20 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">MR</span> <span class="op">&lt;-</span> <span class="va">MR_tidy</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">MR_metadata</span>, by <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/join_by.html" class="external-link">join_by</a></span><span class="op">(</span><span class="va">plate_id</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 480 × 28</span></span>
-<span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id abs_t0 abs_t5 map    </span></span>
-<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;  &lt;chr&gt;  &lt;chr&gt;  </span></span>
-<span><span class="co">#&gt;  1 A     1      A1      A1_P01         MR      P01      0.93   0.67   empty  </span></span>
-<span><span class="co">#&gt;  2 A     1      A1      A1_P02         MR      P02      1.23   1      empty  </span></span>
-<span><span class="co">#&gt;  3 A     1      A1      A1_P03         MR      P03      1.27   1.04   empty  </span></span>
-<span><span class="co">#&gt;  4 A     1      A1      A1_P04         MR      P04      1.32   1.09   empty  </span></span>
-<span><span class="co">#&gt;  5 A     1      A1      A1_P05         MR      P05      1.32   1.13   empty  </span></span>
-<span><span class="co">#&gt;  6 A     2      A2      A2_P01         MR      P01      1.15   0.39   Std_Glu</span></span>
-<span><span class="co">#&gt;  7 A     2      A2      A2_P02         MR      P02      1.23   0.43   Std_Glu</span></span>
-<span><span class="co">#&gt;  8 A     2      A2      A2_P03         MR      P03      1.26   0.47   Std_Glu</span></span>
-<span><span class="co">#&gt;  9 A     2      A2      A2_P04         MR      P04      1.25   0.44   Std_Glu</span></span>
-<span><span class="co">#&gt; 10 A     2      A2      A2_P05         MR      P05      1.25   0.47   Std_Glu</span></span>
-<span><span class="co">#&gt; # ℹ 470 more rows</span></span>
+<span><span class="co">#&gt; # A tibble: 960 × 28</span></span>
+<span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id abs_t0 abs_t5 map  </span></span>
+<span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;  &lt;chr&gt;  &lt;chr&gt;</span></span>
+<span><span class="co">#&gt;  1 A     1      A1      A1_P01         MR      P01      0.93   0.67   empty</span></span>
+<span><span class="co">#&gt;  2 A     1      A1      A1_P02         MR      P02      1.23   1      empty</span></span>
+<span><span class="co">#&gt;  3 A     1      A1      A1_P03         MR      P03      1.27   1.04   empty</span></span>
+<span><span class="co">#&gt;  4 A     1      A1      A1_P04         MR      P04      1.32   1.09   empty</span></span>
+<span><span class="co">#&gt;  5 A     1      A1      A1_P05         MR      P05      1.32   1.13   empty</span></span>
+<span><span class="co">#&gt;  6 A     1      A1      A1_P11         MR      P11      1.43   1.18   empty</span></span>
+<span><span class="co">#&gt;  7 A     1      A1      A1_P12         MR      P12      1.4    1.12   empty</span></span>
+<span><span class="co">#&gt;  8 A     1      A1      A1_P13         MR      P13      1.39   1.14   empty</span></span>
+<span><span class="co">#&gt;  9 A     1      A1      A1_P14         MR      P14      1.38   1.16   empty</span></span>
+<span><span class="co">#&gt; 10 A     1      A1      A1_P15         MR      P15      1.45   1.2    empty</span></span>
+<span><span class="co">#&gt; # ℹ 950 more rows</span></span>
 <span><span class="co">#&gt; # ℹ 19 more variables: plate_nb &lt;chr&gt;, run_id &lt;chr&gt;, sample_id &lt;chr&gt;,</span></span>
 <span><span class="co">#&gt; #   lab_id &lt;chr&gt;, detection_plate_id &lt;chr&gt;, expe &lt;chr&gt;, cra_trial &lt;chr&gt;,</span></span>
 <span><span class="co">#&gt; #   sd_c &lt;chr&gt;, soil &lt;chr&gt;, crop_diversity &lt;chr&gt;, bloc &lt;chr&gt;,</span></span>
@@ -349,9 +411,9 @@
 <span><span class="co">#&gt; #   soil_dm_content_percent &lt;dbl&gt;, soil_well_g &lt;dbl&gt;,</span></span>
 <span><span class="co">#&gt; #   std_soil_dm_content_percent &lt;dbl&gt;, std_soil_well_g &lt;dbl&gt;</span></span></code></pre></div>
 </div>
-</section><section class="section level2"><h2 id="cleaning-the-data">4 - Cleaning the data<a class="anchor" aria-label="anchor" href="#cleaning-the-data"></a>
+</section></section><section class="section level2"><h2 id="sec-clean-normalize-convert">3 - Clean data, normalize &amp; convert to CO2 rate<a class="anchor" aria-label="anchor" href="#sec-clean-normalize-convert"></a>
 </h2>
-<section class="level2"><h3 id="qc---suspicious-wells">4.1 - QC - suspicious wells<a class="anchor" aria-label="anchor" href="#qc---suspicious-wells"></a>
+<section class="level2"><h3 id="qc---suspicious-wells">3.1 - QC - suspicious wells<a class="anchor" aria-label="anchor" href="#qc---suspicious-wells"></a>
 </h3>
 <p><code><a href="../reference/qc_raw_abs.html">plate2N::qc_raw_abs()</a></code> checks whether absorbance data is within a user-defined range or not. Check the documentation on this function for more details.</p>
 <p>Here, we run the quality check to see if there is any really abnormal absorbance reading. The plots are saved in the working environment as objects <code>abs_t0_distrib</code> and <code>abs_t5_distrib</code>, which can be called on later.</p>
@@ -361,11 +423,11 @@
 <span><span class="va">MR</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>abs <span class="op">=</span> <span class="va">abs_t0</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="../reference/qc_raw_abs.html">qc_raw_abs</a></span><span class="op">(</span></span>
-<span>    min_abs <span class="op">=</span> <span class="fl">0.9</span>, max_abs <span class="op">=</span> <span class="fl">1.5</span>, </span>
+<span>    min_abs <span class="op">=</span> <span class="fl">0.9</span>, max_abs <span class="op">=</span> <span class="fl">1.8</span>, </span>
 <span>    plot_col_facet <span class="op">=</span> <span class="st">"dataset"</span>, </span>
 <span>    show_plot <span class="op">=</span> <span class="cn">FALSE</span>, </span>
 <span>    export_plot <span class="op">=</span> <span class="st">"abs_t0_distrib"</span><span class="op">)</span> </span>
-<span><span class="co">#&gt; !! YAY !! All wells are in range for absorbance between 0.9 and 1.5</span></span>
+<span><span class="co">#&gt; !! YAY !! All wells are in range for absorbance between 0.9 and 1.8</span></span>
 <span><span class="co">#&gt; # A tibble: 0 × 5</span></span>
 <span><span class="co">#&gt; # ℹ 5 variables: dataset &lt;chr&gt;, plate_id &lt;chr&gt;, well_id &lt;chr&gt;, map &lt;chr&gt;,</span></span>
 <span><span class="co">#&gt; #   abs &lt;chr&gt;</span></span>
@@ -374,11 +436,11 @@
 <span><span class="va">MR</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>abs <span class="op">=</span> <span class="va">abs_t5</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="../reference/qc_raw_abs.html">qc_raw_abs</a></span><span class="op">(</span></span>
-<span>    min_abs <span class="op">=</span> <span class="fl">0.2</span>, max_abs <span class="op">=</span> <span class="fl">1.5</span>, </span>
+<span>    min_abs <span class="op">=</span> <span class="fl">0.2</span>, max_abs <span class="op">=</span> <span class="fl">1.8</span>, </span>
 <span>    plot_col_facet <span class="op">=</span> <span class="st">"dataset"</span>, </span>
 <span>    show_plot <span class="op">=</span> <span class="cn">FALSE</span>, </span>
 <span>    export_plot <span class="op">=</span> <span class="st">"abs_t5_distrib"</span><span class="op">)</span> </span>
-<span><span class="co">#&gt; !! YAY !! All wells are in range for absorbance between 0.2 and 1.5</span></span>
+<span><span class="co">#&gt; !! YAY !! All wells are in range for absorbance between 0.2 and 1.8</span></span>
 <span><span class="co">#&gt; # A tibble: 0 × 5</span></span>
 <span><span class="co">#&gt; # ℹ 5 variables: dataset &lt;chr&gt;, plate_id &lt;chr&gt;, well_id &lt;chr&gt;, map &lt;chr&gt;,</span></span>
 <span><span class="co">#&gt; #   abs &lt;chr&gt;</span></span></code></pre></div>
@@ -391,12 +453,12 @@
 <span>  <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_annotation.html" class="external-link">plot_annotation</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Distribution of raw absorbance"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="microresp_files/figure-html/unnamed-chunk-11-1.png" width="672"></p>
+<figure><p><img src="microresp_files/figure-html/unnamed-chunk-12-1.png" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
-</section><section class="level2"><h3 id="sec-remove-empty">4.2 - Remove “empty” and NAs<a class="anchor" aria-label="anchor" href="#sec-remove-empty"></a>
+</section><section class="level2"><h3 id="sec-remove-empty">3.2 - Remove “empty” and NAs<a class="anchor" aria-label="anchor" href="#sec-remove-empty"></a>
 </h3>
 <p>With MicroResp experiments, edge effects are not rare, so we exclude any data from columns 1 and 12 of the 96-well plate. Those have been encoded in the mapping as “empty” (though they were not physically).</p>
 <p>We also change data format so that all absorbance data becomes numeric (until now stored as character)</p>
@@ -408,7 +470,7 @@
 <span></span>
 <span><span class="co"># notice that there are now less rows (in particulare, it starts with column 1)</span></span>
 <span><span class="va">MR_clean</span></span>
-<span><span class="co">#&gt; # A tibble: 400 × 28</span></span>
+<span><span class="co">#&gt; # A tibble: 800 × 28</span></span>
 <span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id abs_t0 abs_t5 map    </span></span>
 <span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;     &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;  </span></span>
 <span><span class="co">#&gt;  1 A     2      A2      A2_P01         MR      P01        1.15   0.39 Std_Glu</span></span>
@@ -416,12 +478,12 @@
 <span><span class="co">#&gt;  3 A     2      A2      A2_P03         MR      P03        1.26   0.47 Std_Glu</span></span>
 <span><span class="co">#&gt;  4 A     2      A2      A2_P04         MR      P04        1.25   0.44 Std_Glu</span></span>
 <span><span class="co">#&gt;  5 A     2      A2      A2_P05         MR      P05        1.25   0.47 Std_Glu</span></span>
-<span><span class="co">#&gt;  6 A     3      A3      A3_P01         MR      P01        1.14   0.89 Std_H2O</span></span>
-<span><span class="co">#&gt;  7 A     3      A3      A3_P02         MR      P02        1.22   0.97 Std_H2O</span></span>
-<span><span class="co">#&gt;  8 A     3      A3      A3_P03         MR      P03        1.25   1.03 Std_H2O</span></span>
-<span><span class="co">#&gt;  9 A     3      A3      A3_P04         MR      P04        1.22   0.96 Std_H2O</span></span>
-<span><span class="co">#&gt; 10 A     3      A3      A3_P05         MR      P05        1.28   1.06 Std_H2O</span></span>
-<span><span class="co">#&gt; # ℹ 390 more rows</span></span>
+<span><span class="co">#&gt;  6 A     2      A2      A2_P11         MR      P11        1.41   0.62 Std_Glu</span></span>
+<span><span class="co">#&gt;  7 A     2      A2      A2_P12         MR      P12        1.4    0.56 Std_Glu</span></span>
+<span><span class="co">#&gt;  8 A     2      A2      A2_P13         MR      P13        1.37   0.57 Std_Glu</span></span>
+<span><span class="co">#&gt;  9 A     2      A2      A2_P14         MR      P14        1.4    0.59 Std_Glu</span></span>
+<span><span class="co">#&gt; 10 A     2      A2      A2_P15         MR      P15        1.51   0.64 Std_Glu</span></span>
+<span><span class="co">#&gt; # ℹ 790 more rows</span></span>
 <span><span class="co">#&gt; # ℹ 19 more variables: plate_nb &lt;chr&gt;, run_id &lt;chr&gt;, sample_id &lt;chr&gt;,</span></span>
 <span><span class="co">#&gt; #   lab_id &lt;chr&gt;, detection_plate_id &lt;chr&gt;, expe &lt;chr&gt;, cra_trial &lt;chr&gt;,</span></span>
 <span><span class="co">#&gt; #   sd_c &lt;chr&gt;, soil &lt;chr&gt;, crop_diversity &lt;chr&gt;, bloc &lt;chr&gt;,</span></span>
@@ -429,9 +491,7 @@
 <span><span class="co">#&gt; #   soil_dm_content_percent &lt;dbl&gt;, soil_well_g &lt;dbl&gt;,</span></span>
 <span><span class="co">#&gt; #   std_soil_dm_content_percent &lt;dbl&gt;, std_soil_well_g &lt;dbl&gt;</span></span></code></pre></div>
 </div>
-</section></section><section class="section level2"><h2 id="data-transformation">5 - Data transformation<a class="anchor" aria-label="anchor" href="#data-transformation"></a>
-</h2>
-<section class="level2"><h3 id="normalisation">5.1 - Normalisation<a class="anchor" aria-label="anchor" href="#normalisation"></a>
+</section><section class="level2"><h3 id="normalisation">3.3 - Normalisation<a class="anchor" aria-label="anchor" href="#normalisation"></a>
 </h3>
 <p>In preliminary works we noticed that <code>detection_plate_id</code> was the biggest driver of variability in our dataset. This is due to some lab issues and should not be a recurring problem, but it is a good illustration of the question of “at which scale should we normalize?”. Let’s visualize t0 absorbance readings for standard soils and glucose, supposedly the same between plates (see plot)</p>
 <div class="cell">
@@ -446,10 +506,12 @@
 <span>       subtitle <span class="op">=</span> <span class="st">"no normalisation"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">ylim</a></span><span class="op">(</span><span class="fl">0.38</span>,<span class="fl">0.58</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">unnormed_plot</span></span></code></pre></div>
+<span><span class="va">unnormed_plot</span></span>
+<span><span class="co">#&gt; Warning: Removed 37 rows containing non-finite outside the scale range</span></span>
+<span><span class="co">#&gt; (`stat_boxplot()`).</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="microresp_files/figure-html/unnamed-chunk-13-1.png" width="672"></p>
+<figure><p><img src="microresp_files/figure-html/unnamed-chunk-14-1.png" width="672"></p>
 </figure>
 </div>
 </div>
@@ -479,20 +541,20 @@
 <span></span>
 <span><span class="co"># Check it out</span></span>
 <span><span class="va">MR_norm</span></span>
-<span><span class="co">#&gt; # A tibble: 400 × 32</span></span>
+<span><span class="co">#&gt; # A tibble: 800 × 32</span></span>
 <span><span class="co">#&gt;    unique_well_id abs_t0 abs_t5 norm_dataset norm_plate mean_t0_plate</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;           &lt;dbl&gt;  &lt;dbl&gt;        &lt;dbl&gt;      &lt;dbl&gt;         &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt;  1 A2_P01           1.15   0.39        0.427      0.393          1.16</span></span>
-<span><span class="co">#&gt;  2 A2_P02           1.23   0.43        0.440      0.426          1.22</span></span>
-<span><span class="co">#&gt;  3 A2_P03           1.26   0.47        0.470      0.474          1.27</span></span>
-<span><span class="co">#&gt;  4 A2_P04           1.25   0.44        0.443      0.462          1.31</span></span>
-<span><span class="co">#&gt;  5 A2_P05           1.25   0.47        0.473      0.502          1.34</span></span>
-<span><span class="co">#&gt;  6 A3_P01           1.14   0.89        0.983      0.904          1.16</span></span>
-<span><span class="co">#&gt;  7 A3_P02           1.22   0.97        1.00       0.968          1.22</span></span>
-<span><span class="co">#&gt;  8 A3_P03           1.25   1.03        1.04       1.05           1.27</span></span>
-<span><span class="co">#&gt;  9 A3_P04           1.22   0.96        0.991      1.03           1.31</span></span>
-<span><span class="co">#&gt; 10 A3_P05           1.28   1.06        1.04       1.11           1.34</span></span>
-<span><span class="co">#&gt; # ℹ 390 more rows</span></span>
+<span><span class="co">#&gt;  1 A2_P01           1.15   0.39        0.465      0.393          1.16</span></span>
+<span><span class="co">#&gt;  2 A2_P02           1.23   0.43        0.480      0.426          1.22</span></span>
+<span><span class="co">#&gt;  3 A2_P03           1.26   0.47        0.512      0.474          1.27</span></span>
+<span><span class="co">#&gt;  4 A2_P04           1.25   0.44        0.483      0.462          1.31</span></span>
+<span><span class="co">#&gt;  5 A2_P05           1.25   0.47        0.516      0.502          1.34</span></span>
+<span><span class="co">#&gt;  6 A2_P11           1.41   0.62        0.603      0.655          1.49</span></span>
+<span><span class="co">#&gt;  7 A2_P12           1.4    0.56        0.549      0.590          1.47</span></span>
+<span><span class="co">#&gt;  8 A2_P13           1.37   0.57        0.571      0.605          1.45</span></span>
+<span><span class="co">#&gt;  9 A2_P14           1.4    0.59        0.578      0.604          1.43</span></span>
+<span><span class="co">#&gt; 10 A2_P15           1.51   0.64        0.582      0.668          1.58</span></span>
+<span><span class="co">#&gt; # ℹ 790 more rows</span></span>
 <span><span class="co">#&gt; # ℹ 26 more variables: mean_t0_dataset &lt;dbl&gt;, row &lt;chr&gt;, column &lt;chr&gt;,</span></span>
 <span><span class="co">#&gt; #   well_id &lt;chr&gt;, dataset &lt;chr&gt;, plate_id &lt;chr&gt;, map &lt;chr&gt;, plate_nb &lt;chr&gt;,</span></span>
 <span><span class="co">#&gt; #   run_id &lt;chr&gt;, sample_id &lt;chr&gt;, lab_id &lt;chr&gt;, detection_plate_id &lt;chr&gt;,</span></span>
@@ -523,16 +585,22 @@
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Normalised data"</span>, subtitle <span class="op">=</span> <span class="st">"plate-level"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">ylim</a></span><span class="op">(</span><span class="fl">0.38</span>,<span class="fl">0.58</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">unnormed_plot</span> <span class="op">+</span> <span class="va">plate_normed_plot</span> <span class="op">+</span> <span class="va">dataset_normed_plot</span></span></code></pre></div>
+<span><span class="va">unnormed_plot</span> <span class="op">+</span> <span class="va">plate_normed_plot</span> <span class="op">+</span> <span class="va">dataset_normed_plot</span></span>
+<span><span class="co">#&gt; Warning: Removed 37 rows containing non-finite outside the scale range</span></span>
+<span><span class="co">#&gt; (`stat_boxplot()`).</span></span>
+<span><span class="co">#&gt; Warning: Removed 40 rows containing non-finite outside the scale range</span></span>
+<span><span class="co">#&gt; (`stat_boxplot()`).</span></span>
+<span><span class="co">#&gt; Warning: Removed 26 rows containing non-finite outside the scale range</span></span>
+<span><span class="co">#&gt; (`stat_boxplot()`).</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="microresp_files/figure-html/unnamed-chunk-15-1.png" width="672"></p>
+<figure><p><img src="microresp_files/figure-html/unnamed-chunk-16-1.png" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>Each step, from raw to plate-level to dataset-level is an improvement on the data. This confirms the proposition, and we keep the dataset-level normalised data for downstream steps</p>
-</section></section><section class="level2"><h3 id="convert-to-co2">5.2 - Convert to %CO2<a class="anchor" aria-label="anchor" href="#convert-to-co2"></a>
+</section></section><section class="level2"><h3 id="convert-to-co2">3.4 - Convert to %CO2<a class="anchor" aria-label="anchor" href="#convert-to-co2"></a>
 </h3>
 <p>Those are the coefficients as given in the MicroResp manual. However, if you are interested in this particular experiment, note that the manual recommends that you calibrate the equation on your own lab material.</p>
 <p>%Co2 = -0.2265 + (-1.606)/(1+(-6.771)*norm)</p>
@@ -545,20 +613,20 @@
 <span></span>
 <span><span class="co"># Check it out</span></span>
 <span><span class="va">MR_percent_co2</span></span>
-<span><span class="co">#&gt; # A tibble: 400 × 33</span></span>
+<span><span class="co">#&gt; # A tibble: 800 × 33</span></span>
 <span><span class="co">#&gt;    unique_well_id abs_t0 abs_t5 norm_dataset percent_co2 norm_plate</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;           &lt;dbl&gt;  &lt;dbl&gt;        &lt;dbl&gt;       &lt;dbl&gt;      &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt;  1 A2_P01           1.15   0.39        0.427      0.623       0.393</span></span>
-<span><span class="co">#&gt;  2 A2_P02           1.23   0.43        0.440      0.584       0.426</span></span>
-<span><span class="co">#&gt;  3 A2_P03           1.26   0.47        0.470      0.510       0.474</span></span>
-<span><span class="co">#&gt;  4 A2_P04           1.25   0.44        0.443      0.576       0.462</span></span>
-<span><span class="co">#&gt;  5 A2_P05           1.25   0.47        0.473      0.502       0.502</span></span>
-<span><span class="co">#&gt;  6 A3_P01           1.14   0.89        0.983      0.0574      0.904</span></span>
-<span><span class="co">#&gt;  7 A3_P02           1.22   0.97        1.00       0.0514      0.968</span></span>
-<span><span class="co">#&gt;  8 A3_P03           1.25   1.03        1.04       0.0400      1.05 </span></span>
-<span><span class="co">#&gt;  9 A3_P04           1.22   0.96        0.991      0.0548      1.03 </span></span>
-<span><span class="co">#&gt; 10 A3_P05           1.28   1.06        1.04       0.0385      1.11 </span></span>
-<span><span class="co">#&gt; # ℹ 390 more rows</span></span>
+<span><span class="co">#&gt;  1 A2_P01           1.15   0.39        0.465       0.520      0.393</span></span>
+<span><span class="co">#&gt;  2 A2_P02           1.23   0.43        0.480       0.488      0.426</span></span>
+<span><span class="co">#&gt;  3 A2_P03           1.26   0.47        0.512       0.425      0.474</span></span>
+<span><span class="co">#&gt;  4 A2_P04           1.25   0.44        0.483       0.481      0.462</span></span>
+<span><span class="co">#&gt;  5 A2_P05           1.25   0.47        0.516       0.418      0.502</span></span>
+<span><span class="co">#&gt;  6 A2_P11           1.41   0.62        0.603       0.294      0.655</span></span>
+<span><span class="co">#&gt;  7 A2_P12           1.4    0.56        0.549       0.365      0.590</span></span>
+<span><span class="co">#&gt;  8 A2_P13           1.37   0.57        0.571       0.334      0.605</span></span>
+<span><span class="co">#&gt;  9 A2_P14           1.4    0.59        0.578       0.324      0.604</span></span>
+<span><span class="co">#&gt; 10 A2_P15           1.51   0.64        0.582       0.320      0.668</span></span>
+<span><span class="co">#&gt; # ℹ 790 more rows</span></span>
 <span><span class="co">#&gt; # ℹ 27 more variables: mean_t0_plate &lt;dbl&gt;, mean_t0_dataset &lt;dbl&gt;, row &lt;chr&gt;,</span></span>
 <span><span class="co">#&gt; #   column &lt;chr&gt;, well_id &lt;chr&gt;, dataset &lt;chr&gt;, plate_id &lt;chr&gt;, map &lt;chr&gt;,</span></span>
 <span><span class="co">#&gt; #   plate_nb &lt;chr&gt;, run_id &lt;chr&gt;, sample_id &lt;chr&gt;, lab_id &lt;chr&gt;,</span></span>
@@ -566,7 +634,7 @@
 <span><span class="co">#&gt; #   soil &lt;chr&gt;, crop_diversity &lt;chr&gt;, bloc &lt;chr&gt;, sampling_time &lt;chr&gt;,</span></span>
 <span><span class="co">#&gt; #   zone &lt;chr&gt;, date &lt;chr&gt;, sample_name &lt;chr&gt;, soil_dm_content_percent &lt;dbl&gt;, …</span></span></code></pre></div>
 </div>
-</section><section class="level2"><h3 id="convert-to-µg-co2-c-g-dry-soil-h">5.3 - Convert to µg CO2-C / g dry soil / h<a class="anchor" aria-label="anchor" href="#convert-to-%C2%B5g-co2-c-g-dry-soil-h"></a>
+</section><section class="level2"><h3 id="convert-to-µg-co2-c-g-dry-soil-h">3.5 - Convert to µg CO2-C / g dry soil / h<a class="anchor" aria-label="anchor" href="#convert-to-%C2%B5g-co2-c-g-dry-soil-h"></a>
 </h3>
 <p>co2_emitted = (((percent_co2/100)x850x(44/22.4)x<em>(12/44)x</em>(273/(273+25)))/(soil_per_well_gx(soil_dw/100)))/5</p>
 <div class="cell">
@@ -585,20 +653,20 @@
 <span>  <span class="op">)</span></span>
 <span></span>
 <span><span class="va">MR_co2_g_h</span></span>
-<span><span class="co">#&gt; # A tibble: 400 × 34</span></span>
+<span><span class="co">#&gt; # A tibble: 800 × 34</span></span>
 <span><span class="co">#&gt;    unique_well_id abs_t0 abs_t5 norm_dataset percent_co2 norm_plate</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;           &lt;dbl&gt;  &lt;dbl&gt;        &lt;dbl&gt;       &lt;dbl&gt;      &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt;  1 A2_P01           1.15   0.39        0.427      0.623       0.393</span></span>
-<span><span class="co">#&gt;  2 A2_P02           1.23   0.43        0.440      0.584       0.426</span></span>
-<span><span class="co">#&gt;  3 A2_P03           1.26   0.47        0.470      0.510       0.474</span></span>
-<span><span class="co">#&gt;  4 A2_P04           1.25   0.44        0.443      0.576       0.462</span></span>
-<span><span class="co">#&gt;  5 A2_P05           1.25   0.47        0.473      0.502       0.502</span></span>
-<span><span class="co">#&gt;  6 A3_P01           1.14   0.89        0.983      0.0574      0.904</span></span>
-<span><span class="co">#&gt;  7 A3_P02           1.22   0.97        1.00       0.0514      0.968</span></span>
-<span><span class="co">#&gt;  8 A3_P03           1.25   1.03        1.04       0.0400      1.05 </span></span>
-<span><span class="co">#&gt;  9 A3_P04           1.22   0.96        0.991      0.0548      1.03 </span></span>
-<span><span class="co">#&gt; 10 A3_P05           1.28   1.06        1.04       0.0385      1.11 </span></span>
-<span><span class="co">#&gt; # ℹ 390 more rows</span></span>
+<span><span class="co">#&gt;  1 A2_P01           1.15   0.39        0.465       0.520      0.393</span></span>
+<span><span class="co">#&gt;  2 A2_P02           1.23   0.43        0.480       0.488      0.426</span></span>
+<span><span class="co">#&gt;  3 A2_P03           1.26   0.47        0.512       0.425      0.474</span></span>
+<span><span class="co">#&gt;  4 A2_P04           1.25   0.44        0.483       0.481      0.462</span></span>
+<span><span class="co">#&gt;  5 A2_P05           1.25   0.47        0.516       0.418      0.502</span></span>
+<span><span class="co">#&gt;  6 A2_P11           1.41   0.62        0.603       0.294      0.655</span></span>
+<span><span class="co">#&gt;  7 A2_P12           1.4    0.56        0.549       0.365      0.590</span></span>
+<span><span class="co">#&gt;  8 A2_P13           1.37   0.57        0.571       0.334      0.605</span></span>
+<span><span class="co">#&gt;  9 A2_P14           1.4    0.59        0.578       0.324      0.604</span></span>
+<span><span class="co">#&gt; 10 A2_P15           1.51   0.64        0.582       0.320      0.668</span></span>
+<span><span class="co">#&gt; # ℹ 790 more rows</span></span>
 <span><span class="co">#&gt; # ℹ 28 more variables: mean_t0_plate &lt;dbl&gt;, mean_t0_dataset &lt;dbl&gt;, row &lt;chr&gt;,</span></span>
 <span><span class="co">#&gt; #   column &lt;chr&gt;, well_id &lt;chr&gt;, dataset &lt;chr&gt;, plate_id &lt;chr&gt;, map &lt;chr&gt;,</span></span>
 <span><span class="co">#&gt; #   plate_nb &lt;chr&gt;, run_id &lt;chr&gt;, sample_id &lt;chr&gt;, lab_id &lt;chr&gt;,</span></span>
@@ -614,17 +682,17 @@
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggridges</span><span class="fu">::</span><span class="fu"><a href="https://wilkelab.org/ggridges/reference/geom_density_ridges.html" class="external-link">geom_density_ridges</a></span><span class="op">(</span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">map</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">dataset</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Picking joint bandwidth of 0.0288</span></span></code></pre></div>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.0651</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="microresp_files/figure-html/unnamed-chunk-18-1.png" width="672"></p>
+<figure><p><img src="microresp_files/figure-html/unnamed-chunk-19-1.png" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
-</section></section><section class="section level2"><h2 id="per-plate-per-substrate-outlier-removal">6 - Per plate &amp; per substrate outlier removal<a class="anchor" aria-label="anchor" href="#per-plate-per-substrate-outlier-removal"></a>
+</section></section><section class="section level2"><h2 id="sec-average-outlier-removal">4 - Average per plate &amp; substrate / outlier removal<a class="anchor" aria-label="anchor" href="#sec-average-outlier-removal"></a>
 </h2>
-<section class="level2"><h3 id="compute-preliminary-average-pre-outlier-removal">6.1 - Compute preliminary average (pre-outlier removal)<a class="anchor" aria-label="anchor" href="#compute-preliminary-average-pre-outlier-removal"></a>
+<section class="level2"><h3 id="compute-preliminary-average-pre-outlier-removal">4.1 - Compute preliminary average (pre-outlier removal)<a class="anchor" aria-label="anchor" href="#compute-preliminary-average-pre-outlier-removal"></a>
 </h3>
 <p>MicroResp plates commonly show edge effects — sometimes marginal when the kit was well sealed, but often visible even to the naked eye along one or more edges of the plate. This is the same underlying issue already addressed for columns 1 and 12 in <a href="#sec-remove-empty">Remove “empty” and NAs</a>, and it applies to rows as well: a preliminary run of the steps below showed that wells in row A and row H are outliers on many plates, often a majority of them. Following both this expectation and the recommendation of our colleagues at FiBL, we therefore exclude rows A and H from the subset below before computing the average, rather than treating them case-by-case as ordinary outliers. If you’d like to check the unfiltered data, simply comment out the filtering line. We then compute coefficient of variation which will serve as a threshold to identify potential outliers</p>
 <div class="cell">
@@ -647,7 +715,7 @@
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_histogram.html" class="external-link">geom_histogram</a></span><span class="op">(</span><span class="op">)</span> </span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="microresp_files/figure-html/unnamed-chunk-20-1.png" width="672"></p>
+<figure><p><img src="microresp_files/figure-html/unnamed-chunk-21-1.png" width="672"></p>
 </figure>
 </div>
 </div>
@@ -666,7 +734,7 @@
 </div>
 <p>Now, with a threshold of 8% as max coef of variation, we are left with only 6 combinations of plate x substrate to look at (instead of 50).</p>
 <p>This kind of automated flagging is a trade-off: it saves you from manually reviewing every single well, but it also means you’re trusting the threshold to actually catch what matters. When in doubt, err on the side of a stricter threshold — one that flags more plates than strictly necessary — rather than a looser one. Reviewing a few extra, ultimately fine plates costs little; missing a real outlier because the threshold was too permissive costs much more.</p>
-</section><section class="level2"><h3 id="create-qc-plots">6.2 - create QC plots<a class="anchor" aria-label="anchor" href="#create-qc-plots"></a>
+</section><section class="level2"><h3 id="create-qc-plots">4.2 - create QC plots<a class="anchor" aria-label="anchor" href="#create-qc-plots"></a>
 </h3>
 <p>Create one list of QC plots per dataset.</p>
 <p>Notice that we get a list with 1 plot per substrate (but not all bc not all had outliers in this reduced dataset)</p>
@@ -678,7 +746,8 @@
 <span>  run_id_col <span class="op">=</span> <span class="st">"run_id"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">qc_plots</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "Std_H2O" "OA"      "Glu"     "NAG"     "gABA"</span></span></code></pre></div>
+<span><span class="co">#&gt;  [1] "Std_Glu" "Std_H2O" "H2O"     "OA"      "Glu"     "Lgn"     "NAG"    </span></span>
+<span><span class="co">#&gt;  [8] "gABA"    "Ala"     "Urea"</span></span></code></pre></div>
 </div>
 <p>For the sake of illustration, we just plot 2 of the plots (one per dataset per substrate): each facets by run, and only displays data that is suspicious (coefficient of variation above the threshold defined above).</p>
 <ul>
@@ -689,19 +758,20 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">qc_plots</span><span class="op">$</span><span class="va">Std_H2O</span></span>
-<span><span class="co">#&gt; Picking joint bandwidth of 0.00386</span></span></code></pre></div>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.00232</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.00258</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="microresp_files/figure-html/unnamed-chunk-23-1.png" width="672"></p>
+<figure><p><img src="microresp_files/figure-html/unnamed-chunk-24-1.png" width="672"></p>
 </figure>
 </div>
 </div>
 <div class="sourceCode cell-code" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">qc_plots</span><span class="op">$</span><span class="va">Glu</span></span>
-<span><span class="co">#&gt; Picking joint bandwidth of 0.0325</span></span></code></pre></div>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.0235</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="microresp_files/figure-html/unnamed-chunk-23-2.png" width="672"></p>
+<figure><p><img src="microresp_files/figure-html/unnamed-chunk-24-2.png" width="672"></p>
 </figure>
 </div>
 </div>
@@ -714,14 +784,18 @@
 <span> <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">wrap_elements</a></span><span class="op">(</span>full <span class="op">=</span> <span class="va">qc_plots</span><span class="op">$</span><span class="va">NAG</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span></span>
 <span><span class="op">(</span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">wrap_elements</a></span><span class="op">(</span>full <span class="op">=</span> <span class="va">qc_plots</span><span class="op">$</span><span class="va">OA</span><span class="op">)</span> <span class="op">+</span></span>
 <span> <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">wrap_elements</a></span><span class="op">(</span>full <span class="op">=</span> <span class="va">qc_plots</span><span class="op">$</span><span class="va">Std_H2O</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Picking joint bandwidth of 0.00626</span></span>
-<span><span class="co">#&gt; Picking joint bandwidth of 0.0325</span></span>
-<span><span class="co">#&gt; Picking joint bandwidth of 0.00765</span></span>
-<span><span class="co">#&gt; Picking joint bandwidth of 0.113</span></span>
-<span><span class="co">#&gt; Picking joint bandwidth of 0.00386</span></span></code></pre></div>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.00376</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.0125</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.0235</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.00678</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.0159</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.0925</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.0627</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.00232</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.00258</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="microresp_files/figure-html/unnamed-chunk-24-1.png" width="672"></p>
+<figure><p><img src="microresp_files/figure-html/unnamed-chunk-25-1.png" width="1344"></p>
 </figure>
 </div>
 </div>
@@ -743,7 +817,7 @@
 <span>    plot <span class="op">=</span> <span class="va">plot</span>, width <span class="op">=</span> <span class="fl">18</span>, height <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 </div>
-</section><section class="level2"><h3 id="identifying-outliers-removal">6.3 - identifying outliers + removal<a class="anchor" aria-label="anchor" href="#identifying-outliers-removal"></a>
+</section><section class="level2"><h3 id="identifying-outliers-removal">4.3 - identifying outliers + removal<a class="anchor" aria-label="anchor" href="#identifying-outliers-removal"></a>
 </h3>
 <p>Then, by visual assessment of the plots one by one, we create a table of wells to remove, and clean the dataset from obvious outliers</p>
 <p>Starting with greenhouse outliers</p>
@@ -781,9 +855,7 @@
 <div class="sourceCode cell-code" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">MR_outliers_removed</span> <span class="op">&lt;-</span> <span class="va">MR_wash1</span></span></code></pre></div>
 </div>
-</section></section><section class="section level2"><h2 id="average-per-plate-per-substrate">7 - Average per plate per substrate<a class="anchor" aria-label="anchor" href="#average-per-plate-per-substrate"></a>
-</h2>
-<section class="level2"><h3 id="compute-samplesubstrate-average">7.1 - Compute sample*substrate average<a class="anchor" aria-label="anchor" href="#compute-samplesubstrate-average"></a>
+</section><section class="level2"><h3 id="compute-samplesubstrate-average">4.4 - Compute sample*substrate average<a class="anchor" aria-label="anchor" href="#compute-samplesubstrate-average"></a>
 </h3>
 <p>Now that outliers are removed, we can compute the average value per plate per substrate.</p>
 <p>Note that we create a new column where we store, for each substrate, whether the well contained “sample soil” or “standard soil” (this will be needed for downstream analysis)</p>
@@ -817,13 +889,13 @@
 <span><span class="va">distrib_uncorrected</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="microresp_files/figure-html/unnamed-chunk-30-1.png" width="672"></p>
+<figure><p><img src="microresp_files/figure-html/unnamed-chunk-31-1.png" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
-</section><section class="level2"><h3 id="correction-of-averages---remove-basal-respiration">7.2 - Correction of averages - remove basal respiration<a class="anchor" aria-label="anchor" href="#correction-of-averages---remove-basal-respiration"></a>
-</h3>
+</section></section><section class="section level2"><h2 id="sec-basal-respiration">5 - Correction of averages - remove basal respiration<a class="anchor" aria-label="anchor" href="#sec-basal-respiration"></a>
+</h2>
 <p><span class="citation" data-cites="bongiorno2020">(<a href="#ref-bongiorno2020" role="doc-biblioref">Bongiorno et al. 2020</a>)</span> write: <em>Thereafter, we corrected for the average respiration rate of soil to which the deionized water was added.</em></p>
 <p>Although not fully explicit in the paper, we read this as meaning that the substrate-induced respiration computed so far is the sum of basal respiration plus the “real,” substrate-specific part — so correcting for it means subtracting the basal (H2O) respiration from each substrate’s value.</p>
 <p>So, now we correct SIR’s for basal respiration (subtract H2O-resp from substrate-induced resp)</p>
@@ -837,20 +909,30 @@
 <span></span>
 <span><span class="co"># Check it out</span></span>
 <span><span class="va">basal_resp</span></span>
-<span><span class="co">#&gt; # A tibble: 10 × 4</span></span>
-<span><span class="co">#&gt; # Groups:   dataset, plate_id [5]</span></span>
+<span><span class="co">#&gt; # A tibble: 20 × 4</span></span>
+<span><span class="co">#&gt; # Groups:   dataset, plate_id [10]</span></span>
 <span><span class="co">#&gt;    dataset plate_id std_sample basal_resp</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;           &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt;  1 MR      P01      sample         0.119 </span></span>
-<span><span class="co">#&gt;  2 MR      P01      std_soil       0.123 </span></span>
-<span><span class="co">#&gt;  3 MR      P02      sample         0.105 </span></span>
-<span><span class="co">#&gt;  4 MR      P02      std_soil       0.113 </span></span>
-<span><span class="co">#&gt;  5 MR      P03      sample         0.0962</span></span>
-<span><span class="co">#&gt;  6 MR      P03      std_soil       0.0878</span></span>
-<span><span class="co">#&gt;  7 MR      P04      sample         0.0828</span></span>
-<span><span class="co">#&gt;  8 MR      P04      std_soil       0.0909</span></span>
-<span><span class="co">#&gt;  9 MR      P05      sample         0.0733</span></span>
-<span><span class="co">#&gt; 10 MR      P05      std_soil       0.0845</span></span></code></pre></div>
+<span><span class="co">#&gt;  1 MR      P01      sample         0.0571</span></span>
+<span><span class="co">#&gt;  2 MR      P01      std_soil       0.0637</span></span>
+<span><span class="co">#&gt;  3 MR      P02      sample         0.0450</span></span>
+<span><span class="co">#&gt;  4 MR      P02      std_soil       0.0548</span></span>
+<span><span class="co">#&gt;  5 MR      P03      sample         0.0343</span></span>
+<span><span class="co">#&gt;  6 MR      P03      std_soil       0.0314</span></span>
+<span><span class="co">#&gt;  7 MR      P04      sample         0.0255</span></span>
+<span><span class="co">#&gt;  8 MR      P04      std_soil       0.0341</span></span>
+<span><span class="co">#&gt;  9 MR      P05      sample         0.0153</span></span>
+<span><span class="co">#&gt; 10 MR      P05      std_soil       0.0273</span></span>
+<span><span class="co">#&gt; 11 MR      P11      sample         0.0394</span></span>
+<span><span class="co">#&gt; 12 MR      P11      std_soil       0.0374</span></span>
+<span><span class="co">#&gt; 13 MR      P12      sample         0.0714</span></span>
+<span><span class="co">#&gt; 14 MR      P12      std_soil       0.0470</span></span>
+<span><span class="co">#&gt; 15 MR      P13      sample         0.0503</span></span>
+<span><span class="co">#&gt; 16 MR      P13      std_soil       0.0382</span></span>
+<span><span class="co">#&gt; 17 MR      P14      sample         0.0524</span></span>
+<span><span class="co">#&gt; 18 MR      P14      std_soil       0.0399</span></span>
+<span><span class="co">#&gt; 19 MR      P15      sample         0.0300</span></span>
+<span><span class="co">#&gt; 20 MR      P15      std_soil       0.0271</span></span></code></pre></div>
 </div>
 <p>Now we can join this info to the rest of the data and compute H2O-corrected data</p>
 <div class="cell">
@@ -868,21 +950,21 @@
 <div class="cell">
 <div class="sourceCode cell-code" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">H2O_corrected</span></span>
-<span><span class="co">#&gt; # A tibble: 50 × 7</span></span>
-<span><span class="co">#&gt; # Groups:   dataset, plate_id [5]</span></span>
+<span><span class="co">#&gt; # A tibble: 100 × 7</span></span>
+<span><span class="co">#&gt; # Groups:   dataset, plate_id [10]</span></span>
 <span><span class="co">#&gt;    dataset plate_id map     co2_g_h_avg std_sample basal_resp H2O_corrected_resp</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;         &lt;dbl&gt; &lt;chr&gt;           &lt;dbl&gt;              &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt;  1 MR      P01      Ala           0.286 sample          0.119             0.168 </span></span>
-<span><span class="co">#&gt;  2 MR      P01      Glu           0.552 sample          0.119             0.434 </span></span>
-<span><span class="co">#&gt;  3 MR      P01      H2O           0.119 sample          0.119             0.119 </span></span>
-<span><span class="co">#&gt;  4 MR      P01      Lgn           0.248 sample          0.119             0.129 </span></span>
-<span><span class="co">#&gt;  5 MR      P01      NAG           0.261 sample          0.119             0.142 </span></span>
-<span><span class="co">#&gt;  6 MR      P01      OA            2.06  sample          0.119             1.94  </span></span>
-<span><span class="co">#&gt;  7 MR      P01      Std_Glu       1.27  std_soil        0.123             1.14  </span></span>
-<span><span class="co">#&gt;  8 MR      P01      Std_H2O       0.123 std_soil        0.123             0.123 </span></span>
-<span><span class="co">#&gt;  9 MR      P01      Urea          0.223 sample          0.119             0.104 </span></span>
-<span><span class="co">#&gt; 10 MR      P01      gABA          0.189 sample          0.119             0.0702</span></span>
-<span><span class="co">#&gt; # ℹ 40 more rows</span></span></code></pre></div>
+<span><span class="co">#&gt;  1 MR      P01      Ala          0.206  sample         0.0571             0.149 </span></span>
+<span><span class="co">#&gt;  2 MR      P01      Glu          0.440  sample         0.0571             0.383 </span></span>
+<span><span class="co">#&gt;  3 MR      P01      H2O          0.0571 sample         0.0571             0.0571</span></span>
+<span><span class="co">#&gt;  4 MR      P01      Lgn          0.172  sample         0.0571             0.115 </span></span>
+<span><span class="co">#&gt;  5 MR      P01      NAG          0.184  sample         0.0571             0.127 </span></span>
+<span><span class="co">#&gt;  6 MR      P01      OA           1.72   sample         0.0571             1.66  </span></span>
+<span><span class="co">#&gt;  7 MR      P01      Std_Glu      1.06   std_soil       0.0637             0.992 </span></span>
+<span><span class="co">#&gt;  8 MR      P01      Std_H2O      0.0637 std_soil       0.0637             0.0637</span></span>
+<span><span class="co">#&gt;  9 MR      P01      Urea         0.150  sample         0.0571             0.0929</span></span>
+<span><span class="co">#&gt; 10 MR      P01      gABA         0.120  sample         0.0571             0.0625</span></span>
+<span><span class="co">#&gt; # ℹ 90 more rows</span></span></code></pre></div>
 </div>
 <p>In the following sections, we follow computations as in <span class="citation" data-cites="bongiorno2020">(<a href="#ref-bongiorno2020" role="doc-biblioref">Bongiorno et al. 2020</a>)</span>, i.e.:</p>
 <ul>
@@ -892,144 +974,11 @@
 <li><p>Compute the Shannon index</p></li>
 </ul>
 <p>Then, we can still discuss some N-based index</p>
-</section></section><section class="section level2"><h2 id="mbc-basal-respiration-metabolic-quotient-msir">8 - MBC, basal respiration, metabolic quotient, MSIR<a class="anchor" aria-label="anchor" href="#mbc-basal-respiration-metabolic-quotient-msir"></a>
-</h2>
-<p>Now, we compute the MBC, qCO2 and MSIR. We use H2O-corrected data throughout, and exclude both the water (basal respiration) and the standard-soil rows from the MSIR sum, since it should only reflect the real substrates.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb36"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Extract Glu's own respiration value per plate (needed for MBC below)</span></span>
-<span><span class="va">glu_resp</span> <span class="op">&lt;-</span> <span class="va">H2O_corrected</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">map</span> <span class="op">==</span> <span class="st">"Glu"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span>, glu_resp <span class="op">=</span> <span class="va">H2O_corrected_resp</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Keep only real substrates (exclude basal/H2O and both std soils),</span></span>
-<span><span class="co"># drop the now-redundant raw co2_g_h_avg, and compute MSIR as a</span></span>
-<span><span class="co"># grouped sum - no pivot needed</span></span>
-<span><span class="va">substrate_data</span> <span class="op">&lt;-</span> <span class="va">H2O_corrected</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter_out</a></span><span class="op">(</span><span class="va">map</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"H2O"</span>, <span class="st">"Std_H2O"</span>, <span class="st">"Std_Glu"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename</a></span><span class="op">(</span>substrate <span class="op">=</span> <span class="va">map</span>, SIR <span class="op">=</span> <span class="va">H2O_corrected_resp</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">!</span><span class="va">co2_g_h_avg</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>MSIR <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">SIR</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">ungroup</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-</div>
-</section><section class="section level2"><h2 id="shannon-index">9 - Shannon index<a class="anchor" aria-label="anchor" href="#shannon-index"></a>
-</h2>
-<p>We can now join in each plate’s Glu respiration (needed for MBC) and directly compute relative SIRs (rSIR) and the -x*ln(x) intermediary value (sSIR), all while staying in the same long, per-substrate format.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb37"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Join in basal_resp and glu_resp, then compute MBC, qCO2, rSIR, sSIR -</span></span>
-<span><span class="co"># all still in long format</span></span>
-<span><span class="va">rSIRs</span> <span class="op">&lt;-</span> <span class="va">substrate_data</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span></span>
-<span>    <span class="va">glu_resp</span>, by <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/join_by.html" class="external-link">join_by</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
-<span>    MBC <span class="op">=</span> <span class="op">(</span><span class="va">glu_resp</span> <span class="op">*</span> <span class="fl">40.04</span><span class="op">)</span> <span class="op">+</span> <span class="fl">0.37</span>, <span class="co"># not sure where those numbers come from!</span></span>
-<span>    qCO2 <span class="op">=</span> <span class="va">basal_resp</span> <span class="op">*</span> <span class="fl">1000</span> <span class="op">/</span> <span class="va">MBC</span>, <span class="co"># same here</span></span>
-<span>    rSIR <span class="op">=</span> <span class="va">SIR</span> <span class="op">/</span> <span class="va">MSIR</span>,</span>
-<span>    sSIR <span class="op">=</span> <span class="op">-</span><span class="va">rSIR</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">rSIR</span><span class="op">)</span></span>
-<span>  <span class="op">)</span></span></code></pre></div>
-</div>
-<p>! There is still one warning: we are loosing one data point (possibly still a negative or null value given to the log?)</p>
-<p>Still, check out the output</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb38"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">rSIRs</span></span>
-<span><span class="co">#&gt; # A tibble: 35 × 12</span></span>
-<span><span class="co">#&gt;    dataset plate_id substrate std_sample basal_resp    SIR  MSIR glu_resp   MBC</span></span>
-<span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;     &lt;chr&gt;           &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt;  1 MR      P01      Ala       sample          0.119 0.168   2.99    0.434  17.7</span></span>
-<span><span class="co">#&gt;  2 MR      P01      Glu       sample          0.119 0.434   2.99    0.434  17.7</span></span>
-<span><span class="co">#&gt;  3 MR      P01      Lgn       sample          0.119 0.129   2.99    0.434  17.7</span></span>
-<span><span class="co">#&gt;  4 MR      P01      NAG       sample          0.119 0.142   2.99    0.434  17.7</span></span>
-<span><span class="co">#&gt;  5 MR      P01      OA        sample          0.119 1.94    2.99    0.434  17.7</span></span>
-<span><span class="co">#&gt;  6 MR      P01      Urea      sample          0.119 0.104   2.99    0.434  17.7</span></span>
-<span><span class="co">#&gt;  7 MR      P01      gABA      sample          0.119 0.0702  2.99    0.434  17.7</span></span>
-<span><span class="co">#&gt;  8 MR      P02      Ala       sample          0.105 0.158   3.11    0.487  19.9</span></span>
-<span><span class="co">#&gt;  9 MR      P02      Glu       sample          0.105 0.487   3.11    0.487  19.9</span></span>
-<span><span class="co">#&gt; 10 MR      P02      Lgn       sample          0.105 0.139   3.11    0.487  19.9</span></span>
-<span><span class="co">#&gt; # ℹ 25 more rows</span></span>
-<span><span class="co">#&gt; # ℹ 3 more variables: qCO2 &lt;dbl&gt;, rSIR &lt;dbl&gt;, sSIR &lt;dbl&gt;</span></span></code></pre></div>
-</div>
-<p>Now, we sum sSIRs within each plate to get the Shannon index.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb39"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">shannon</span> <span class="op">&lt;-</span> <span class="va">rSIRs</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span></span>
-<span>    shannon <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">sSIR</span><span class="op">)</span>,</span>
-<span>    <span class="co"># basal_resp, MBC, qCO2, MSIR are already constant within each plate</span></span>
-<span>    <span class="co"># (computed once per plate, repeated across its substrate rows), so</span></span>
-<span>    <span class="co"># taking the first row's value is equivalent to taking "the" value</span></span>
-<span>    basal_resp <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/nth.html" class="external-link">first</a></span><span class="op">(</span><span class="va">basal_resp</span><span class="op">)</span>,</span>
-<span>    MBC <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/nth.html" class="external-link">first</a></span><span class="op">(</span><span class="va">MBC</span><span class="op">)</span>,</span>
-<span>    qCO2 <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/nth.html" class="external-link">first</a></span><span class="op">(</span><span class="va">qCO2</span><span class="op">)</span>,</span>
-<span>    MSIR <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/nth.html" class="external-link">first</a></span><span class="op">(</span><span class="va">MSIR</span><span class="op">)</span>,</span>
-<span>    .groups <span class="op">=</span> <span class="st">"drop"</span></span>
-<span>  <span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Check it out</span></span>
-<span><span class="va">shannon</span></span>
-<span><span class="co">#&gt; # A tibble: 5 × 7</span></span>
-<span><span class="co">#&gt;   dataset plate_id shannon basal_resp   MBC  qCO2  MSIR</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;      &lt;dbl&gt;      &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1 MR      P01        1.21      0.119  17.7   6.69  2.99</span></span>
-<span><span class="co">#&gt; 2 MR      P02        1.26      0.105  19.9   5.27  3.11</span></span>
-<span><span class="co">#&gt; 3 MR      P03        1.28      0.0962 23.8   4.05  3.30</span></span>
-<span><span class="co">#&gt; 4 MR      P04        1.08      0.0828 14.7   5.64  2.84</span></span>
-<span><span class="co">#&gt; 5 MR      P05        0.865     0.0733  8.49  8.63  2.34</span></span></code></pre></div>
-</div>
-<p>Gather all data (except std soil data)</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb40"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">MR_indices</span> <span class="op">&lt;-</span> <span class="va">MR_outliers_removed</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="co"># update this selection to what makes sense in your study</span></span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span>, <span class="va">run_id</span><span class="op">:</span><span class="va">sample_name</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">shannon</span>, by <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/join_by.html" class="external-link">join_by</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/relocate.html" class="external-link">relocate</a></span><span class="op">(</span><span class="va">plate_id</span>, <span class="va">sample_id</span>, <span class="va">soil</span>, <span class="va">basal_resp</span>, <span class="va">MBC</span>, <span class="va">qCO2</span>, <span class="va">MSIR</span>, <span class="va">shannon</span><span class="op">)</span></span></code></pre></div>
-</div>
-<p>Check it out</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb41"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">MR_indices</span> </span>
-<span><span class="co">#&gt; # A tibble: 5 × 21</span></span>
-<span><span class="co">#&gt;   plate_id sample_id soil  basal_resp   MBC  qCO2  MSIR shannon dataset run_id</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;     &lt;chr&gt;      &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt; </span></span>
-<span><span class="co">#&gt; 1 P01      t2_102_z1 Auto      0.119  17.7   6.69  2.99   1.21  MR      R1    </span></span>
-<span><span class="co">#&gt; 2 P02      t2_103_z3 Auto      0.105  19.9   5.27  3.11   1.26  MR      R1    </span></span>
-<span><span class="co">#&gt; 3 P03      t2_86_z2  ABC       0.0962 23.8   4.05  3.30   1.28  MR      R1    </span></span>
-<span><span class="co">#&gt; 4 P04      t2_101_z3 Auto      0.0828 14.7   5.64  2.84   1.08  MR      R1    </span></span>
-<span><span class="co">#&gt; 5 P05      t2_84_z1  ABC       0.0733  8.49  8.63  2.34   0.865 MR      R1    </span></span>
-<span><span class="co">#&gt; # ℹ 11 more variables: lab_id &lt;chr&gt;, detection_plate_id &lt;chr&gt;, expe &lt;chr&gt;,</span></span>
-<span><span class="co">#&gt; #   cra_trial &lt;chr&gt;, sd_c &lt;chr&gt;, crop_diversity &lt;chr&gt;, bloc &lt;chr&gt;,</span></span>
-<span><span class="co">#&gt; #   sampling_time &lt;chr&gt;, zone &lt;chr&gt;, date &lt;chr&gt;, sample_name &lt;chr&gt;</span></span></code></pre></div>
-</div>
-<p>This is per-plate aggregated data, meaning that we lost the per-substrate data, including raw <code>co2_g_h</code> and its corrected version <code>SIR</code>, as well as relative SIR (<code>rSIR</code>) and precomputed <code>sSIR</code>, which are stored in <code>rSIRs</code> (just in case). Standard-soil data is set aside too — it’s rebuilt directly from <code>H2O_corrected</code> in <a href="#sec-qc-std-soils">QC - check standard soils</a>.</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb42"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">rSIRs</span></span>
-<span><span class="co">#&gt; # A tibble: 35 × 12</span></span>
-<span><span class="co">#&gt;    dataset plate_id substrate std_sample basal_resp    SIR  MSIR glu_resp   MBC</span></span>
-<span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;     &lt;chr&gt;           &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt;  1 MR      P01      Ala       sample          0.119 0.168   2.99    0.434  17.7</span></span>
-<span><span class="co">#&gt;  2 MR      P01      Glu       sample          0.119 0.434   2.99    0.434  17.7</span></span>
-<span><span class="co">#&gt;  3 MR      P01      Lgn       sample          0.119 0.129   2.99    0.434  17.7</span></span>
-<span><span class="co">#&gt;  4 MR      P01      NAG       sample          0.119 0.142   2.99    0.434  17.7</span></span>
-<span><span class="co">#&gt;  5 MR      P01      OA        sample          0.119 1.94    2.99    0.434  17.7</span></span>
-<span><span class="co">#&gt;  6 MR      P01      Urea      sample          0.119 0.104   2.99    0.434  17.7</span></span>
-<span><span class="co">#&gt;  7 MR      P01      gABA      sample          0.119 0.0702  2.99    0.434  17.7</span></span>
-<span><span class="co">#&gt;  8 MR      P02      Ala       sample          0.105 0.158   3.11    0.487  19.9</span></span>
-<span><span class="co">#&gt;  9 MR      P02      Glu       sample          0.105 0.487   3.11    0.487  19.9</span></span>
-<span><span class="co">#&gt; 10 MR      P02      Lgn       sample          0.105 0.139   3.11    0.487  19.9</span></span>
-<span><span class="co">#&gt; # ℹ 25 more rows</span></span>
-<span><span class="co">#&gt; # ℹ 3 more variables: qCO2 &lt;dbl&gt;, rSIR &lt;dbl&gt;, sSIR &lt;dbl&gt;</span></span></code></pre></div>
-</div>
-</section><section class="section level2"><h2 id="sec-qc-std-soils">10 - QC - check standard soils<a class="anchor" aria-label="anchor" href="#sec-qc-std-soils"></a>
+</section><section class="section level2"><h2 id="sec-qc-std-soils">6 - QC - check standard soils<a class="anchor" aria-label="anchor" href="#sec-qc-std-soils"></a>
 </h2>
 <p>For this QC check, we use H2O-corrected data for the glucose standard.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb43"><pre class="downlit sourceCode r">
+<div class="sourceCode cell-code" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Extract standard-soil data</span></span>
 <span><span class="va">std_soil_data</span> <span class="op">&lt;-</span> <span class="va">H2O_corrected</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">map</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Std_H2O"</span>, <span class="st">"Std_Glu"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
@@ -1051,13 +1000,158 @@
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">substrate</span>, scales <span class="op">=</span> <span class="st">"free"</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="microresp_files/figure-html/unnamed-chunk-41-1.png" width="672"></p>
+<figure><p><img src="microresp_files/figure-html/unnamed-chunk-35-1.png" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
-</section><section class="section level2"><h2 id="last-data-wrangling">11 - Last data wrangling<a class="anchor" aria-label="anchor" href="#last-data-wrangling"></a>
+</section><section class="section level2"><h2 id="sec-compute-indices">7 - Compute indices &amp; final wrangling<a class="anchor" aria-label="anchor" href="#sec-compute-indices"></a>
 </h2>
+<section class="level2"><h3 id="mbc-basal-respiration-metabolic-quotient-and-msir">7.1 - MBC, basal respiration, metabolic quotient and MSIR<a class="anchor" aria-label="anchor" href="#mbc-basal-respiration-metabolic-quotient-and-msir"></a>
+</h3>
+<p>Now, we compute the MBC, qCO2 and MSIR. We use H2O-corrected data throughout, and exclude both the water (basal respiration) and the standard-soil rows from the MSIR sum, since it should only reflect the real substrates.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Extract Glu's own respiration value per plate (needed for MBC below)</span></span>
+<span><span class="va">glu_resp</span> <span class="op">&lt;-</span> <span class="va">H2O_corrected</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">map</span> <span class="op">==</span> <span class="st">"Glu"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span>, glu_resp <span class="op">=</span> <span class="va">H2O_corrected_resp</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Keep only real substrates (exclude basal/H2O and both std soils),</span></span>
+<span><span class="co"># drop the now-redundant raw co2_g_h_avg, and compute MSIR as a</span></span>
+<span><span class="co"># grouped sum - no pivot needed</span></span>
+<span><span class="va">substrate_data</span> <span class="op">&lt;-</span> <span class="va">H2O_corrected</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter_out</a></span><span class="op">(</span><span class="va">map</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"H2O"</span>, <span class="st">"Std_H2O"</span>, <span class="st">"Std_Glu"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename</a></span><span class="op">(</span>substrate <span class="op">=</span> <span class="va">map</span>, SIR <span class="op">=</span> <span class="va">H2O_corrected_resp</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">!</span><span class="va">co2_g_h_avg</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>MSIR <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">SIR</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">ungroup</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+</div>
+</section><section class="level2"><h3 id="shannon-index">7.2 - Shannon index<a class="anchor" aria-label="anchor" href="#shannon-index"></a>
+</h3>
+<p>We can now join in each plate’s Glu respiration (needed for MBC) and directly compute relative SIRs (rSIR) and the -x*ln(x) intermediary value (sSIR), all while staying in the same long, per-substrate format.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Join in basal_resp and glu_resp, then compute MBC, qCO2, rSIR, sSIR -</span></span>
+<span><span class="co"># all still in long format</span></span>
+<span><span class="va">rSIRs</span> <span class="op">&lt;-</span> <span class="va">substrate_data</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span></span>
+<span>    <span class="va">glu_resp</span>, by <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/join_by.html" class="external-link">join_by</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
+<span>    MBC <span class="op">=</span> <span class="op">(</span><span class="va">glu_resp</span> <span class="op">*</span> <span class="fl">40.04</span><span class="op">)</span> <span class="op">+</span> <span class="fl">0.37</span>, <span class="co"># not sure where those numbers come from!</span></span>
+<span>    qCO2 <span class="op">=</span> <span class="va">basal_resp</span> <span class="op">*</span> <span class="fl">1000</span> <span class="op">/</span> <span class="va">MBC</span>, <span class="co"># same here</span></span>
+<span>    rSIR <span class="op">=</span> <span class="va">SIR</span> <span class="op">/</span> <span class="va">MSIR</span>,</span>
+<span>    sSIR <span class="op">=</span> <span class="op">-</span><span class="va">rSIR</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">rSIR</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span></code></pre></div>
+</div>
+<p>! There is still one warning: we are loosing one data point (possibly still a negative or null value given to the log?)</p>
+<p>Still, check out the output</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb39"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">rSIRs</span></span>
+<span><span class="co">#&gt; # A tibble: 70 × 12</span></span>
+<span><span class="co">#&gt;    dataset plate_id substrate std_sample basal_resp    SIR  MSIR glu_resp   MBC</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;     &lt;chr&gt;           &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt;  1 MR      P01      Ala       sample         0.0571 0.149   2.59    0.383  15.7</span></span>
+<span><span class="co">#&gt;  2 MR      P01      Glu       sample         0.0571 0.383   2.59    0.383  15.7</span></span>
+<span><span class="co">#&gt;  3 MR      P01      Lgn       sample         0.0571 0.115   2.59    0.383  15.7</span></span>
+<span><span class="co">#&gt;  4 MR      P01      NAG       sample         0.0571 0.127   2.59    0.383  15.7</span></span>
+<span><span class="co">#&gt;  5 MR      P01      OA        sample         0.0571 1.66    2.59    0.383  15.7</span></span>
+<span><span class="co">#&gt;  6 MR      P01      Urea      sample         0.0571 0.0929  2.59    0.383  15.7</span></span>
+<span><span class="co">#&gt;  7 MR      P01      gABA      sample         0.0571 0.0625  2.59    0.383  15.7</span></span>
+<span><span class="co">#&gt;  8 MR      P02      Ala       sample         0.0450 0.141   2.70    0.430  17.6</span></span>
+<span><span class="co">#&gt;  9 MR      P02      Glu       sample         0.0450 0.430   2.70    0.430  17.6</span></span>
+<span><span class="co">#&gt; 10 MR      P02      Lgn       sample         0.0450 0.124   2.70    0.430  17.6</span></span>
+<span><span class="co">#&gt; # ℹ 60 more rows</span></span>
+<span><span class="co">#&gt; # ℹ 3 more variables: qCO2 &lt;dbl&gt;, rSIR &lt;dbl&gt;, sSIR &lt;dbl&gt;</span></span></code></pre></div>
+</div>
+<p>Now, we sum sSIRs within each plate to get the Shannon index.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">shannon</span> <span class="op">&lt;-</span> <span class="va">rSIRs</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span></span>
+<span>    shannon <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">sSIR</span><span class="op">)</span>,</span>
+<span>    <span class="co"># basal_resp, MBC, qCO2, MSIR are already constant within each plate</span></span>
+<span>    <span class="co"># (computed once per plate, repeated across its substrate rows), so</span></span>
+<span>    <span class="co"># taking the first row's value is equivalent to taking "the" value</span></span>
+<span>    basal_resp <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/nth.html" class="external-link">first</a></span><span class="op">(</span><span class="va">basal_resp</span><span class="op">)</span>,</span>
+<span>    MBC <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/nth.html" class="external-link">first</a></span><span class="op">(</span><span class="va">MBC</span><span class="op">)</span>,</span>
+<span>    qCO2 <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/nth.html" class="external-link">first</a></span><span class="op">(</span><span class="va">qCO2</span><span class="op">)</span>,</span>
+<span>    MSIR <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/nth.html" class="external-link">first</a></span><span class="op">(</span><span class="va">MSIR</span><span class="op">)</span>,</span>
+<span>    .groups <span class="op">=</span> <span class="st">"drop"</span></span>
+<span>  <span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Check it out</span></span>
+<span><span class="va">shannon</span></span>
+<span><span class="co">#&gt; # A tibble: 10 × 7</span></span>
+<span><span class="co">#&gt;    dataset plate_id shannon basal_resp   MBC  qCO2  MSIR</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;      &lt;dbl&gt;      &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt;  1 MR      P01        1.23      0.0571 15.7   3.63  2.59</span></span>
+<span><span class="co">#&gt;  2 MR      P02        1.28      0.0450 17.6   2.56  2.70</span></span>
+<span><span class="co">#&gt;  3 MR      P03        1.29      0.0343 21.0   1.63  2.87</span></span>
+<span><span class="co">#&gt;  4 MR      P04        1.10      0.0255 13.1   1.95  2.46</span></span>
+<span><span class="co">#&gt;  5 MR      P05        0.885     0.0153  7.60  2.01  2.03</span></span>
+<span><span class="co">#&gt;  6 MR      P11        1.84      0.0394 22.9   1.72  2.73</span></span>
+<span><span class="co">#&gt;  7 MR      P12        1.86      0.0714 40.7   1.75  4.37</span></span>
+<span><span class="co">#&gt;  8 MR      P13        1.81      0.0503 28.4   1.77  3.24</span></span>
+<span><span class="co">#&gt;  9 MR      P14        1.83      0.0524 37.6   1.39  4.00</span></span>
+<span><span class="co">#&gt; 10 MR      P15        1.78      0.0300 25.3   1.18  3.08</span></span></code></pre></div>
+</div>
+<p>Gather all data (except std soil data)</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">MR_indices</span> <span class="op">&lt;-</span> <span class="va">MR_outliers_removed</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="co"># update this selection to what makes sense in your study</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span>, <span class="va">run_id</span><span class="op">:</span><span class="va">sample_name</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">shannon</span>, by <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/join_by.html" class="external-link">join_by</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/relocate.html" class="external-link">relocate</a></span><span class="op">(</span><span class="va">plate_id</span>, <span class="va">sample_id</span>, <span class="va">soil</span>, <span class="va">basal_resp</span>, <span class="va">MBC</span>, <span class="va">qCO2</span>, <span class="va">MSIR</span>, <span class="va">shannon</span><span class="op">)</span></span></code></pre></div>
+</div>
+<p>Check it out</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb42"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">MR_indices</span> </span>
+<span><span class="co">#&gt; # A tibble: 10 × 21</span></span>
+<span><span class="co">#&gt;    plate_id sample_id soil  basal_resp   MBC  qCO2  MSIR shannon dataset run_id</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt;    &lt;chr&gt;     &lt;chr&gt;      &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt; </span></span>
+<span><span class="co">#&gt;  1 P01      t2_102_z1 Auto      0.0571 15.7   3.63  2.59   1.23  MR      R1    </span></span>
+<span><span class="co">#&gt;  2 P02      t2_103_z3 Auto      0.0450 17.6   2.56  2.70   1.28  MR      R1    </span></span>
+<span><span class="co">#&gt;  3 P03      t2_86_z2  ABC       0.0343 21.0   1.63  2.87   1.29  MR      R1    </span></span>
+<span><span class="co">#&gt;  4 P04      t2_101_z3 Auto      0.0255 13.1   1.95  2.46   1.10  MR      R1    </span></span>
+<span><span class="co">#&gt;  5 P05      t2_84_z1  ABC       0.0153  7.60  2.01  2.03   0.885 MR      R1    </span></span>
+<span><span class="co">#&gt;  6 P11      t2_92_z2  Ref       0.0394 22.9   1.72  2.73   1.84  MR      R2    </span></span>
+<span><span class="co">#&gt;  7 P12      t2_82_z2  ABC       0.0714 40.7   1.75  4.37   1.86  MR      R2    </span></span>
+<span><span class="co">#&gt;  8 P13      t2_94_z3  Ref       0.0503 28.4   1.77  3.24   1.81  MR      R2    </span></span>
+<span><span class="co">#&gt;  9 P14      t2_87_z2  ABC       0.0524 37.6   1.39  4.00   1.83  MR      R2    </span></span>
+<span><span class="co">#&gt; 10 P15      t2_91_z3  Ref       0.0300 25.3   1.18  3.08   1.78  MR      R2    </span></span>
+<span><span class="co">#&gt; # ℹ 11 more variables: lab_id &lt;chr&gt;, detection_plate_id &lt;chr&gt;, expe &lt;chr&gt;,</span></span>
+<span><span class="co">#&gt; #   cra_trial &lt;chr&gt;, sd_c &lt;chr&gt;, crop_diversity &lt;chr&gt;, bloc &lt;chr&gt;,</span></span>
+<span><span class="co">#&gt; #   sampling_time &lt;chr&gt;, zone &lt;chr&gt;, date &lt;chr&gt;, sample_name &lt;chr&gt;</span></span></code></pre></div>
+</div>
+<p>This is per-plate aggregated data, meaning that we lost the per-substrate data, including raw <code>co2_g_h</code> and its corrected version <code>SIR</code>, as well as relative SIR (<code>rSIR</code>) and precomputed <code>sSIR</code>, which are stored in <code>rSIRs</code> (just in case). Standard-soil data is set aside too — it’s rebuilt directly from <code>H2O_corrected</code> in <a href="#sec-qc-std-soils">QC - check standard soils</a>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb43"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">rSIRs</span></span>
+<span><span class="co">#&gt; # A tibble: 70 × 12</span></span>
+<span><span class="co">#&gt;    dataset plate_id substrate std_sample basal_resp    SIR  MSIR glu_resp   MBC</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;     &lt;chr&gt;           &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt;  1 MR      P01      Ala       sample         0.0571 0.149   2.59    0.383  15.7</span></span>
+<span><span class="co">#&gt;  2 MR      P01      Glu       sample         0.0571 0.383   2.59    0.383  15.7</span></span>
+<span><span class="co">#&gt;  3 MR      P01      Lgn       sample         0.0571 0.115   2.59    0.383  15.7</span></span>
+<span><span class="co">#&gt;  4 MR      P01      NAG       sample         0.0571 0.127   2.59    0.383  15.7</span></span>
+<span><span class="co">#&gt;  5 MR      P01      OA        sample         0.0571 1.66    2.59    0.383  15.7</span></span>
+<span><span class="co">#&gt;  6 MR      P01      Urea      sample         0.0571 0.0929  2.59    0.383  15.7</span></span>
+<span><span class="co">#&gt;  7 MR      P01      gABA      sample         0.0571 0.0625  2.59    0.383  15.7</span></span>
+<span><span class="co">#&gt;  8 MR      P02      Ala       sample         0.0450 0.141   2.70    0.430  17.6</span></span>
+<span><span class="co">#&gt;  9 MR      P02      Glu       sample         0.0450 0.430   2.70    0.430  17.6</span></span>
+<span><span class="co">#&gt; 10 MR      P02      Lgn       sample         0.0450 0.124   2.70    0.430  17.6</span></span>
+<span><span class="co">#&gt; # ℹ 60 more rows</span></span>
+<span><span class="co">#&gt; # ℹ 3 more variables: qCO2 &lt;dbl&gt;, rSIR &lt;dbl&gt;, sSIR &lt;dbl&gt;</span></span></code></pre></div>
+</div>
+</section><section class="level2"><h3 id="last-data-wrangling">7.3 - Last data wrangling<a class="anchor" aria-label="anchor" href="#last-data-wrangling"></a>
+</h3>
 <p>For our Field experiment, some modalities are to be removed: Bloc 1 is not a real bloc, and the faba bean did not take in the Ref treatment, so we removed it from MR data. Not relevant to write it out here though (didn’t make it into plates 1 to 5), but nice to mention that some more post analysis might be relevant</p>
 <p>Plot the indices</p>
 <div class="cell">
@@ -1068,18 +1162,21 @@
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_boxplot.html" class="external-link">geom_boxplot</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <div class="cell-output-display">
 <div>
-<figure><p><img src="microresp_files/figure-html/unnamed-chunk-42-1.png" width="672"></p>
+<figure><p><img src="microresp_files/figure-html/unnamed-chunk-43-1.png" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
-</section><section class="section level2"><h2 id="next-steps">12 - Next steps<a class="anchor" aria-label="anchor" href="#next-steps"></a>
+</section></section><section class="section level2"><h2 id="next-steps">8 - Next steps<a class="anchor" aria-label="anchor" href="#next-steps"></a>
 </h2>
 <p>Can be exported with <code>MR_indices |&gt; write_rds("path/to/the/file.rds")</code> or as a csv with <code>MR_indices |&gt; write_csv("path/to/the/file.csv")</code></p>
 <p>Now would come: plotting, modelling, etc. –&gt; “usual data analysis”</p>
 <div id="refs" class="references csl-bib-body hanging-indent" role="list">
 <div id="ref-bongiorno2020" class="csl-entry" role="listitem">
 Bongiorno, Giulia, Else K. Bünemann, Lijbert Brussaard, Paul Mäder, Chidinma U. Oguejiofor, and Ron G. M. de Goede. 2020. <span>“Soil Management Intensity Shifts Microbial Catabolic Profiles Across a Range of European Long-Term Field Experiments.”</span> <em>Applied Soil Ecology</em> 154: 103596. <a href="https://doi.org/10.1016/j.apsoil.2020.103596" class="external-link">https://doi.org/10.1016/j.apsoil.2020.103596</a>.
+</div>
+<div id="ref-wickham2019" class="csl-entry" role="listitem">
+Wickham, Hadley, Mara Averick, Jennifer Bryan, et al. 2019. <span>“Welcome to the <span class="nocase">tidyverse</span>.”</span> <em>Journal of Open Source Software</em> 4 (43): 1686. <a href="https://doi.org/10.21105/joss.01686" class="external-link">https://doi.org/10.21105/joss.01686</a>.
 </div>
 </div>
 </section><script id="quarto-html-after-body" type="application/javascript">
