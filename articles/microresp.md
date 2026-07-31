@@ -70,7 +70,7 @@ flowchart TD
   O --> D
   D --> F1[Correct for basal respiration]:::caseStudy
   F1 --> H[QC standard soils]:::caseStudy
-  F1 --> F2[Compute indices: MBC, qCO2, Shannon + Final wrangling & export]:::caseStudy
+  F1 --> F2[Compute indices: MBC, qCO2, MSIR, Shannon + Final wrangling & export]:::caseStudy
 
   classDef contribution fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,stroke-width:1.5px,font-weight:bold;
   classDef caseStudy fill:#f8fafc,stroke:#cbd5e1,color:#64748b,stroke-width:1px;
