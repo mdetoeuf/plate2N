@@ -161,7 +161,7 @@ Finally, run the mapping function with
 
 # compute the mapping
 MR_map <- map_plates(
-  plate_ids = paste0("P", sprintf("%02d", seq(01:nb_plates))), 
+  plate_ids = paste0("P", sprintf("%02d", seq_len(nb_plates))), 
   samples = rep(MR_columns, nb_plates),
   n_samples_per_plate = 10,
   column_curves = c(), column_blank = c(), column_empty = c(1,12),
