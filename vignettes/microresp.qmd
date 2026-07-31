@@ -24,12 +24,10 @@ library(ggridges)
 
 - Explain the choice of absorbance thresholds used in the QC step (Section 4.1)
 - Double-check the µg CO2-C conversion formula (Section 5.3) against the MicroResp manual — currently taken from an Excel document
-- Check where the MBC and qCO2 formulas (Section 8) come from, and confirm their units
-- Update the example dataset to include more plates (e.g. plates 11-15, for 10 total across 2 runs), so the `run_id` parameter demonstrates meaningfully rather than showing a single run
-- Reevaluate which variables `MR_indices` keeps, for readability (Section 9)
-- Section 10's standard-soil QC plot only shows one run currently — revisit once more run data is available
+- Check where the MBC and qCO2 formulas (Section 7.1) come from, and confirm their units
+- Section 6's standard-soil QC plot only shows one run currently — revisit once more run data is available
 - Turn Section 11's per-variable plotting into a loop over each index (basal_resp through shannon)
-- Investigate and resolve the one dropped data point warning in `rSIRs` (Section 9) — likely a negative-or-zero value going into `log()`
+- Investigate and resolve the one dropped data point warning in `rSIRs` (Section 7.2) — likely a negative-or-zero value going into `log()`
 
 # 1 - Introduction {#sec-microresp}
 
@@ -63,18 +61,17 @@ flowchart TD
 
 Bold boxes use `plate2N` functions directly; the remaining boxes apply the tidyverse toolbox [@wickham2019] to MicroResp data.
 
-- **Sections 2-3**: import raw plate files, tidy them, and join in sample metadata.
-- **Section 4**: quality-check raw absorbance, remove empty/edge wells.
-- **Section 5**: normalize absorbance across plates, then convert to %CO2 and a respiration rate.
-- **Section 6**: identify and remove per-plate[^1], per-substrate outliers.
-- **Section 7**: average remaining replicates, and correct for basal respiration.
-- **Sections 8-9**: compute the summary indices (MBC, qCO2, MSIR, Shannon).
-- **Section 10**: a QC check on the standard soils.
-- **Sections 11-12**: final study-specific wrangling and export.
+- **Sections 2**: import raw plate files, tidy them, and join in sample metadata.
+- **Section 3**: quality-check raw absorbance, remove empty/edge wells, normalize across plates, then convert to %CO2 and a respiration rate.
+- **Section 4**: compute a preliminary average, then iteratively check for and remove per-plate[^1]/substrate outliers, and recompute the final average.
+- **Section 5**: correct for basal respiration.
+- **Section 6**: a QC check on the standard soils.
+- **Section 7**: compute the summary indices (MBC, qCO2, MSIR, Shannon).
+- **Section 8**: final study-specific wrangling and export.
 
 [^1]: In the MicroResp experiment, one plate was attributed to each sample (with dedicated columns for comparison with the standard soil), so that "per-plate" really means "per-sample"
 
-# 2 - Import and tidy with 2+ layers
+# 2 - Import & tidy 2+ layers, then join metadata
 
 ## 2.1 - Importing 2 layers of absorbance data
 
@@ -192,7 +189,7 @@ MR_tidy |> dplyr::relocate(map, .before = abs_t0)
 Everything from Section 3 onward is functional, but still being refined — expect rough edges, and expect this section to keep growing (an index-computation step is still to be added at the end).
 :::
 
-# 3 - Join metadata to plate data
+## 2.5 - Join metadata to plate data
 
 ```{r}
 # Get path to metadata
@@ -210,9 +207,9 @@ Now we can join it to the plate data
 (MR <- MR_tidy |> dplyr::left_join(MR_metadata, by = dplyr::join_by(plate_id)))
 ```
 
-# 4 - Cleaning the data
+# 3 - Clean data, normalize & convert to CO2 rate
 
-## 4.1 - QC - suspicious wells
+## 3.1 - QC - suspicious wells
 
 `plate2N::qc_raw_abs()` checks whether absorbance data is within a user-defined range or not. Check the documentation on this function for more details.
 
@@ -246,7 +243,7 @@ Good news, all absorbance reads are within expected range. Let's plot them
   patchwork::plot_annotation(title = "Distribution of raw absorbance")
 ```
 
-## 4.2 - Remove "empty" and NAs {#sec-remove-empty}
+## 3.2 - Remove "empty" and NAs {#sec-remove-empty}
 
 With MicroResp experiments, edge effects are not rare, so we exclude any data from columns 1 and 12 of the 96-well plate. Those have been encoded in the mapping as "empty" (though they were not physically).
 
@@ -261,9 +258,7 @@ MR_clean <- MR |>
 MR_clean
 ```
 
-# 5 - Data transformation
-
-## 5.1 - Normalisation
+## 3.3 - Normalisation
 
 In preliminary works we noticed that `detection_plate_id` was the biggest driver of variability in our dataset. This is due to some lab issues and should not be a recurring problem, but it is a good illustration of the question of "at which scale should we normalize?". Let's visualize t0 absorbance readings for standard soils and glucose, supposedly the same between plates (see plot)
 
@@ -335,7 +330,7 @@ unnormed_plot + plate_normed_plot + dataset_normed_plot
 
 Each step, from raw to plate-level to dataset-level is an improvement on the data. This confirms the proposition, and we keep the dataset-level normalised data for downstream steps
 
-## 5.2 - Convert to %CO2
+## 3.4 - Convert to %CO2
 
 Those are the coefficients as given in the MicroResp manual. However, if you are interested in this particular experiment, note that the manual recommends that you calibrate the equation on your own lab material.
 
@@ -351,7 +346,7 @@ MR_percent_co2 <- MR_norm |>
 MR_percent_co2
 ```
 
-## 5.3 - Convert to µg CO2-C / g dry soil / h
+## 3.5 - Convert to µg CO2-C / g dry soil / h
 
 co2_emitted = (((percent_co2/100)x850x(44/22.4)x*(12/44)x*(273/(273+25)))/(soil_per_well_gx(soil_dw/100)))/5
 
@@ -382,9 +377,9 @@ MR_co2_g_h |>
   ggplot2::facet_wrap(~dataset)
 ```
 
-# 6 - Per plate & per substrate outlier removal
+# 4 - Average per plate & substrate / outlier removal
 
-## 6.1 - Compute preliminary average (pre-outlier removal)
+## 4.1 - Compute preliminary average (pre-outlier removal)
 
 MicroResp plates commonly show edge effects — sometimes marginal when the kit was well sealed, but often visible even to the naked eye along one or more edges of the plate. This is the same underlying issue already addressed for columns 1 and 12 in [Remove "empty" and NAs](#sec-remove-empty), and it applies to rows as well: a preliminary run of the steps below showed that wells in row A and row H are outliers on many plates, often a majority of them. Following both this expectation and the recommendation of our colleagues at FiBL, we therefore exclude rows A and H from the subset below before computing the average, rather than treating them case-by-case as ordinary outliers. If you'd like to check the unfiltered data, simply comment out the filtering line. We then compute coefficient of variation which will serve as a threshold to identify potential outliers
 
@@ -429,7 +424,7 @@ Now, with a threshold of 8% as max coef of variation, we are left with only 6 co
 
 This kind of automated flagging is a trade-off: it saves you from manually reviewing every single well, but it also means you're trusting the threshold to actually catch what matters. When in doubt, err on the side of a stricter threshold — one that flags more plates than strictly necessary — rather than a looser one. Reviewing a few extra, ultimately fine plates costs little; missing a real outlier because the threshold was too permissive costs much more.
 
-## 6.2 - create QC plots
+## 4.2 - create QC plots
 
 Create one list of QC plots per dataset.
 
@@ -488,7 +483,7 @@ for (i in seq_along(qc_plots)) {
 }
 ```
 
-## 6.3 - identifying outliers + removal
+## 4.3 - identifying outliers + removal
 
 Then, by visual assessment of the plots one by one, we create a table of wells to remove, and clean the dataset from obvious outliers
 
@@ -526,9 +521,7 @@ Store last version in a new variable (easier for edits...)
 MR_outliers_removed <- MR_wash1
 ```
 
-# 7 - Average per plate per substrate
-
-## 7.1 - Compute sample\*substrate average
+## 4.4 - Compute sample\*substrate average
 
 Now that outliers are removed, we can compute the average value per plate per substrate.
 
@@ -566,7 +559,7 @@ distrib_uncorrected <- MR_avg |>
 distrib_uncorrected
 ```
 
-## 7.2 - Correction of averages - remove basal respiration
+# 5 - Correction of averages - remove basal respiration
 
 [@bongiorno2020] write: *Thereafter, we corrected for the average respiration rate of soil to which the deionized water was added.*
 
@@ -618,7 +611,35 @@ In the following sections, we follow computations as in [@bongiorno2020], i.e.:
 
 Then, we can still discuss some N-based index
 
-# 8 - MBC, basal respiration, metabolic quotient, MSIR
+# 6 - QC - check standard soils {#sec-qc-std-soils}
+
+For this QC check, we use H2O-corrected data for the glucose standard.
+
+```{r}
+# Extract standard-soil data
+std_soil_data <- H2O_corrected |> 
+  dplyr::filter(map %in% c("Std_H2O", "Std_Glu")) |> 
+  dplyr::rename(substrate = map, SIR = H2O_corrected_resp) |> 
+  dplyr::select(dataset, plate_id, substrate, SIR) |>
+  # joining MR_outliers_removed based on dataset and plate_id
+  # add columns as needed for your study (here: run_id and detection_plate_id)
+  dplyr::left_join(
+    MR_outliers_removed |> 
+      dplyr::select(dataset, plate_id, run_id, detection_plate_id) |> 
+      unique(), 
+    by = dplyr::join_by(dataset, plate_id))
+
+# plot it
+std_soil_data |> 
+  ggplot2::ggplot(ggplot2::aes(x = run_id, y = SIR)) +
+  ggplot2::theme_minimal() + 
+  ggplot2::geom_boxplot() +
+  ggplot2::facet_wrap(~substrate, scales = "free")
+```
+
+# 7 - Compute indices & final wrangling
+
+## 7.1 - MBC, basal respiration, metabolic quotient and MSIR
 
 Now, we compute the MBC, qCO2 and MSIR. We use H2O-corrected data throughout, and exclude both the water (basal respiration) and the standard-soil rows from the MSIR sum, since it should only reflect the real substrates.
 
@@ -642,7 +663,7 @@ substrate_data <- H2O_corrected |>
 
 ```
 
-# 9 - Shannon index
+## 7.2 - Shannon index
 
 We can now join in each plate's Glu respiration (needed for MBC) and directly compute relative SIRs (rSIR) and the -x\*ln(x) intermediary value (sSIR), all while staying in the same long, per-substrate format.
 
@@ -713,33 +734,7 @@ This is per-plate aggregated data, meaning that we lost the per-substrate data, 
 rSIRs
 ```
 
-# 10 - QC - check standard soils {#sec-qc-std-soils}
-
-For this QC check, we use H2O-corrected data for the glucose standard.
-
-```{r}
-# Extract standard-soil data
-std_soil_data <- H2O_corrected |> 
-  dplyr::filter(map %in% c("Std_H2O", "Std_Glu")) |> 
-  dplyr::rename(substrate = map, SIR = H2O_corrected_resp) |> 
-  dplyr::select(dataset, plate_id, substrate, SIR) |>
-  # joining MR_outliers_removed based on dataset and plate_id
-  # add columns as needed for your study (here: run_id and detection_plate_id)
-  dplyr::left_join(
-    MR_outliers_removed |> 
-      dplyr::select(dataset, plate_id, run_id, detection_plate_id) |> 
-      unique(), 
-    by = dplyr::join_by(dataset, plate_id))
-
-# plot it
-std_soil_data |> 
-  ggplot2::ggplot(ggplot2::aes(x = run_id, y = SIR)) +
-  ggplot2::theme_minimal() + 
-  ggplot2::geom_boxplot() +
-  ggplot2::facet_wrap(~substrate, scales = "free")
-```
-
-# 11 - Last data wrangling
+## 7.3 - Last data wrangling
 
 For our Field experiment, some modalities are to be removed: Bloc 1 is not a real bloc, and the faba bean did not take in the Ref treatment, so we removed it from MR data. Not relevant to write it out here though (didn't make it into plates 1 to 5), but nice to mention that some more post analysis might be relevant
 
@@ -752,7 +747,7 @@ MR_indices |>
   ggplot2::geom_boxplot()
 ```
 
-# 12 - Next steps
+# 8 - Next steps
 
 Can be exported with `MR_indices |> write_rds("path/to/the/file.rds")` or as a csv with `MR_indices |> write_csv("path/to/the/file.csv")`
 
