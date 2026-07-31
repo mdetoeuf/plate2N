@@ -24,20 +24,20 @@ a mapped plate format where the plate id is in the upper left corner.
 ``` r
 
 (samples <- sample(LETTERS, size = 15))
-#>  [1] "W" "M" "P" "J" "C" "Z" "L" "U" "R" "Q" "I" "B" "O" "Y" "H"
+#>  [1] "D" "N" "G" "P" "C" "O" "M" "R" "E" "H" "F" "Y" "L" "K" "Z"
 map_1_plate(plate_id = "test_plate", samples = samples)
 #> # A tibble: 9 × 13
 #>   row    X1    X2    X3    X4    X5    X6    X7    X8    X9    X10   X11   X12  
 #>   <chr>  <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr> <chr>
 #> 1 test_… 1     2     3     4     5     6     7     8     9     10    11    12   
-#> 2 A      Std   W     P     C     L     R     I     extr  O     H     empty Std  
-#> 3 B      Std   W     P     C     L     R     I     extr  O     H     empty Std  
-#> 4 C      Std   W     P     C     L     R     I     extr  O     H     empty Std  
-#> 5 D      Std   W     P     C     L     R     I     extr  O     H     empty Std  
-#> 6 E      Std   M     J     Z     U     Q     B     extr  Y     empty empty Std  
-#> 7 F      Std   M     J     Z     U     Q     B     extr  Y     empty empty Std  
-#> 8 G      Std   M     J     Z     U     Q     B     extr  Y     empty empty Std  
-#> 9 H      Std   M     J     Z     U     Q     B     extr  Y     empty empty Std
+#> 2 A      Std   D     G     C     M     E     F     extr  L     Z     empty Std  
+#> 3 B      Std   D     G     C     M     E     F     extr  L     Z     empty Std  
+#> 4 C      Std   D     G     C     M     E     F     extr  L     Z     empty Std  
+#> 5 D      Std   D     G     C     M     E     F     extr  L     Z     empty Std  
+#> 6 E      Std   N     P     O     R     H     Y     extr  K     empty empty Std  
+#> 7 F      Std   N     P     O     R     H     Y     extr  K     empty empty Std  
+#> 8 G      Std   N     P     O     R     H     Y     extr  K     empty empty Std  
+#> 9 H      Std   N     P     O     R     H     Y     extr  K     empty empty Std
 ```
 
 Usually, more than one plate needs to be prepared. Let’s say we need to

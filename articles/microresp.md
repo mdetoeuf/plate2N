@@ -791,13 +791,14 @@ because plots are named in the list, they can be easily accessed by name
 
 ``` r
 
-for (i in 1:length(qc_plots)) {
+for (i in seq_along(qc_plots)) {
   
   plot <- qc_plots[[i]]
+  plot_name <- names(qc_plots)[i]
   
   filepath <- paste0(
       "output/figures/QC/microresp/",
-      names(plot), "_", Sys.Date(), ".pdf")
+      plot_name, "_", Sys.Date(), ".pdf")
   
   ggplot2::ggsave(
     filename = filepath, 
@@ -857,12 +858,9 @@ squeezed plots
 
 Store last version in a new variable (easier for edits…)
 
-–\> To Do: check, I feel that MR_clean is created twice. If that’s the
-case, this could lead to confusions –\> rename one
-
 ``` r
 
-MR_clean <- MR_wash1
+MR_outliers_removed <- MR_wash1
 ```
 
 ## 7 - Average per plate per substrate
@@ -878,7 +876,7 @@ be needed for downstream analysis)
 
 ``` r
 
-MR_avg <- MR_clean |> 
+MR_avg <- MR_outliers_removed |> 
   dplyr::group_by(dataset, plate_id, map) |> 
   dplyr::summarize(
     co2_g_h_avg = mean(co2_g_h)) |> 
@@ -932,8 +930,7 @@ soil
 # Extract basal resp data only
 basal_resp <- MR_avg |> 
   dplyr::filter(map %in% c("H2O", "Std_H2O")) |> 
-  dplyr::select(dataset, plate_id, std_sample, co2_g_h_avg) |> 
-  dplyr::rename(basal_resp = co2_g_h_avg)
+  dplyr::select(dataset, plate_id, std_sample, basal_resp = co2_g_h_avg)
 
 # Check it out
 basal_resp
@@ -959,8 +956,10 @@ H2O-corrected data
 ``` r
 
 H2O_corrected <- MR_avg |> 
-  dplyr::left_join(basal_resp) |> 
-  dplyr::mutate(H2O_corrected = dplyr::case_when(
+  dplyr::left_join(
+    basal_resp, 
+    by = dplyr::join_by(dataset, plate_id, std_sample)) |> 
+  dplyr::mutate(H2O_corrected_resp = dplyr::case_when(
     map %in% c("H2O", "Std_H2O") ~ basal_resp,
     .default = co2_g_h_avg - basal_resp
   ))
@@ -973,18 +972,18 @@ Check it out
 H2O_corrected
 #> # A tibble: 50 × 7
 #> # Groups:   dataset, plate_id [5]
-#>    dataset plate_id map     co2_g_h_avg std_sample basal_resp H2O_corrected
-#>    <chr>   <chr>    <chr>         <dbl> <chr>           <dbl>         <dbl>
-#>  1 MR      P01      Ala           0.286 sample          0.119        0.168 
-#>  2 MR      P01      Glu           0.552 sample          0.119        0.434 
-#>  3 MR      P01      H2O           0.119 sample          0.119        0.119 
-#>  4 MR      P01      Lgn           0.248 sample          0.119        0.129 
-#>  5 MR      P01      NAG           0.261 sample          0.119        0.142 
-#>  6 MR      P01      OA            2.06  sample          0.119        1.94  
-#>  7 MR      P01      Std_Glu       1.27  std_soil        0.123        1.14  
-#>  8 MR      P01      Std_H2O       0.123 std_soil        0.123        0.123 
-#>  9 MR      P01      Urea          0.223 sample          0.119        0.104 
-#> 10 MR      P01      gABA          0.189 sample          0.119        0.0702
+#>    dataset plate_id map     co2_g_h_avg std_sample basal_resp H2O_corrected_resp
+#>    <chr>   <chr>    <chr>         <dbl> <chr>           <dbl>              <dbl>
+#>  1 MR      P01      Ala           0.286 sample          0.119             0.168 
+#>  2 MR      P01      Glu           0.552 sample          0.119             0.434 
+#>  3 MR      P01      H2O           0.119 sample          0.119             0.119 
+#>  4 MR      P01      Lgn           0.248 sample          0.119             0.129 
+#>  5 MR      P01      NAG           0.261 sample          0.119             0.142 
+#>  6 MR      P01      OA            2.06  sample          0.119             1.94  
+#>  7 MR      P01      Std_Glu       1.27  std_soil        0.123             1.14  
+#>  8 MR      P01      Std_H2O       0.123 std_soil        0.123             0.123 
+#>  9 MR      P01      Urea          0.223 sample          0.119             0.104 
+#> 10 MR      P01      gABA          0.189 sample          0.119             0.0702
 #> # ℹ 40 more rows
 ```
 
@@ -1015,27 +1014,21 @@ by storing it somewhere (it will be needed for QC)
 
 ``` r
 
-# pivot to get one column per substrate
-wider_data <- H2O_corrected |> 
-  tidyr::pivot_wider(
-    names_from = map, 
-    values_from = H2O_corrected, id_cols = c(dataset, plate_id))
+# Extract Glu's own respiration value per plate (needed for MBC below)
+glu_resp <- H2O_corrected |> 
+  dplyr::filter(map == "Glu") |> 
+  dplyr::select(dataset, plate_id, glu_resp = H2O_corrected_resp)
 
-# extract std_soil_data and store it in an object
-std_soil_data <- wider_data |> dplyr::select(dataset, plate_id, tidyselect::starts_with("Std"))
-
-# compute first round of indicators
-MSIR <- wider_data |> 
-  # exclude std soil data
-  dplyr::select(!tidyselect::starts_with("Std")) |> 
-  # compute Basal resp, MBC, metabolic quotient
-  dplyr::rename(basal_resp = "H2O") |> dplyr::relocate(basal_resp, .after = tidyselect::everything()) |> 
-  dplyr::mutate(
-    MBC = (Glu * 40.04) + 0.37, # not sure where those numbers come from!
-    qCO2 = basal_resp * 1000 / MBC # same here
-  ) |> 
-  # compute MSIR
-  dplyr::rowwise() |> dplyr::mutate(MSIR = sum(dplyr::c_across(Ala:gABA)))
+# Keep only real substrates (exclude basal/H2O and both std soils),
+# drop the now-redundant raw co2_g_h_avg, and compute MSIR as a
+# grouped sum - no pivot needed
+substrate_data <- H2O_corrected |> 
+  dplyr::filter_out(map %in% c("H2O", "Std_H2O", "Std_Glu")) |> 
+  dplyr::rename(substrate = map, SIR = H2O_corrected_resp) |> 
+  dplyr::select(!co2_g_h_avg) |> 
+  dplyr::group_by(dataset, plate_id) |> 
+  dplyr::mutate(MSIR = sum(SIR)) |> 
+  dplyr::ungroup()
 ```
 
 ## 9 - Shannon index
@@ -1045,11 +1038,17 @@ directly compute relative SIRs (rSIR) and -x\*ln(x) intermediary value
 
 ``` r
 
-rSIRs <- MSIR |> 
-  tidyr::pivot_longer(cols = c(Ala:gABA), names_to = "substrate", values_to = "SIR") |> 
+# Join in basal_resp and glu_resp, then compute MBC, qCO2, rSIR, sSIR -
+# all still in long format
+rSIRs <- substrate_data |> 
+  dplyr::left_join(
+    glu_resp, by = dplyr::join_by(dataset, plate_id)) |> 
   dplyr::mutate(
+    MBC = (glu_resp * 40.04) + 0.37, # not sure where those numbers come from!
+    qCO2 = basal_resp * 1000 / MBC, # same here
     rSIR = SIR / MSIR,
-    sSIR = -rSIR * log(rSIR))
+    sSIR = -rSIR * log(rSIR)
+  )
 ```
 
 ! There is still one warning: we are loosing one data point (possibly
@@ -1062,20 +1061,21 @@ Still, check out the output
 ``` r
 
 rSIRs
-#> # A tibble: 35 × 10
-#>    dataset plate_id basal_resp   MBC  qCO2  MSIR substrate    SIR   rSIR   sSIR
-#>    <chr>   <chr>         <dbl> <dbl> <dbl> <dbl> <chr>      <dbl>  <dbl>  <dbl>
-#>  1 MR      P01           0.119  17.7  6.69  2.99 Ala       0.168  0.0560 0.161 
-#>  2 MR      P01           0.119  17.7  6.69  2.99 Glu       0.434  0.145  0.280 
-#>  3 MR      P01           0.119  17.7  6.69  2.99 Lgn       0.129  0.0431 0.136 
-#>  4 MR      P01           0.119  17.7  6.69  2.99 NAG       0.142  0.0476 0.145 
-#>  5 MR      P01           0.119  17.7  6.69  2.99 OA        1.94   0.650  0.280 
-#>  6 MR      P01           0.119  17.7  6.69  2.99 Urea      0.104  0.0349 0.117 
-#>  7 MR      P01           0.119  17.7  6.69  2.99 gABA      0.0702 0.0235 0.0881
-#>  8 MR      P02           0.105  19.9  5.27  3.11 Ala       0.158  0.0508 0.151 
-#>  9 MR      P02           0.105  19.9  5.27  3.11 Glu       0.487  0.157  0.290 
-#> 10 MR      P02           0.105  19.9  5.27  3.11 Lgn       0.139  0.0448 0.139 
+#> # A tibble: 35 × 12
+#>    dataset plate_id substrate std_sample basal_resp    SIR  MSIR glu_resp   MBC
+#>    <chr>   <chr>    <chr>     <chr>           <dbl>  <dbl> <dbl>    <dbl> <dbl>
+#>  1 MR      P01      Ala       sample          0.119 0.168   2.99    0.434  17.7
+#>  2 MR      P01      Glu       sample          0.119 0.434   2.99    0.434  17.7
+#>  3 MR      P01      Lgn       sample          0.119 0.129   2.99    0.434  17.7
+#>  4 MR      P01      NAG       sample          0.119 0.142   2.99    0.434  17.7
+#>  5 MR      P01      OA        sample          0.119 1.94    2.99    0.434  17.7
+#>  6 MR      P01      Urea      sample          0.119 0.104   2.99    0.434  17.7
+#>  7 MR      P01      gABA      sample          0.119 0.0702  2.99    0.434  17.7
+#>  8 MR      P02      Ala       sample          0.105 0.158   3.11    0.487  19.9
+#>  9 MR      P02      Glu       sample          0.105 0.487   3.11    0.487  19.9
+#> 10 MR      P02      Lgn       sample          0.105 0.139   3.11    0.487  19.9
 #> # ℹ 25 more rows
+#> # ℹ 3 more variables: qCO2 <dbl>, rSIR <dbl>, sSIR <dbl>
 ```
 
 Now, we can pivot wider again to sum sSIRs on a per sample basis
@@ -1083,26 +1083,29 @@ Now, we can pivot wider again to sum sSIRs on a per sample basis
 ``` r
 
 shannon <- rSIRs |> 
-  tidyr::pivot_wider(
-    names_from = substrate, names_prefix = "sSIR_",
-    values_from = sSIR,
-    id_cols = c(dataset, plate_id, basal_resp, MBC, qCO2, MSIR)
-  ) |> 
-  dplyr::rowwise() |> dplyr::mutate(shannon = sum(dplyr::c_across(sSIR_Ala:sSIR_gABA)))
+  dplyr::group_by(dataset, plate_id) |> 
+  dplyr::summarize(
+    shannon = sum(sSIR),
+    # basal_resp, MBC, qCO2, MSIR are already constant within each plate
+    # (computed once per plate, repeated across its substrate rows), so
+    # taking the first row's value is equivalent to taking "the" value
+    basal_resp = dplyr::first(basal_resp),
+    MBC = dplyr::first(MBC),
+    qCO2 = dplyr::first(qCO2),
+    MSIR = dplyr::first(MSIR),
+    .groups = "drop"
+  )
 
 # Check it out
 shannon
-#> # A tibble: 5 × 14
-#> # Rowwise: 
-#>   dataset plate_id basal_resp   MBC  qCO2  MSIR sSIR_Ala sSIR_Glu sSIR_Lgn
-#>   <chr>   <chr>         <dbl> <dbl> <dbl> <dbl>    <dbl>    <dbl>    <dbl>
-#> 1 MR      P01          0.119  17.7   6.69  2.99    0.161    0.280    0.136
-#> 2 MR      P02          0.105  19.9   5.27  3.11    0.151    0.290    0.139
-#> 3 MR      P03          0.0962 23.8   4.05  3.30    0.148    0.307    0.136
-#> 4 MR      P04          0.0828 14.7   5.64  2.84    0.135    0.261    0.116
-#> 5 MR      P05          0.0733  8.49  8.63  2.34    0.107    0.212    0.107
-#> # ℹ 5 more variables: sSIR_NAG <dbl>, sSIR_OA <dbl>, sSIR_Urea <dbl>,
-#> #   sSIR_gABA <dbl>, shannon <dbl>
+#> # A tibble: 5 × 7
+#>   dataset plate_id shannon basal_resp   MBC  qCO2  MSIR
+#>   <chr>   <chr>      <dbl>      <dbl> <dbl> <dbl> <dbl>
+#> 1 MR      P01        1.21      0.119  17.7   6.69  2.99
+#> 2 MR      P02        1.26      0.105  19.9   5.27  3.11
+#> 3 MR      P03        1.28      0.0962 23.8   4.05  3.30
+#> 4 MR      P04        1.08      0.0828 14.7   5.64  2.84
+#> 5 MR      P05        0.865     0.0733  8.49  8.63  2.34
 ```
 
 Gather all data (except std soil data)
@@ -1112,14 +1115,11 @@ if less)
 
 ``` r
 
-MR_indices <- MR_clean |> 
-  #take relevant categorical variables (no quantitative data)
+MR_indices <- MR_outliers_removed |> 
+  # update this selection to what makes sense in your study
   dplyr::select(dataset, plate_id, run_id:sample_name) |> 
-  # reduce it to one row per plate
   unique() |> 
-  # join it to the quantitative, plate-wise (=sample-wise) agregated quantitative data
-  dplyr::left_join(shannon) |> 
-  # give it a better order for readability
+  dplyr::left_join(shannon, by = dplyr::join_by(dataset, plate_id)) |> 
   dplyr::relocate(plate_id, sample_id, soil, basal_resp, MBC, qCO2, MSIR, shannon)
 ```
 
@@ -1128,7 +1128,7 @@ Check it out
 ``` r
 
 MR_indices 
-#> # A tibble: 5 × 28
+#> # A tibble: 5 × 21
 #>   plate_id sample_id soil  basal_resp   MBC  qCO2  MSIR shannon dataset run_id
 #>   <chr>    <chr>     <chr>      <dbl> <dbl> <dbl> <dbl>   <dbl> <chr>   <chr> 
 #> 1 P01      t2_102_z1 Auto      0.119  17.7   6.69  2.99   1.21  MR      R1    
@@ -1136,11 +1136,9 @@ MR_indices
 #> 3 P03      t2_86_z2  ABC       0.0962 23.8   4.05  3.30   1.28  MR      R1    
 #> 4 P04      t2_101_z3 Auto      0.0828 14.7   5.64  2.84   1.08  MR      R1    
 #> 5 P05      t2_84_z1  ABC       0.0733  8.49  8.63  2.34   0.865 MR      R1    
-#> # ℹ 18 more variables: lab_id <chr>, detection_plate_id <chr>, expe <chr>,
+#> # ℹ 11 more variables: lab_id <chr>, detection_plate_id <chr>, expe <chr>,
 #> #   cra_trial <chr>, sd_c <chr>, crop_diversity <chr>, bloc <chr>,
-#> #   sampling_time <chr>, zone <chr>, date <chr>, sample_name <chr>,
-#> #   sSIR_Ala <dbl>, sSIR_Glu <dbl>, sSIR_Lgn <dbl>, sSIR_NAG <dbl>,
-#> #   sSIR_OA <dbl>, sSIR_Urea <dbl>, sSIR_gABA <dbl>
+#> #   sampling_time <chr>, zone <chr>, date <chr>, sample_name <chr>
 ```
 
 We lost
@@ -1153,30 +1151,21 @@ We lost
 ``` r
 
 rSIRs
-#> # A tibble: 35 × 10
-#>    dataset plate_id basal_resp   MBC  qCO2  MSIR substrate    SIR   rSIR   sSIR
-#>    <chr>   <chr>         <dbl> <dbl> <dbl> <dbl> <chr>      <dbl>  <dbl>  <dbl>
-#>  1 MR      P01           0.119  17.7  6.69  2.99 Ala       0.168  0.0560 0.161 
-#>  2 MR      P01           0.119  17.7  6.69  2.99 Glu       0.434  0.145  0.280 
-#>  3 MR      P01           0.119  17.7  6.69  2.99 Lgn       0.129  0.0431 0.136 
-#>  4 MR      P01           0.119  17.7  6.69  2.99 NAG       0.142  0.0476 0.145 
-#>  5 MR      P01           0.119  17.7  6.69  2.99 OA        1.94   0.650  0.280 
-#>  6 MR      P01           0.119  17.7  6.69  2.99 Urea      0.104  0.0349 0.117 
-#>  7 MR      P01           0.119  17.7  6.69  2.99 gABA      0.0702 0.0235 0.0881
-#>  8 MR      P02           0.105  19.9  5.27  3.11 Ala       0.158  0.0508 0.151 
-#>  9 MR      P02           0.105  19.9  5.27  3.11 Glu       0.487  0.157  0.290 
-#> 10 MR      P02           0.105  19.9  5.27  3.11 Lgn       0.139  0.0448 0.139 
+#> # A tibble: 35 × 12
+#>    dataset plate_id substrate std_sample basal_resp    SIR  MSIR glu_resp   MBC
+#>    <chr>   <chr>    <chr>     <chr>           <dbl>  <dbl> <dbl>    <dbl> <dbl>
+#>  1 MR      P01      Ala       sample          0.119 0.168   2.99    0.434  17.7
+#>  2 MR      P01      Glu       sample          0.119 0.434   2.99    0.434  17.7
+#>  3 MR      P01      Lgn       sample          0.119 0.129   2.99    0.434  17.7
+#>  4 MR      P01      NAG       sample          0.119 0.142   2.99    0.434  17.7
+#>  5 MR      P01      OA        sample          0.119 1.94    2.99    0.434  17.7
+#>  6 MR      P01      Urea      sample          0.119 0.104   2.99    0.434  17.7
+#>  7 MR      P01      gABA      sample          0.119 0.0702  2.99    0.434  17.7
+#>  8 MR      P02      Ala       sample          0.105 0.158   3.11    0.487  19.9
+#>  9 MR      P02      Glu       sample          0.105 0.487   3.11    0.487  19.9
+#> 10 MR      P02      Lgn       sample          0.105 0.139   3.11    0.487  19.9
 #> # ℹ 25 more rows
-std_soil_data
-#> # A tibble: 5 × 4
-#> # Groups:   dataset, plate_id [5]
-#>   dataset plate_id Std_Glu Std_H2O
-#>   <chr>   <chr>      <dbl>   <dbl>
-#> 1 MR      P01        1.14   0.123 
-#> 2 MR      P02        1.08   0.113 
-#> 3 MR      P03        1.02   0.0878
-#> 4 MR      P04        0.922  0.0909
-#> 5 MR      P05        0.984  0.0845
+#> # ℹ 3 more variables: qCO2 <dbl>, rSIR <dbl>, sSIR <dbl>
 ```
 
 ## 10 - QC - check standard soils
@@ -1188,21 +1177,21 @@ data for the glucose
 
 ``` r
 
-# prepare data for the graph
-std_soil_longer <- std_soil_data |> 
-  tidyr::pivot_longer(
-    values_to = "SIR", 
-    names_to = "substrate", 
-    cols = tidyselect::starts_with("Std")) |> 
-  # add categorical data
+# Extract standard-soil data (kept for QC in Section 10)
+std_soil_data <- H2O_corrected |> 
+  dplyr::filter(map %in% c("Std_H2O", "Std_Glu")) |> 
+  dplyr::rename(substrate = map, SIR = H2O_corrected_resp) |> 
+  dplyr::select(dataset, plate_id, substrate, SIR) |>
+  # joining MR_outliers_removed based on dataset and plate_id
+  # add columns as needed for your study (here: run_id and detection_plate_id)
   dplyr::left_join(
-    MR_clean |> 
+    MR_outliers_removed |> 
       dplyr::select(dataset, plate_id, run_id, detection_plate_id) |> 
-      unique(),
+      unique(), 
     by = dplyr::join_by(dataset, plate_id))
 
 # plot it
-std_soil_longer |> 
+std_soil_data |> 
   ggplot2::ggplot(ggplot2::aes(x = run_id, y = SIR)) +
   ggplot2::theme_minimal() + 
   ggplot2::geom_boxplot() +
