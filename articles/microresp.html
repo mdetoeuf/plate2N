@@ -87,6 +87,13 @@
 <li>Add index computations at the end of the pipeline (not yet written)</li>
 <li>Explain the choice of absorbance thresholds used in the QC step (Section 4.1)</li>
 <li>Double-check the µg CO2-C conversion formula (Section 5.3) against the MicroResp manual — currently taken from an Excel document</li>
+<li>Check where the MBC and qCO2 formulas (Section 8) come from, and confirm their units</li>
+<li>Update the example dataset to include more plates (e.g. plates 11-15, for 10 total across 2 runs), so the <code>run_id</code> parameter demonstrates meaningfully rather than showing a single run</li>
+<li>Reevaluate which variables <code>MR_indices</code> keeps, for readability (Section 9)</li>
+<li>Section 10’s standard-soil QC plot only shows one run currently — revisit once more run data is available</li>
+<li>Turn Section 11’s per-variable plotting into a loop over each index (basal_resp through shannon)</li>
+<li>Investigate and resolve the one dropped data point warning in <code>rSIRs</code> (Section 9) — likely a negative-or-zero value going into <code><a href="https://rdrr.io/r/base/Log.html" class="external-link">log()</a></code>
+</li>
 </ul></section><section class="section level2"><h2 id="sec-microresp">1 - Introduction<a class="anchor" aria-label="anchor" href="#sec-microresp"></a>
 </h2>
 <p>This vignette walks through the full analysis pipeline for a MicroResp experiment, from raw plate import to substrate-level CO2 respiration values. It follows the same overall logic as the main N-dosage pipeline (<code>import-tidy</code>, <code>blank-correction</code>, <code>abs-to-conc</code>), but MicroResp experiments differ enough — more data layers per plate, no standard curve, and a different final unit (a respiration rate rather than a concentration) — that they’re covered here as their own self-contained walkthrough rather than split across the main vignettes.</p>
@@ -96,7 +103,7 @@
 <div>
 <blockquote>
 <p><strong>More layers of data are possible</strong></p>
-<p>In theory, any number of data layers are possible, you just need to extend the logic displayed here, with additional elements to some arguments that are vectors (e.g., <code>abs_map = c("abs_t0", "abs_t5", "map")</code> and others that are lists of all data sets (one per layer).</p>
+<p>In theory, any number of data layers are possible - you just need to extend the logic displayed here, with additional elements to some arguments that are vectors (e.g., <code>abs_map = c("abs_t0", "abs_t5", "map")</code>) and others that are lists of all data sets (one per layer).</p>
 </blockquote>
 </div>
 </section><section class="section level2"><h2 id="import-and-tidy-with-2-layers">2 - Import and tidy with 2+ layers<a class="anchor" aria-label="anchor" href="#import-and-tidy-with-2-layers"></a>
@@ -658,12 +665,11 @@
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">right_join</a></span><span class="op">(</span><span class="va">suspicious_substrates</span>, by <span class="op">=</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/join_by.html" class="external-link">join_by</a></span><span class="op">(</span><span class="va">dataset</span>, <span class="va">plate_id</span>, <span class="va">map</span><span class="op">)</span><span class="op">)</span> </span></code></pre></div>
 </div>
 <p>Now, with a threshold of 8% as max coef of variation, we are left with only 6 combinations of plate x substrate to look at (instead of 50).</p>
-<p>!! This means we are ok with not looking at all data !!</p>
+<p>This kind of automated flagging is a trade-off: it saves you from manually reviewing every single well, but it also means you’re trusting the threshold to actually catch what matters. When in doubt, err on the side of a stricter threshold — one that flags more plates than strictly necessary — rather than a looser one. Reviewing a few extra, ultimately fine plates costs little; missing a real outlier because the threshold was too permissive costs much more.</p>
 </section><section class="level2"><h3 id="create-qc-plots">6.2 - create QC plots<a class="anchor" aria-label="anchor" href="#create-qc-plots"></a>
 </h3>
 <p>Create one list of QC plots per dataset.</p>
 <p>Notice that we get a list with 1 plot per substrate (but not all bc not all had outliers in this reduced dataset)</p>
-<p>–&gt; TO DO: update microresp data to get more plate, maybe include plates 11-15, so we have 10 total, and 2 runs, so that using the run_id parameter makes sense visually here</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">qc_plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plot_list_qc_microresp.html">plot_list_qc_microresp</a></span><span class="op">(</span></span>
@@ -674,7 +680,12 @@
 <span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">qc_plots</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "Std_H2O" "OA"      "Glu"     "NAG"     "gABA"</span></span></code></pre></div>
 </div>
-<p>For the sake of illustration, we just plot 2 of the plots (one per dataset per substrate): it facets the plots per run, and only displays data that is suspicious (coefficient of variation above threshold defined above). - H2O: i’d remove B3 - Glu: i’d remove nothing Notice that - the nb of plate changes between plots, only suspicious plates are displayed</p>
+<p>For the sake of illustration, we just plot 2 of the plots (one per dataset per substrate): each facets by run, and only displays data that is suspicious (coefficient of variation above the threshold defined above).</p>
+<ul>
+<li>H2O: we would remove B3</li>
+<li>Glu: no wells to remove</li>
+</ul>
+<p>Notice that the number of plates differs between the two plots — only the plates flagged as suspicious for that particular substrate are shown.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">qc_plots</span><span class="op">$</span><span class="va">Std_H2O</span></span>
@@ -695,7 +706,7 @@
 </div>
 </div>
 </div>
-<p>To get general idea, plot it all in one go - <strong>briefly</strong> explain the rationale behind using <code><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">patchwork::wrap_elements</a></code> here (keep title) - But say that in real datasets, depending on substrates, more plates are displayed, so this patchworking might make things unreadable anyway</p>
+<p>To get a general overview, we can plot all substrates together in a single figure. Each substrate’s plot is itself already a <code>patchwork</code> composition (boxplot + ridgeline) with its own title — nesting one <code>patchwork</code> inside another normally drops that inner title, so we wrap each one with <code><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">patchwork::wrap_elements()</a></code> first, which “flattens” it into a single element that keeps its title intact when combined further. In a real dataset, depending on how many plates are flagged per substrate, this combined view can get crowded quickly — treat it as a quick overview, and fall back to inspecting substrates individually (as above, possibly in a loop) when there’s a lot to look through.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_elements.html" class="external-link">wrap_elements</a></span><span class="op">(</span>full <span class="op">=</span> <span class="va">qc_plots</span><span class="op">$</span><span class="va">gABA</span><span class="op">)</span> <span class="op">+</span></span>
@@ -757,7 +768,7 @@
 <span><span class="co">#&gt; 2 P01      E8      MR     </span></span>
 <span><span class="co">#&gt; 3 P01      B3      MR</span></span></code></pre></div>
 </div>
-<p>In a real dataset with hundreds of plates, this can take a while, and we recommand a second reading of those plots after “sleeping on it”, and seeing if we still agree with ourselves, and didn’t make any mistake</p>
+<p>In a real dataset with hundreds of plates, this can take a while, and we recommend a second reading of those plots after “sleeping on it”, and seeing if we still agree with ourselves, and didn’t make any mistake</p>
 <p>Remove those outliers</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb29"><pre class="downlit sourceCode r">
@@ -813,8 +824,8 @@
 </div>
 </section><section class="level2"><h3 id="correction-of-averages---remove-basal-respiration">7.2 - Correction of averages - remove basal respiration<a class="anchor" aria-label="anchor" href="#correction-of-averages---remove-basal-respiration"></a>
 </h3>
-<p><span class="citation" data-cites="bongiorno2020">[@bongiorno2020]</span> write: <em>Thereafter, we corrected for the average respiration rate of soil to which the deionized water was added.</em></p>
-<p>Although not explicit, I believe that what they say if that they consider that substrate-induced respirations as computed so far are indeed the sum of basal respiration + the “real” part of the respiration that is substrate induced. So probably they do a subtraction?</p>
+<p><span class="citation" data-cites="bongiorno2020">(<a href="#ref-bongiorno2020" role="doc-biblioref">Bongiorno et al. 2020</a>)</span> write: <em>Thereafter, we corrected for the average respiration rate of soil to which the deionized water was added.</em></p>
+<p>Although not fully explicit in the paper, we read this as meaning that the substrate-induced respiration computed so far is the sum of basal respiration plus the “real,” substrate-specific part — so correcting for it means subtracting the basal (H2O) respiration from each substrate’s value.</p>
 <p>So, now we correct SIR’s for basal respiration (subtract H2O-resp from substrate-induced resp)</p>
 <p>First, extract basal respiration and keep only H2O rows, so that we have, separately, the basal respiration of the samples vs the standard soil</p>
 <div class="cell">
@@ -873,7 +884,7 @@
 <span><span class="co">#&gt; 10 MR      P01      gABA          0.189 sample          0.119             0.0702</span></span>
 <span><span class="co">#&gt; # ℹ 40 more rows</span></span></code></pre></div>
 </div>
-<p>In the following sections, I follow computations as in <span class="citation" data-cites="bongiorno2020a">[@bongiorno2020a]</span>, i.e.:</p>
+<p>In the following sections, we follow computations as in <span class="citation" data-cites="bongiorno2020">(<a href="#ref-bongiorno2020" role="doc-biblioref">Bongiorno et al. 2020</a>)</span>, i.e.:</p>
 <ul>
 <li><p>Compute MSIR, MBC, metabolic quotient</p></li>
 <li><p>Compute relative contributions of SIR’s (SIR / MSIR), refered to as rSIR’s</p></li>
@@ -883,8 +894,7 @@
 <p>Then, we can still discuss some N-based index</p>
 </section></section><section class="section level2"><h2 id="mbc-basal-respiration-metabolic-quotient-msir">8 - MBC, basal respiration, metabolic quotient, MSIR<a class="anchor" aria-label="anchor" href="#mbc-basal-respiration-metabolic-quotient-msir"></a>
 </h2>
-<p>Now, we compute the MBC, qCO2 and MSIR (here, we use H2O-corrected data, and don’t keep water in the computation. So it is only a sum of non-H2O substrates. Also, we don’t keep std soil data from here on, so we start by storing it somewhere (it will be needed for QC)</p>
-<p><u><strong>!! TO DO: check where computation of MBC and qCO2 come from + units !!</strong></u></p>
+<p>Now, we compute the MBC, qCO2 and MSIR. We use H2O-corrected data throughout, and exclude both the water (basal respiration) and the standard-soil rows from the MSIR sum, since it should only reflect the real substrates.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Extract Glu's own respiration value per plate (needed for MBC below)</span></span>
@@ -905,7 +915,7 @@
 </div>
 </section><section class="section level2"><h2 id="shannon-index">9 - Shannon index<a class="anchor" aria-label="anchor" href="#shannon-index"></a>
 </h2>
-<p>Now, we re-pivot longer to compute on a per-substrate basis again, and directly compute relative SIRs (rSIR) and -x*ln(x) intermediary value</p>
+<p>We can now join in each plate’s Glu respiration (needed for MBC) and directly compute relative SIRs (rSIR) and the -x*ln(x) intermediary value (sSIR), all while staying in the same long, per-substrate format.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Join in basal_resp and glu_resp, then compute MBC, qCO2, rSIR, sSIR -</span></span>
@@ -921,7 +931,6 @@
 <span>  <span class="op">)</span></span></code></pre></div>
 </div>
 <p>! There is still one warning: we are loosing one data point (possibly still a negative or null value given to the log?)</p>
-<p><u><strong>!! TODO : Deal with this later !!</strong></u></p>
 <p>Still, check out the output</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb38"><pre class="downlit sourceCode r">
@@ -942,7 +951,7 @@
 <span><span class="co">#&gt; # ℹ 25 more rows</span></span>
 <span><span class="co">#&gt; # ℹ 3 more variables: qCO2 &lt;dbl&gt;, rSIR &lt;dbl&gt;, sSIR &lt;dbl&gt;</span></span></code></pre></div>
 </div>
-<p>Now, we can pivot wider again to sum sSIRs on a per sample basis</p>
+<p>Now, we sum sSIRs within each plate to get the Shannon index.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">shannon</span> <span class="op">&lt;-</span> <span class="va">rSIRs</span> <span class="op">|&gt;</span> </span>
@@ -971,7 +980,6 @@
 <span><span class="co">#&gt; 5 MR      P05        0.865     0.0733  8.49  8.63  2.34</span></span></code></pre></div>
 </div>
 <p>Gather all data (except std soil data)</p>
-<p>–&gt; to do: reevaluate selection of variables to keep (more readibility if less)</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">MR_indices</span> <span class="op">&lt;-</span> <span class="va">MR_outliers_removed</span> <span class="op">|&gt;</span> </span>
@@ -997,11 +1005,7 @@
 <span><span class="co">#&gt; #   cra_trial &lt;chr&gt;, sd_c &lt;chr&gt;, crop_diversity &lt;chr&gt;, bloc &lt;chr&gt;,</span></span>
 <span><span class="co">#&gt; #   sampling_time &lt;chr&gt;, zone &lt;chr&gt;, date &lt;chr&gt;, sample_name &lt;chr&gt;</span></span></code></pre></div>
 </div>
-<p>We lost</p>
-<ul>
-<li><p>the data on raw SIR and relative SIR (rSIR), which is stored in rSIRs (just in case)</p></li>
-<li><p>and std soil data</p></li>
-</ul>
+<p>This is per-plate aggregated data, meaning that we lost the per-substrate data, including raw <code>co2_g_h</code> and its corrected version <code>SIR</code>, as well as relative SIR (<code>rSIR</code>) and precomputed <code>sSIR</code>, which are stored in <code>rSIRs</code> (just in case). Standard-soil data is set aside too — it’s rebuilt directly from <code>H2O_corrected</code> in <a href="#sec-qc-std-soils">QC - check standard soils</a>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">rSIRs</span></span>
@@ -1021,13 +1025,12 @@
 <span><span class="co">#&gt; # ℹ 25 more rows</span></span>
 <span><span class="co">#&gt; # ℹ 3 more variables: qCO2 &lt;dbl&gt;, rSIR &lt;dbl&gt;, sSIR &lt;dbl&gt;</span></span></code></pre></div>
 </div>
-</section><section class="section level2"><h2 id="qc---check-standard-soils">10 - QC - check standard soils<a class="anchor" aria-label="anchor" href="#qc---check-standard-soils"></a>
+</section><section class="section level2"><h2 id="sec-qc-std-soils">10 - QC - check standard soils<a class="anchor" aria-label="anchor" href="#sec-qc-std-soils"></a>
 </h2>
-<p>I’m actually not sooo happy about this. FYI: here, I took H2O-corrected data for the glucose</p>
-<p>–&gt; To Do: again, we have only one run, so… not displaying as it could</p>
+<p>For this QC check, we use H2O-corrected data for the glucose standard.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb43"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Extract standard-soil data (kept for QC in Section 10)</span></span>
+<code class="sourceCode R"><span><span class="co"># Extract standard-soil data</span></span>
 <span><span class="va">std_soil_data</span> <span class="op">&lt;-</span> <span class="va">H2O_corrected</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">map</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Std_H2O"</span>, <span class="st">"Std_Glu"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename</a></span><span class="op">(</span>substrate <span class="op">=</span> <span class="va">map</span>, SIR <span class="op">=</span> <span class="va">H2O_corrected_resp</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
@@ -1055,9 +1058,8 @@
 </div>
 </section><section class="section level2"><h2 id="last-data-wrangling">11 - Last data wrangling<a class="anchor" aria-label="anchor" href="#last-data-wrangling"></a>
 </h2>
-<p>For our Field experiment, some modalities are to be removed: Bloc 1 is not a real bloc, and the faba bean did not take in the Ref treatment, so we removed it from MR data. Not relevant to write it out here though (didn’t make it into plates 1 to 5), but nice to mention that some more post analysis might me relevant</p>
+<p>For our Field experiment, some modalities are to be removed: Bloc 1 is not a real bloc, and the faba bean did not take in the Ref treatment, so we removed it from MR data. Not relevant to write it out here though (didn’t make it into plates 1 to 5), but nice to mention that some more post analysis might be relevant</p>
 <p>Plot the indices</p>
-<p>–&gt; make this into a loop, fo each variable between basal_resp and shannon</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb44"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">MR_indices</span> <span class="op">|&gt;</span> </span>
@@ -1075,6 +1077,11 @@
 </h2>
 <p>Can be exported with <code>MR_indices |&gt; write_rds("path/to/the/file.rds")</code> or as a csv with <code>MR_indices |&gt; write_csv("path/to/the/file.csv")</code></p>
 <p>Now would come: plotting, modelling, etc. –&gt; “usual data analysis”</p>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-bongiorno2020" class="csl-entry" role="listitem">
+Bongiorno, Giulia, Else K. Bünemann, Lijbert Brussaard, Paul Mäder, Chidinma U. Oguejiofor, and Ron G. M. de Goede. 2020. <span>“Soil Management Intensity Shifts Microbial Catabolic Profiles Across a Range of European Long-Term Field Experiments.”</span> <em>Applied Soil Ecology</em> 154: 103596. <a href="https://doi.org/10.1016/j.apsoil.2020.103596" class="external-link">https://doi.org/10.1016/j.apsoil.2020.103596</a>.
+</div>
+</div>
 </section><script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
