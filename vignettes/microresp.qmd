@@ -480,8 +480,6 @@ It is possible to run once more through the quality check before deciding to mov
 
 Store last version in a new variable (easier for edits...)
 
---\> To Do: check, I feel that MR_clean is created twice. If that's the case, this could lead to confusions –\> rename one
-
 ```{r}
 MR_outliers_removed <- MR_wash1
 ```
