@@ -22,7 +22,6 @@ library(ggridges)
 
 # TO DO
 
-- Add index computations at the end of the pipeline (not yet written)
 - Explain the choice of absorbance thresholds used in the QC step (Section 4.1)
 - Double-check the µg CO2-C conversion formula (Section 5.3) against the MicroResp manual — currently taken from an Excel document
 - Check where the MBC and qCO2 formulas (Section 8) come from, and confirm their units
@@ -42,11 +41,38 @@ Here, we quickly go through the import pipeline with an example of data from a [
 
 So, the 3 layers of data are referred to as `abs_t0`, `abs_t5`, and `map`.
 
-::: callout-note
-## More layers of data are possible
+## Overview
 
-In theory, any number of data layers are possible - you just need to extend the logic displayed here, with additional elements to some arguments that are vectors (e.g., `abs_map = c("abs_t0", "abs_t5", "map")`) and others that are lists of all data sets (one per layer).
-:::
+This vignette runs through 12 sections in a single, mostly linear pipeline. Here's the shape of it, grouped into the main phases:
+
+```{mermaid}
+flowchart TD
+  A[Import, tidy & join metadata]:::contribution --> C[Clean data, normalize & convert to CO2 rate]:::caseStudy
+  C --> D[Average per plate & substrate]:::loopTarget
+  D --> O{{QC / outlier removal}}:::contribution
+  O --> D
+  D --> F1[Correct for basal respiration]:::caseStudy
+  F1 --> H[QC standard soils]:::caseStudy
+  F1 --> F2[Compute indices: MBC, qCO2, Shannon + Final wrangling & export]:::caseStudy
+
+  classDef contribution fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,stroke-width:1.5px,font-weight:bold;
+  classDef caseStudy fill:#f8fafc,stroke:#cbd5e1,color:#64748b,stroke-width:1px;
+  classDef loopTarget fill:#f8fafc,stroke:#2563eb,color:#334155,stroke-width:1.5px,stroke-dasharray:4 2,font-weight:bold;
+  
+```
+
+Bold boxes use `plate2N` functions directly; the remaining boxes apply the tidyverse toolbox [@wickham2019] to MicroResp data.
+
+- **Sections 2-3**: import raw plate files, tidy them, and join in sample metadata.
+- **Section 4**: quality-check raw absorbance, remove empty/edge wells.
+- **Section 5**: normalize absorbance across plates, then convert to %CO2 and a respiration rate.
+- **Section 6**: identify and remove per-plate[^1], per-substrate outliers.
+- **Section 7**: average remaining replicates, and correct for basal respiration.
+- **Sections 8-9**: compute the summary indices (MBC, qCO2, MSIR, Shannon).
+- **Section 10**: a QC check on the standard soils.
+- **Sections 11-12**: final study-specific wrangling and export.
+
+[^1]: In the MicroResp experiment, one plate was attributed to each sample (with dedicated columns for comparison with the standard soil), so that "per-plate" really means "per-sample"
 
 # 2 - Import and tidy with 2+ layers
 
@@ -64,6 +90,12 @@ MR_abs_t5 <- csv_to_tibble(MR_t5_csv)
 # Check them out
 MR_abs_t0; MR_abs_t5
 ```
+
+::: callout-note
+## More layers of data are possible
+
+In theory, any number of data layers are possible - you just need to extend the logic displayed here, with additional elements to some arguments that are vectors (e.g., `abs_map = c("abs_t0", "abs_t5", "map")`) and others that are lists of all data sets (one per layer).
+:::
 
 ## 2.2 - Being creative with importing mappings
 
