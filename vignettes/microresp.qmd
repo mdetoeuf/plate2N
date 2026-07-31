@@ -28,6 +28,7 @@ library(ggridges)
 - Section 6's standard-soil QC plot only shows one run currently — revisit once more run data is available
 - Turn Section 11's per-variable plotting into a loop over each index (basal_resp through shannon)
 - Investigate and resolve the one dropped data point warning in `rSIRs` (Section 7.2) — likely a negative-or-zero value going into `log()`
+- change ylim() in normalized / not normalized plot to reflect new data (5 plates added) so no points are out of range
 
 # 1 - Introduction {#sec-microresp}
 
@@ -137,9 +138,14 @@ Finally, run the mapping function with
 - 8 wells per “sample” (in this case: not samples but substrates)
 
 ```{r}
+# extract the real plate ids present in the raw data, in order
+(plate_ids_used <- MR_abs_t0 |> 
+  dplyr::filter(!(row %in% LETTERS)) |> 
+  dplyr::pull(row))
+
 # compute the mapping
 MR_map <- map_plates(
-  plate_ids = paste0("P", sprintf("%02d", seq_len(nb_plates))), 
+  plate_ids = plate_ids_used, 
   samples = rep(MR_columns, nb_plates),
   n_samples_per_plate = 10,
   column_curves = c(), column_blank = c(), column_empty = c(1,12),
@@ -222,7 +228,7 @@ Here, we run the quality check to see if there is any really abnormal absorbance
 MR |> 
   dplyr::mutate(abs = abs_t0) |> 
   qc_raw_abs(
-    min_abs = 0.9, max_abs = 1.5, 
+    min_abs = 0.9, max_abs = 1.8, 
     plot_col_facet = "dataset", 
     show_plot = FALSE, 
     export_plot = "abs_t0_distrib") 
@@ -231,7 +237,7 @@ MR |>
 MR |> 
   dplyr::mutate(abs = abs_t5) |> 
   qc_raw_abs(
-    min_abs = 0.2, max_abs = 1.5, 
+    min_abs = 0.2, max_abs = 1.8, 
     plot_col_facet = "dataset", 
     show_plot = FALSE, 
     export_plot = "abs_t5_distrib") 
