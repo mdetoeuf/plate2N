@@ -717,8 +717,6 @@ rSIRs <- substrate_data |>
   )
 ```
 
-! There is still one warning: we are loosing one data point (possibly still a negative or null value given to the log?)
-
 Still, check out the output
 
 ```{r}
