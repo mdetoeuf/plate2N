@@ -121,7 +121,11 @@ by in this case).</p></dd>
 
 <dt id="arg-max-plates-per-panel">max_plates_per_panel<a class="anchor" aria-label="anchor" href="#arg-max-plates-per-panel"></a></dt>
 <dd><p>Maximum number of plates shown per panel when
-<code>run_id_col</code> is <code>NULL</code>. Ignored otherwise. Defaults to <code>10</code>.</p></dd>
+<code>run_id_col</code> is <code>NULL</code>, used to determine how many panels are needed
+(<code>ceiling(n_plates / max_plates_per_panel)</code>) — plates are then spread
+as evenly as possible across that many panels, so the last panel is
+never left with a small, oddly emphasized remainder. Ignored if
+<code>run_id_col</code> is given. Defaults to <code>10</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

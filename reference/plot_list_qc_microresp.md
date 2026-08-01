@@ -65,8 +65,12 @@ plot_list_qc_microresp(
 
 - max_plates_per_panel:
 
-  Maximum number of plates shown per panel when `run_id_col` is `NULL`.
-  Ignored otherwise. Defaults to `10`.
+  Maximum number of plates shown per panel when `run_id_col` is `NULL`,
+  used to determine how many panels are needed
+  (`ceiling(n_plates / max_plates_per_panel)`) — plates are then spread
+  as evenly as possible across that many panels, so the last panel is
+  never left with a small, oddly emphasized remainder. Ignored if
+  `run_id_col` is given. Defaults to `10`.
 
 ## Value
 
