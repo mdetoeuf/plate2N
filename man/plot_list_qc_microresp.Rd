@@ -10,13 +10,13 @@ plot_list_qc_microresp(
   plate_id_col = "plate_id",
   value_col = "co2_g_h",
   label_col = "well_id",
-  run_id_col = NULL,
+  panel_col = NULL,
   max_plates_per_panel = 10
 )
 }
 \arguments{
 \item{data}{A tibble containing the columns referenced by \code{map_col},
-\code{plate_id_col}, \code{value_col}, \code{label_col}, and (if given) \code{run_id_col}.
+\code{plate_id_col}, \code{value_col}, \code{label_col}, and (if given) \code{panel_col}.
 Must also contain a \code{dataset} column (used only in plot titles).}
 
 \item{map_col}{Name of the column identifying substrates/treatments/layers
@@ -34,20 +34,21 @@ beyond MicroResp.}
 \item{label_col}{Name of the column used to label individual points
 (passed through to \code{\link[=boxplot_values]{boxplot_values()}}). Defaults to \code{"well_id"}.}
 
-\item{run_id_col}{Optional name of a column identifying experimental
-runs/batches. If given, one panel is produced per run, labelled by
-run id, and ridges are coloured by run. If \code{NULL} (the default),
+\item{panel_col}{Optional name of a column defining how plates are split
+into panels (e.g. an experimental run or batch identifier). If given,
+one panel is produced per unique value, labelled accordingly, and
+ridges are coloured by that value. If \code{NULL} (the default),
 plates are automatically split into evenly-sized panels labelled
 "Panel X of Y", each capped at \code{max_plates_per_panel} plates, with
 ridges in a single uniform colour (no meaningful grouping to colour
 by in this case).}
 
 \item{max_plates_per_panel}{Maximum number of plates shown per panel when
-\code{run_id_col} is \code{NULL}, used to determine how many panels are needed
+\code{panel_col} is \code{NULL}, used to determine how many panels are needed
 (\code{ceiling(n_plates / max_plates_per_panel)}) — plates are then spread
 as evenly as possible across that many panels, so the last panel is
 never left with a small, oddly emphasized remainder. Ignored if
-\code{run_id_col} is given. Defaults to \code{10}.}
+\code{panel_col} is given. Defaults to \code{10}.}
 }
 \value{
 A named list of combined plots, one per unique value of
@@ -59,7 +60,8 @@ per value.
 For each unique value of \code{map_col} (e.g. one substrate, treatment, or
 other layer's category), builds a combined boxplot (\code{\link[=boxplot_values]{boxplot_values()}}) +
 ridgeline (\code{\link[=plot_ridges_values]{plot_ridges_values()}}) QC plot, split into manageable panels —
-either by an existing run/batch identifier (\code{run_id_col}), or, if none is
+either by an existing panel-defining column (\code{panel_col}, e.g. a run or
+batch identifier), or, if none is
 given, into automatically-sized chunks of at most \code{max_plates_per_panel}
 plates. Panels are assembled side by side using the \code{patchwork} package.
 }
@@ -69,7 +71,7 @@ separate substrate and treatment columns), call this function once per
 column, passing the relevant column name as \code{map_col} each time.
 }
 \examples{
-# plot_list_qc_microresp(MR_co2_g_h, run_id_col = "run_id")
+# # plot_list_qc_microresp(MR_co2_g_h, panel_col = "run_id")
 # plot_list_qc_microresp(MR_co2_g_h, max_plates_per_panel = 8)
 }
 \seealso{

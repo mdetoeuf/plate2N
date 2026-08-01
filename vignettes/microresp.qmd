@@ -443,7 +443,7 @@ Notice that we get a list with 1 plot per substrate (but not all because not all
 qc_plots <- plot_list_qc_microresp(
   suspicious_MR, 
   map_col = "map",
-  run_id_col = "run_id")
+  panel_col = "run_id")
 
 names(qc_plots)
 ```

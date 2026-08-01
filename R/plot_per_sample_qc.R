@@ -133,7 +133,8 @@ plot_ridges_values <- function(
 #' For each unique value of `map_col` (e.g. one substrate, treatment, or
 #' other layer's category), builds a combined boxplot ([boxplot_values()]) +
 #' ridgeline ([plot_ridges_values()]) QC plot, split into manageable panels —
-#' either by an existing run/batch identifier (`run_id_col`), or, if none is
+#' either by an existing panel-defining column (`panel_col`, e.g. a run or
+#' batch identifier), or, if none is
 #' given, into automatically-sized chunks of at most `max_plates_per_panel`
 #' plates. Panels are assembled side by side using the `patchwork` package.
 #'
@@ -142,7 +143,7 @@ plot_ridges_values <- function(
 #' column, passing the relevant column name as `map_col` each time.
 #'
 #' @param data A tibble containing the columns referenced by `map_col`,
-#'     `plate_id_col`, `value_col`, `label_col`, and (if given) `run_id_col`.
+#'     `plate_id_col`, `value_col`, `label_col`, and (if given) `panel_col`.
 #'     Must also contain a `dataset` column (used only in plot titles).
 #' @param map_col Name of the column identifying substrates/treatments/layers
 #'     for this call — one QC plot is produced per unique value, and the
@@ -155,19 +156,20 @@ plot_ridges_values <- function(
 #'     beyond MicroResp.
 #' @param label_col Name of the column used to label individual points
 #'     (passed through to [boxplot_values()]). Defaults to `"well_id"`.
-#' @param run_id_col Optional name of a column identifying experimental
-#'     runs/batches. If given, one panel is produced per run, labelled by
-#'     run id, and ridges are coloured by run. If `NULL` (the default),
+#' @param panel_col Optional name of a column defining how plates are split
+#'     into panels (e.g. an experimental run or batch identifier). If given,
+#'     one panel is produced per unique value, labelled accordingly, and
+#'     ridges are coloured by that value. If `NULL` (the default),
 #'     plates are automatically split into evenly-sized panels labelled
 #'     "Panel X of Y", each capped at `max_plates_per_panel` plates, with
 #'     ridges in a single uniform colour (no meaningful grouping to colour
 #'     by in this case).
 #' @param max_plates_per_panel Maximum number of plates shown per panel when
-#'     `run_id_col` is `NULL`, used to determine how many panels are needed
+#'     `panel_col` is `NULL`, used to determine how many panels are needed
 #'     (`ceiling(n_plates / max_plates_per_panel)`) — plates are then spread
 #'     as evenly as possible across that many panels, so the last panel is
 #'     never left with a small, oddly emphasized remainder. Ignored if
-#'     `run_id_col` is given. Defaults to `10`.
+#'     `panel_col` is given. Defaults to `10`.
 #'
 #' @returns A named list of combined plots, one per unique value of
 #'     `map_col`. If `map_col` has several distinct values (e.g. several
@@ -177,7 +179,7 @@ plot_ridges_values <- function(
 #' @export
 #'
 #' @examples
-#' # plot_list_qc_microresp(MR_co2_g_h, run_id_col = "run_id")
+#' # # plot_list_qc_microresp(MR_co2_g_h, panel_col = "run_id")
 #' # plot_list_qc_microresp(MR_co2_g_h, max_plates_per_panel = 8)
 plot_list_qc_microresp <- function(
     data,
@@ -185,7 +187,7 @@ plot_list_qc_microresp <- function(
     plate_id_col = "plate_id",
     value_col = "co2_g_h",
     label_col = "well_id",
-    run_id_col = NULL,
+    panel_col = NULL,
     max_plates_per_panel = 10
 ) {
   substrates <- data |> dplyr::select(dplyr::all_of(map_col)) |> unique()
@@ -200,16 +202,16 @@ plot_list_qc_microresp <- function(
 
     substrate_plots <- list()
 
-    if (!is.null(run_id_col)) {
-      # one panel per run/batch
-      panel_ids <- subset |> dplyr::select(dplyr::all_of(run_id_col)) |> unique() |> dplyr::pull()
+    if (!is.null(panel_col)) {
+      # one panel per unique value of panel_col
+      panel_ids <- subset |> dplyr::select(dplyr::all_of(panel_col)) |> unique() |> dplyr::pull()
 
       for (j in seq_along(panel_ids)) {
-        subset_panel <- subset |> dplyr::filter(.data[[run_id_col]] == panel_ids[j])
+        subset_panel <- subset |> dplyr::filter(.data[[panel_col]] == panel_ids[j])
 
         boxplot_panel <- subset_panel |>
           boxplot_values(x_col = plate_id_col, value_col = value_col, label_col = label_col) +
-          ggplot2::facet_wrap(ggplot2::vars(.data[[run_id_col]]), scales = "free_x", nrow = 2) +
+          ggplot2::facet_wrap(ggplot2::vars(.data[[panel_col]]), scales = "free_x", nrow = 2) +
           ggplot2::theme(legend.position = "none") +
           ggplot2::scale_x_discrete(limits = rev(c("", unique(subset_panel[[plate_id_col]])))) +
           ggplot2::xlab(plate_id_col) +
@@ -218,9 +220,9 @@ plot_list_qc_microresp <- function(
         ridges_panel <- subset_panel |>
           plot_ridges_values(
             value_col = value_col, y_col = plate_id_col,
-            groups_col = run_id_col, colour_col = run_id_col) +
+            groups_col = panel_col, colour_col = panel_col) +
           ggplot2::scale_y_discrete(limits = rev) +
-          ggplot2::facet_wrap(ggplot2::vars(.data[[run_id_col]]), scales = "free_y", nrow = 2) +
+          ggplot2::facet_wrap(ggplot2::vars(.data[[panel_col]]), scales = "free_y", nrow = 2) +
           ggplot2::theme(legend.position = "none")
 
         panel_plot <- boxplot_panel + ridges_panel + patchwork::plot_layout(axis_titles = "collect")
@@ -228,7 +230,7 @@ plot_list_qc_microresp <- function(
       }
 
     } else {
-      # no run identifier: chunk plates into panels of max_plates_per_panel
+      # no panel_col: split plates evenly across ceiling(n/max_plates_per_panel) panels
       all_plates <- subset |> dplyr::select(dplyr::all_of(plate_id_col)) |> unique() |> dplyr::pull()
       #plate_chunks <- split(all_plates, ceiling(seq_along(all_plates) / max_plates_per_panel))
       n_panels <- ceiling(length(all_plates) / max_plates_per_panel)
