@@ -43,7 +43,11 @@ ridges in a single uniform colour (no meaningful grouping to colour
 by in this case).}
 
 \item{max_plates_per_panel}{Maximum number of plates shown per panel when
-\code{run_id_col} is \code{NULL}. Ignored otherwise. Defaults to \code{10}.}
+\code{run_id_col} is \code{NULL}, used to determine how many panels are needed
+(\code{ceiling(n_plates / max_plates_per_panel)}) — plates are then spread
+as evenly as possible across that many panels, so the last panel is
+never left with a small, oddly emphasized remainder. Ignored if
+\code{run_id_col} is given. Defaults to \code{10}.}
 }
 \value{
 A named list of combined plots, one per unique value of

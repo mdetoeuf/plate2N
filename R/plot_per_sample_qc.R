@@ -163,7 +163,11 @@ plot_ridges_values <- function(
 #'     ridges in a single uniform colour (no meaningful grouping to colour
 #'     by in this case).
 #' @param max_plates_per_panel Maximum number of plates shown per panel when
-#'     `run_id_col` is `NULL`. Ignored otherwise. Defaults to `10`.
+#'     `run_id_col` is `NULL`, used to determine how many panels are needed
+#'     (`ceiling(n_plates / max_plates_per_panel)`) — plates are then spread
+#'     as evenly as possible across that many panels, so the last panel is
+#'     never left with a small, oddly emphasized remainder. Ignored if
+#'     `run_id_col` is given. Defaults to `10`.
 #'
 #' @returns A named list of combined plots, one per unique value of
 #'     `map_col`. If `map_col` has several distinct values (e.g. several
@@ -226,7 +230,10 @@ plot_list_qc_microresp <- function(
     } else {
       # no run identifier: chunk plates into panels of max_plates_per_panel
       all_plates <- subset |> dplyr::select(dplyr::all_of(plate_id_col)) |> unique() |> dplyr::pull()
-      plate_chunks <- split(all_plates, ceiling(seq_along(all_plates) / max_plates_per_panel))
+      #plate_chunks <- split(all_plates, ceiling(seq_along(all_plates) / max_plates_per_panel))
+      n_panels <- ceiling(length(all_plates) / max_plates_per_panel)
+      idx_groups <- parallel::splitIndices(length(all_plates), n_panels)
+      plate_chunks <- lapply(idx_groups, function(idx) all_plates[idx])
 
       for (j in seq_along(plate_chunks)) {
         subset_panel <- subset |> dplyr::filter(.data[[plate_id_col]] %in% plate_chunks[[j]])
