@@ -806,7 +806,7 @@ not all had outliers in this reduced dataset)
 qc_plots <- plot_list_qc_microresp(
   suspicious_MR, 
   map_col = "map",
-  run_id_col = "run_id")
+  panel_col = "run_id")
 
 names(qc_plots)
 #>  [1] "Std_Glu" "Std_H2O" "H2O"     "OA"      "Glu"     "Lgn"     "NAG"    
