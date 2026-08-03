@@ -200,6 +200,10 @@ plot_list_qc_microresp <- function(
     subset <- data |>
       dplyr::filter(.data[[map_col]] == substrates[[map_col]][i])
 
+    # fix the value axis range once per substrate, so every panel for this
+    # substrate is comparable on the same scale (not independently rescaled)
+    value_range <- range(subset[[value_col]], na.rm = TRUE)
+
     substrate_plots <- list()
 
     if (!is.null(panel_col)) {
@@ -215,7 +219,7 @@ plot_list_qc_microresp <- function(
           ggplot2::theme(legend.position = "none") +
           ggplot2::scale_x_discrete(limits = rev(c("", unique(subset_panel[[plate_id_col]])))) +
           ggplot2::xlab(plate_id_col) +
-          ggplot2::coord_flip()
+          ggplot2::coord_flip(ylim = value_range)
 
         ridges_panel <- subset_panel |>
           plot_ridges_values(
@@ -223,6 +227,7 @@ plot_list_qc_microresp <- function(
             groups_col = panel_col, colour_col = panel_col) +
           ggplot2::scale_y_discrete(limits = rev) +
           ggplot2::facet_wrap(ggplot2::vars(.data[[panel_col]]), scales = "free_y", nrow = 2) +
+          ggplot2::coord_cartesian(xlim = value_range) +
           ggplot2::theme(legend.position = "none")
 
         panel_plot <- boxplot_panel + ridges_panel + patchwork::plot_layout(axis_titles = "collect")
@@ -246,13 +251,14 @@ plot_list_qc_microresp <- function(
           ggplot2::theme(legend.position = "none") +
           ggplot2::scale_x_discrete(limits = rev(c("", unique(subset_panel[[plate_id_col]])))) +
           ggplot2::xlab(plate_id_col) +
-          ggplot2::coord_flip()
+          ggplot2::coord_flip(ylim = value_range)
 
         ridges_panel <- subset_panel |>
           plot_ridges_values(
             value_col = value_col, y_col = plate_id_col,
             groups_col = plate_id_col, colour_col = NULL) +
           ggplot2::scale_y_discrete(limits = rev) +
+          ggplot2::coord_cartesian(xlim = value_range) +
           ggplot2::theme(legend.position = "none")
 
         panel_plot <- boxplot_panel + ridges_panel + patchwork::plot_layout(axis_titles = "collect")
