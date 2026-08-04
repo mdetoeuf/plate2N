@@ -1013,7 +1013,6 @@ Should there be too many plates for a proper visualization, split
 # plot outliers
 suspicious_extr |> 
   boxplot_outlier_extr(max_coeff = threshold) 
-#> Joining with `by = join_by(plate_id)`
 ```
 
 ![](blank-correction_files/figure-html/unnamed-chunk-27-1.png)
@@ -1324,7 +1323,6 @@ plot_blank_var_distrib(extr_avg_dbl)
 
 # plot outliers
 suspicious_extr_dbl |> boxplot_outlier_extr(max_coeff = 5) 
-#> Joining with `by = join_by(plate_id)`
 ```
 
 ![](blank-correction_files/figure-html/unnamed-chunk-36-2.png)
