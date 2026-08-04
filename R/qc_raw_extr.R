@@ -328,7 +328,8 @@ boxplot_outlier_extr <- function(
 
   # fix the absorbance-axis range across all panels, so plates are compared
   # fairly regardless of which panel they land in
-  abs_range <- range(suspicious_extractant[[value_col]], na.rm = TRUE)
+  # (0 is included since the plate-number labels are anchored there)
+  abs_range <- range(c(0, suspicious_extractant[[value_col]]), na.rm = TRUE)
 
   panel_plots <- list()
 
