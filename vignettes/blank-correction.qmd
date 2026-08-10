@@ -605,10 +605,10 @@ to_remove <- plate_ids |>
   # double rows for plates with 2 outliers
   dplyr::bind_rows(
     plate_ids |> dplyr::filter(plate_order %in% plate_with_2_outliers)) |> 
-  #remove plate without outliers
-  dplyr::filter_out(plate_order %in% plate_without_outliers) |> 
   #reorder plates (if some were doubled)
   dplyr::arrange(plate_order) |> 
+  #remove plate without outliers
+  dplyr::filter_out(plate_order %in% plate_without_outliers) |> 
   # add column with well ids from vector defined above
   dplyr::mutate(well_id = well_ids) |> 
   # remove plate_order(optional)
