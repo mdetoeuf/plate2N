@@ -46,13 +46,14 @@ boxplot_values <- function(
    # decide whether colour_col names an actual data column (map it as an
    # aesthetic) or is a literal colour/NULL (use it as a single fixed colour)
   colour_as_aesthetics <- FALSE
+  fixed_colour <- "purple"
 
   if (is.null(colour_col)) {
-     colour_col <- "purple"
    } else if (colour_col %in% names(data)) {
-     colour_col <- data[[colour_col]]
      colour_as_aesthetics <- TRUE
-  }
+   } else {
+     fixed_colour <- colour_col
+     }
 
   plot <- data |>
     # x-axis: one category per sample; y-axis: the value of interest
@@ -61,18 +62,17 @@ boxplot_values <- function(
     ggplot2::xlab(x_col) +
     # per-sample summary; individual wells (below) already show every
     # point labelled, so boxplot's own outlier markers would be redundant
-    ggplot2::geom_boxplot(outliers = FALSE) +
+    {if (colour_as_aesthetics) ggplot2::geom_boxplot(ggplot2::aes(fill = .data[[colour_col]]), outliers = FALSE, alpha = 0.3)} +
+    {if (!colour_as_aesthetics) ggplot2::geom_boxplot(outliers = FALSE)} +
     # one point per well, coloured either by the chosen column or by a
     # single fixed colour, depending on colour_as_aesthetics
-    {if (colour_as_aesthetics) ggplot2::geom_point(alpha = 0.4, ggplot2::aes(colour = colour_col))} +
-    {if (!colour_as_aesthetics) ggplot2::geom_point(alpha = 0.4, colour = colour_col)} +
-    # well-id labels, repelled apart to stay legible - this is what lets
-    # you read the exact well to remove straight off the plot
+    {if (colour_as_aesthetics) ggplot2::geom_point(alpha = 0.4, ggplot2::aes(colour = .data[[colour_col]]))} +
+    {if (!colour_as_aesthetics) ggplot2::geom_point(alpha = 0.4, colour = fixed_colour)} +
     {if (colour_as_aesthetics) ggrepel::geom_text_repel(
-      ggplot2::aes(label = .data[[label_col]], colour = colour_col),
+      ggplot2::aes(label = .data[[label_col]], colour = .data[[colour_col]]),
       size = 2, alpha = 1, min.segment.length = 1)} +
     {if (!colour_as_aesthetics) ggrepel::geom_text_repel(
-      ggplot2::aes(label = .data[[label_col]]), colour = colour_col,
+      ggplot2::aes(label = .data[[label_col]]), colour = fixed_colour,
       size = 2, alpha = 1, min.segment.length = 1)}
 
   return(plot)
@@ -425,9 +425,8 @@ plot_qc_sample_pair <- function(
     ggplot2::coord_flip(ylim = value_range) +
     ggplot2::xlab(NULL) +
     ggplot2::scale_x_discrete(limits = rev, expand = ggplot2::expansion(add = 0.6)) +
-    ggplot2::theme(
-      legend.position = legend_position,
-      axis.text.y = ggplot2::element_blank())
+    ggplot2::theme(axis.text.y = ggplot2::element_blank()) +
+    ggplot2::guides(colour = "none", fill = "none")
 
   # ridgeline: quickest way to visually spot an outlier sample. Axis text
   # centered so it reads naturally as belonging to both plots at once
@@ -438,9 +437,7 @@ plot_qc_sample_pair <- function(
     ggplot2::ylab(NULL) +
     ggplot2::coord_cartesian(xlim = value_range) +
     ggplot2::scale_y_discrete(limits = rev, expand = ggplot2::expansion(add = 0.6)) +
-    ggplot2::theme(
-      legend.position = legend_position,
-      axis.text.y = ggplot2::element_text(hjust = 0.5))
+    ggplot2::theme(axis.text.y = ggplot2::element_text(hjust = 0.5))
 
   # title defaults to y_col's name if not supplied; added here (before
   # wrap_elements() below) so it survives being nested into a larger
@@ -452,6 +449,11 @@ plot_qc_sample_pair <- function(
     patchwork::plot_annotation(
       title = pair_title,
       theme = ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)))
+
+  # legend position/visibility applied once, to the whole collected pair -
+  # this is what actually controls a merged legend's position (or hides
+  # it entirely, if "none"), unlike setting it on individual sub-plots
+  pair <- pair & ggplot2::theme(legend.position = legend_position)
 
   # flatten the pair into a single element (preserving its title) and draw
   # a border box around it, so the pair reads as one visual unit once
