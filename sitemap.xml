@@ -8,6 +8,7 @@
 <url><loc>https://mdetoeuf.github.io/plate2N/articles/import-tidy.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/articles/index.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/articles/microresp.html</loc></url>
+<url><loc>https://mdetoeuf.github.io/plate2N/articles/model-choice.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/articles/prepare_plates.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/articles/translate-abs.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/authors.html</loc></url>
@@ -28,6 +29,8 @@
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/extractant_average.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/failed_wells_example.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/failed_wells_template.html</loc></url>
+<url><loc>https://mdetoeuf.github.io/plate2N/reference/fit_curve_model.html</loc></url>
+<url><loc>https://mdetoeuf.github.io/plate2N/reference/fit_curve_models.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/index.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/join_abs_map.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/lm_output.html</loc></url>
@@ -42,7 +45,9 @@
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/plot_list_lm.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/plot_list_qc_microresp.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/plot_list_qc_samples.html</loc></url>
+<url><loc>https://mdetoeuf.github.io/plate2N/reference/plot_model_comparison.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/plot_qc_sample_pair.html</loc></url>
+<url><loc>https://mdetoeuf.github.io/plate2N/reference/plot_residual_comparison.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/plot_ridges_values.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/plot_std.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/qc_raw_abs.html</loc></url>
@@ -50,10 +55,12 @@
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/read_tecan.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/reg_join_abs.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/remove_wells.html</loc></url>
+<url><loc>https://mdetoeuf.github.io/plate2N/reference/review_model_choice.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/sample_corrected.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/skanit_to_tibble.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/std_blank_average.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/std_corrected.html</loc></url>
+<url><loc>https://mdetoeuf.github.io/plate2N/reference/std_corrected_TDN.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/std_dilution_average.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/suspicious_extr.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/suspicious_lm.html</loc></url>

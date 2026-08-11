@@ -40,6 +40,10 @@
   : Example of failed well table
 - [`failed_wells_template()`](https://mdetoeuf.github.io/plate2N/reference/failed_wells_template.md)
   : Generate a template to record "failed wells"
+- [`fit_curve_model()`](https://mdetoeuf.github.io/plate2N/reference/fit_curve_model.md)
+  : Fit one model (linear or polynomial) for a single standard curve
+- [`fit_curve_models()`](https://mdetoeuf.github.io/plate2N/reference/fit_curve_models.md)
+  : Fit both linear and polynomial models for one standard curve
 - [`join_abs_map()`](https://mdetoeuf.github.io/plate2N/reference/join_abs_map.md)
   : Merging 2 vertical plates into one
 - [`lm_output`](https://mdetoeuf.github.io/plate2N/reference/lm_output.md)
@@ -71,8 +75,13 @@
   into panels
 - [`plot_list_qc_samples()`](https://mdetoeuf.github.io/plate2N/reference/plot_list_qc_samples.md)
   : Build per-sample QC plots (boxplot + ridgeline pairs), paginated
+- [`plot_model_comparison()`](https://mdetoeuf.github.io/plate2N/reference/plot_model_comparison.md)
+  : Plot linear and polynomial model fits side by side for one or more
+  curves
 - [`plot_qc_sample_pair()`](https://mdetoeuf.github.io/plate2N/reference/plot_qc_sample_pair.md)
   : Boxplot + ridgeline pair for one chunk of samples
+- [`plot_residual_comparison()`](https://mdetoeuf.github.io/plate2N/reference/plot_residual_comparison.md)
+  : Plot residuals of linear vs. polynomial models for one curve
 - [`plot_ridges_values()`](https://mdetoeuf.github.io/plate2N/reference/plot_ridges_values.md)
   : Ridge-line density plot of values, grouped by sample
 - [`plot_std()`](https://mdetoeuf.github.io/plate2N/reference/plot_std.md)
@@ -88,6 +97,9 @@
   Absorbance Data (samples)
 - [`remove_wells()`](https://mdetoeuf.github.io/plate2N/reference/remove_wells.md)
   : Clean a tidy table from undesired wells
+- [`review_model_choice()`](https://mdetoeuf.github.io/plate2N/reference/review_model_choice.md)
+  : Review linear vs. polynomial model choice across several standard
+  curves
 - [`sample_corrected`](https://mdetoeuf.github.io/plate2N/reference/sample_corrected.md)
   : Example of Blank-corrected Absorbance Data (samples)
 - [`skanit_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/skanit_to_tibble.md)
@@ -96,6 +108,9 @@
   : Computing per-plate average for raw absorbance of the standard blank
 - [`std_corrected`](https://mdetoeuf.github.io/plate2N/reference/std_corrected.md)
   : Example of Blank-corrected Data for Standard Curve
+- [`std_corrected_TDN`](https://mdetoeuf.github.io/plate2N/reference/std_corrected_TDN.md)
+  : Blank-corrected standard curve data for a Total Dissolved Nitrogen
+  (TDN) experiment
 - [`std_dilution_average()`](https://mdetoeuf.github.io/plate2N/reference/std_dilution_average.md)
   : Compute per-dilution Averages for Standard Curves
 - [`suspicious_extr()`](https://mdetoeuf.github.io/plate2N/reference/suspicious_extr.md)

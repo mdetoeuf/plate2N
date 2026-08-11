@@ -10,5 +10,6 @@
 ### Other
 
 - [prepare_plates](https://mdetoeuf.github.io/plate2N/articles/prepare_plates.md):
-- [translate-abs](https://mdetoeuf.github.io/plate2N/articles/translate-abs.md):
+- [model-choice](https://mdetoeuf.github.io/plate2N/articles/model-choice.md):
 - [microresp](https://mdetoeuf.github.io/plate2N/articles/microresp.md):
+- [translate-abs](https://mdetoeuf.github.io/plate2N/articles/translate-abs.md):
