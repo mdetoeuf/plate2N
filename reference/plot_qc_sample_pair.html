@@ -80,7 +80,8 @@ box. Typically built once per chunk of samples by
 <span>  colour_col <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  scale <span class="op">=</span> <span class="fl">0.8</span>,</span>
 <span>  title <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  border_colour <span class="op">=</span> <span class="st">"grey80"</span></span>
+<span>  border_colour <span class="op">=</span> <span class="st">"grey80"</span>,</span>
+<span>  legend_position <span class="op">=</span> <span class="st">"none"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -136,6 +137,14 @@ shared axis. Defaults to <code>y_col</code>'s name if not given.</p></dd>
 <dt id="arg-border-colour">border_colour<a class="anchor" aria-label="anchor" href="#arg-border-colour"></a></dt>
 <dd><p>Colour of the border box drawn around the pair.
 Defaults to <code>"grey80"</code>.</p></dd>
+
+
+<dt id="arg-legend-position">legend_position<a class="anchor" aria-label="anchor" href="#arg-legend-position"></a></dt>
+<dd><p>Standard <code>ggplot2</code> <code>legend.position</code> value (e.g.
+<code>"none"</code>, <code>"right"</code>, <code>"bottom"</code>, <code>"left"</code>, <code>"top"</code>), applied to both
+the boxplot and the ridge, with duplicate legends automatically
+collected into one shared legend for the pair. Defaults to
+<code>"none"</code> (no legend shown).</p></dd>
 
 </dl></div>
     <div class="section level2">

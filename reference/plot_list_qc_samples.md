@@ -21,6 +21,7 @@ plot_list_qc_samples(
   value_range = NULL,
   scale = 0.8,
   gap_size = 0.002,
+  legend_position = "none",
   title = NULL
 )
 ```
@@ -79,6 +80,13 @@ plot_list_qc_samples(
   Relative width of the visual gap between chunks, passed to
   [`add_spacers()`](https://mdetoeuf.github.io/plate2N/reference/add_spacers.md).
   Defaults to `0.002`.
+
+- legend_position:
+
+  Standard `ggplot2` `legend.position` value (e.g. `"none"`, `"right"`,
+  `"bottom"`, `"left"`, `"top"`), applied to both the boxplot and the
+  ridge, with duplicate legends automatically collected into one shared
+  legend for the pair. Defaults to `"none"` (no legend shown).
 
 - title:
 

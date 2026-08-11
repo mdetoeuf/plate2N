@@ -75,6 +75,7 @@ abs-to-conc's downstream per-sample averaging).</p>
 <span>  value_range <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  scale <span class="op">=</span> <span class="fl">0.8</span>,</span>
 <span>  gap_size <span class="op">=</span> <span class="fl">0.002</span>,</span>
+<span>  legend_position <span class="op">=</span> <span class="st">"none"</span>,</span>
 <span>  title <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -135,6 +136,14 @@ to <code>0.8</code>.</p></dd>
 <dt id="arg-gap-size">gap_size<a class="anchor" aria-label="anchor" href="#arg-gap-size"></a></dt>
 <dd><p>Relative width of the visual gap between chunks,
 passed to <code><a href="add_spacers.html">add_spacers()</a></code>. Defaults to <code>0.002</code>.</p></dd>
+
+
+<dt id="arg-legend-position">legend_position<a class="anchor" aria-label="anchor" href="#arg-legend-position"></a></dt>
+<dd><p>Standard <code>ggplot2</code> <code>legend.position</code> value (e.g.
+<code>"none"</code>, <code>"right"</code>, <code>"bottom"</code>, <code>"left"</code>, <code>"top"</code>), applied to both
+the boxplot and the ridge, with duplicate legends automatically
+collected into one shared legend for the pair. Defaults to
+<code>"none"</code> (no legend shown).</p></dd>
 
 
 <dt id="arg-title">title<a class="anchor" aria-label="anchor" href="#arg-title"></a></dt>

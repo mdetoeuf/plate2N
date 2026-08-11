@@ -25,7 +25,8 @@ plot_qc_sample_pair(
   colour_col = NULL,
   scale = 0.8,
   title = NULL,
-  border_colour = "grey80"
+  border_colour = "grey80",
+  legend_position = "none"
 )
 ```
 
@@ -83,6 +84,13 @@ plot_qc_sample_pair(
 
   Colour of the border box drawn around the pair. Defaults to
   `"grey80"`.
+
+- legend_position:
+
+  Standard `ggplot2` `legend.position` value (e.g. `"none"`, `"right"`,
+  `"bottom"`, `"left"`, `"top"`), applied to both the boxplot and the
+  ridge, with duplicate legends automatically collected into one shared
+  legend for the pair. Defaults to `"none"` (no legend shown).
 
 ## Value
 
