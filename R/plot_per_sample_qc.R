@@ -418,7 +418,7 @@ plot_qc_sample_pair <- function(
     boxplot_values(x_col = y_col, value_col = value_col, colour_col = colour_col) +
     ggplot2::coord_flip(ylim = value_range) +
     ggplot2::xlab(NULL) +
-    ggplot2::scale_x_discrete(expand = ggplot2::expansion(add = 0.6)) +
+    ggplot2::scale_x_discrete(limits = rev, expand = ggplot2::expansion(add = 0.6)) +
     ggplot2::theme(
       legend.position = "none",
       axis.text.y = ggplot2::element_blank())
@@ -431,7 +431,7 @@ plot_qc_sample_pair <- function(
       groups_col = y_col, colour_col = colour_col, scale = scale) +
     ggplot2::ylab(NULL) +
     ggplot2::coord_cartesian(xlim = value_range) +
-    ggplot2::scale_y_discrete(expand = ggplot2::expansion(add = 0.6)) +
+    ggplot2::scale_y_discrete(limits = rev, expand = ggplot2::expansion(add = 0.6)) +
     ggplot2::theme(
       legend.position = "none",
       axis.text.y = ggplot2::element_text(hjust = 0.5))
