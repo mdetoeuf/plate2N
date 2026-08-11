@@ -17,7 +17,7 @@ boxplot_values(
   data,
   x_col = "sample_id",
   value_col = "conc_mgN_L",
-  colour = NULL,
+  colour_col = NULL,
   label_col = "well_id"
 )
 ```
@@ -27,7 +27,7 @@ boxplot_values(
 - data:
 
   A tibble containing the columns referenced by `x_col`, `value_col`,
-  `label_col`, and (if used as a column name) `colour`.
+  `label_col`, and (if used as a column name) `colour_col`.
 
 - x_col:
 
@@ -45,7 +45,7 @@ boxplot_values(
   before vs. after concentration inference isn't exactly equivalent
   (though the difference is typically small).
 
-- colour:
+- colour_col:
 
   If `NULL` (the default), all points are coloured `"purple"`.
   Otherwise, either a literal colour name (applied to every point) or

@@ -31,6 +31,9 @@ concentrations.
 
 ## All functions
 
+- [`add_spacers()`](https://mdetoeuf.github.io/plate2N/reference/add_spacers.md)
+  : Interleave plots with spacer panels for visual gaps in patchwork
+  layouts
 - [`blank_correct_abs()`](https://mdetoeuf.github.io/plate2N/reference/blank_correct_abs.md)
   : Transform Raw Absorbance Data into Blank-corrected Absorbance
 - [`boxplot_outlier_extr()`](https://mdetoeuf.github.io/plate2N/reference/boxplot_outlier_extr.md)
@@ -95,6 +98,10 @@ concentrations.
 - [`plot_list_qc_microresp()`](https://mdetoeuf.github.io/plate2N/reference/plot_list_qc_microresp.md)
   : Build per-substrate/treatment QC plots for MicroResp data, paginated
   into panels
+- [`plot_list_qc_samples()`](https://mdetoeuf.github.io/plate2N/reference/plot_list_qc_samples.md)
+  : Build per-sample QC plots (boxplot + ridgeline pairs), paginated
+- [`plot_qc_sample_pair()`](https://mdetoeuf.github.io/plate2N/reference/plot_qc_sample_pair.md)
+  : Boxplot + ridgeline pair for one chunk of samples
 - [`plot_ridges_values()`](https://mdetoeuf.github.io/plate2N/reference/plot_ridges_values.md)
   : Ridge-line density plot of values, grouped by sample
 - [`plot_std()`](https://mdetoeuf.github.io/plate2N/reference/plot_std.md)

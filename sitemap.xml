@@ -12,6 +12,7 @@
 <url><loc>https://mdetoeuf.github.io/plate2N/articles/translate-abs.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/authors.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/index.html</loc></url>
+<url><loc>https://mdetoeuf.github.io/plate2N/reference/add_spacers.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/blank_correct_abs.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/boxplot_outlier_extr.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/boxplot_values.html</loc></url>
@@ -40,6 +41,8 @@
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/plot_blank_var_distrib.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/plot_list_lm.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/plot_list_qc_microresp.html</loc></url>
+<url><loc>https://mdetoeuf.github.io/plate2N/reference/plot_list_qc_samples.html</loc></url>
+<url><loc>https://mdetoeuf.github.io/plate2N/reference/plot_qc_sample_pair.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/plot_ridges_values.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/plot_std.html</loc></url>
 <url><loc>https://mdetoeuf.github.io/plate2N/reference/qc_raw_abs.html</loc></url>
