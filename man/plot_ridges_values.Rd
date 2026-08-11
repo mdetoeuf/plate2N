@@ -9,7 +9,8 @@ plot_ridges_values(
   value_col = "conc_mgN_L",
   groups_col = "sample_id",
   colour_col = NULL,
-  y_col = "sample_id"
+  y_col = "sample_id",
+  scale = 1
 )
 }
 \arguments{
@@ -27,12 +28,20 @@ value). Defaults to \code{"sample_id"} — replace with whatever column
 identifies your own sample units.}
 
 \item{colour_col}{If \code{NULL}, all ridges are drawn in a single, uniform
-colour. Otherwise, the name of a column in \code{data} used for colour/fill
+colour. Otherwise, either a literal colour name (applied to every
+ridge) or the name of a column in \code{data} used for colour/fill
 aesthetics (e.g. to distinguish ridges by run or batch). Defaults to
 \code{NULL}.}
 
 \item{y_col}{Name of the column defining the vertical ridge position.
 Defaults to \code{"sample_id"}.}
+
+\item{scale}{How far each ridge is allowed to visually extend beyond its
+own row (passed to \code{ggridges::geom_density_ridges()}). Values above 1
+let curves overlap into neighboring rows (the classic ridgeline
+look); values at or below 1 keep each curve within its own row,
+useful when ridges need to align precisely with the rows of a paired
+plot (see \code{\link[=boxplot_values]{boxplot_values()}}). Defaults to \code{1}.}
 }
 \value{
 A ggplot object.

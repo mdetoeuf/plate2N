@@ -8,13 +8,13 @@ boxplot_values(
   data,
   x_col = "sample_id",
   value_col = "conc_mgN_L",
-  colour = NULL,
+  colour_col = NULL,
   label_col = "well_id"
 )
 }
 \arguments{
 \item{data}{A tibble containing the columns referenced by \code{x_col},
-\code{value_col}, \code{label_col}, and (if used as a column name) \code{colour}.}
+\code{value_col}, \code{label_col}, and (if used as a column name) \code{colour_col}.}
 
 \item{x_col}{Name of the column identifying samples, plotted on the x-axis
 (coerced to a factor). Defaults to \code{"sample_id"} — replace with
@@ -28,7 +28,7 @@ identical results either way; for a polynomial model, averaging
 absorbance before vs. after concentration inference isn't exactly
 equivalent (though the difference is typically small).}
 
-\item{colour}{If \code{NULL} (the default), all points are coloured
+\item{colour_col}{If \code{NULL} (the default), all points are coloured
 \code{"purple"}. Otherwise, either a literal colour name (applied to every
 point) or the name of a column in \code{data}, in which case points are
 coloured according to that column's values.}
