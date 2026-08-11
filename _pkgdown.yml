@@ -15,5 +15,6 @@ articles:
   navbar: Other
   contents:
   - prepare_plates
-  - translate-abs
+  - model-choice
   - microresp
+  - translate-abs
