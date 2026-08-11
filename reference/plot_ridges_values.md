@@ -59,7 +59,7 @@ plot_ridges_values(
 
   How far each ridge is allowed to visually extend beyond its own row
   (passed to
-  [`ggridges::geom_density_ridges()`](https://wilkelab.org/ggridges/reference/geom_density_ridges.html)).
+  [`ggridges::geom_density_ridges()`](https://rdrr.io/pkg/ggridges/man/geom_density_ridges.html)).
   Values above 1 let curves overlap into neighboring rows (the classic
   ridgeline look); values at or below 1 keep each curve within its own
   row, useful when ridges need to align precisely with the rows of a
