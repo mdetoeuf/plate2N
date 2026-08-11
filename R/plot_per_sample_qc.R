@@ -387,6 +387,11 @@ add_spacers <- function(plots, gap_size = 0.002) {
 #'     shared axis. Defaults to `y_col`'s name if not given.
 #' @param border_colour Colour of the border box drawn around the pair.
 #'     Defaults to `"grey80"`.
+#' @param legend_position Standard `ggplot2` `legend.position` value (e.g.
+#'     `"none"`, `"right"`, `"bottom"`, `"left"`, `"top"`), applied to both
+#'     the boxplot and the ridge, with duplicate legends automatically
+#'     collected into one shared legend for the pair. Defaults to
+#'     `"none"` (no legend shown).
 #'
 #' @returns A single combined plot (a flattened `patchwork` object).
 #' @seealso [plot_list_qc_samples()], [boxplot_values()], [plot_ridges_values()]
@@ -406,7 +411,8 @@ plot_qc_sample_pair <- function(
     colour_col = NULL,
     scale = 0.8,
     title = NULL,
-    border_colour = "grey80"
+    border_colour = "grey80",
+    legend_position = "none"
 ) {
   # keep only the samples assigned to this chunk/page
   subset_chunk <- data |> dplyr::filter(.data[[y_col]] %in% chunk)
@@ -420,7 +426,7 @@ plot_qc_sample_pair <- function(
     ggplot2::xlab(NULL) +
     ggplot2::scale_x_discrete(limits = rev, expand = ggplot2::expansion(add = 0.6)) +
     ggplot2::theme(
-      legend.position = "none",
+      legend.position = legend_position,
       axis.text.y = ggplot2::element_blank())
 
   # ridgeline: quickest way to visually spot an outlier sample. Axis text
@@ -433,7 +439,7 @@ plot_qc_sample_pair <- function(
     ggplot2::coord_cartesian(xlim = value_range) +
     ggplot2::scale_y_discrete(limits = rev, expand = ggplot2::expansion(add = 0.6)) +
     ggplot2::theme(
-      legend.position = "none",
+      legend.position = legend_position,
       axis.text.y = ggplot2::element_text(hjust = 0.5))
 
   # title defaults to y_col's name if not supplied; added here (before
@@ -442,7 +448,7 @@ plot_qc_sample_pair <- function(
   # objects unless the composition is flattened with wrap_elements() first
   pair_title <- if (is.null(title)) y_col else title
 
-  pair <- patchwork::wrap_plots(box, ridge, ncol = 2, axis_titles = "collect") +
+  pair <- patchwork::wrap_plots(box, ridge, ncol = 2, axis_titles = "collect", guides = "collect") +
     patchwork::plot_annotation(
       title = pair_title,
       theme = ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)))
@@ -500,6 +506,11 @@ plot_qc_sample_pair <- function(
 #'     to `0.8`.
 #' @param gap_size Relative width of the visual gap between chunks,
 #'     passed to [add_spacers()]. Defaults to `0.002`.
+#' @param legend_position Standard `ggplot2` `legend.position` value (e.g.
+#'     `"none"`, `"right"`, `"bottom"`, `"left"`, `"top"`), applied to both
+#'     the boxplot and the ridge, with duplicate legends automatically
+#'     collected into one shared legend for the pair. Defaults to
+#'     `"none"` (no legend shown).
 #' @param title Optional title, passed to every pair (identical across
 #'     chunks). Defaults to `y_col`'s name if not given.
 #'
@@ -522,6 +533,7 @@ plot_list_qc_samples <- function(
     value_range = NULL,
     scale = 0.8,
     gap_size = 0.002,
+    legend_position = "none",
     title = NULL
 ) {
   # catch a common mistake early: y_col/value_col arguments swapped
@@ -556,7 +568,7 @@ plot_list_qc_samples <- function(
     sample_chunks, plot_qc_sample_pair,
     data = data, y_col = y_col, value_col = value_col,
     value_range = value_range, colour_col = colour_col,
-    scale = scale, title = title)
+    scale = scale, title = title, legend_position = legend_position)
 
   # combine all chunks into one row, with a small visual gap between them
   spaced <- add_spacers(chunk_plots, gap_size = gap_size)

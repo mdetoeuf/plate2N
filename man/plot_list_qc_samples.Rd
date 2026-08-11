@@ -14,6 +14,7 @@ plot_list_qc_samples(
   value_range = NULL,
   scale = 0.8,
   gap_size = 0.002,
+  legend_position = "none",
   title = NULL
 )
 }
@@ -53,6 +54,12 @@ to \code{0.8}.}
 
 \item{gap_size}{Relative width of the visual gap between chunks,
 passed to \code{\link[=add_spacers]{add_spacers()}}. Defaults to \code{0.002}.}
+
+\item{legend_position}{Standard \code{ggplot2} \code{legend.position} value (e.g.
+\code{"none"}, \code{"right"}, \code{"bottom"}, \code{"left"}, \code{"top"}), applied to both
+the boxplot and the ridge, with duplicate legends automatically
+collected into one shared legend for the pair. Defaults to
+\code{"none"} (no legend shown).}
 
 \item{title}{Optional title, passed to every pair (identical across
 chunks). Defaults to \code{y_col}'s name if not given.}

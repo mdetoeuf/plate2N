@@ -13,7 +13,8 @@ plot_qc_sample_pair(
   colour_col = NULL,
   scale = 0.8,
   title = NULL,
-  border_colour = "grey80"
+  border_colour = "grey80",
+  legend_position = "none"
 )
 }
 \arguments{
@@ -48,6 +49,12 @@ shared axis. Defaults to \code{y_col}'s name if not given.}
 
 \item{border_colour}{Colour of the border box drawn around the pair.
 Defaults to \code{"grey80"}.}
+
+\item{legend_position}{Standard \code{ggplot2} \code{legend.position} value (e.g.
+\code{"none"}, \code{"right"}, \code{"bottom"}, \code{"left"}, \code{"top"}), applied to both
+the boxplot and the ridge, with duplicate legends automatically
+collected into one shared legend for the pair. Defaults to
+\code{"none"} (no legend shown).}
 }
 \value{
 A single combined plot (a flattened \code{patchwork} object).
