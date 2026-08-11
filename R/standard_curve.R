@@ -283,15 +283,39 @@ extract_curve <- function(
 #' Uses the `ggplot2` package.
 #'
 #' @param std_data The table containing the data to be plotted. Must contain the
-#'     columns `std_conc`, `abs`, `plate_id` and `well_id`. If the plot shows too
-#'     many curves, consider filtering the input data frame or adding a ggplot layer
-#'     to facet (see `?facet_wrap()` or `?facet_grid()`).
+#'     columns referenced by `conc_col`, `value_col`, `group_col`, `label_col`,
+#'     and `unit_col`. If the plot shows too many curves, consider filtering the
+#'     input data frame or adding a ggplot layer to facet
+#'     (see `?facet_wrap()` or `?facet_grid()`).
 #' @param through_origin Whether the smooth curve should be constrained to go
 #'     through the origin. Default to TRUE, which only makes sense for absorbance
 #'     data that has already been blank-corrected
 #' @param model Which model to use for the smooth curve. Accepts either `linear`
 #'     (default) or `poly` for polynomial model (y = ax + bx^2 + c, with c = 0
 #'     if `through_origin = TRUE`)
+#' @param conc_col Name of the column containing concentration. Defaults to
+#'     `"std_conc"`.
+#' @param value_col Name of the column containing absorbance. Defaults to
+#'     `"abs"`.
+#' @param group_col Name of the column used to group/colour/fill curves
+#'     (e.g. one curve per plate). Defaults to `"column"`.
+#' @param colour_col Name of the column used for colour/fill. If `NULL`
+#'     (the default), uses `group_col` (same variable drives both
+#'     grouping and colour, as originally). Set independently to colour
+#'     by something else meaningful (e.g. date, dilution factor) while
+#'     still fitting one regression line per `group_col`.
+#' @param label_col Name of the column used to label individual points.
+#'     Defaults to `"well_id"`.
+#' @param unit_col Optional: how to label the concentration unit on the
+#'     x-axis. `NULL` (the default) shows no unit at all. Otherwise,
+#'     either the name of a column in `std_data` to read the unit from,
+#'     or a literal string (e.g. `"mg/L"`) applied uniformly.
+#' @param smooth_alpha Transparency of the fitted smooth-curve
+#'     ribbon/line. Defaults to `0.3`.
+#' @param smooth_linewidth Width of the fitted smooth-curve line.
+#'     Defaults to `0.5`.
+#' @param smooth_linetype Line type of the fitted smooth-curve line
+#'     (`ggplot2` linetype code). Defaults to `2` (dashed).
 #'
 #' @import ggplot2
 #'
@@ -306,26 +330,50 @@ extract_curve <- function(
 #'   extract_std_data() |>
 #'   dplyr::select(!std_conc) |>
 #'   dplyr::left_join(curve_concentration, by = dplyr::join_by(row, dataset, plate_id))
-#' plot_std(std_data, through_origin = FALSE, model = "linear") + ggplot2::facet_wrap(dataset~plate_id)
+#' plot_std(std_data, through_origin = FALSE, model = "linear", unit_col = "std_unit") +
+#'   ggplot2::facet_wrap(dataset~plate_id)
 plot_std <- function(
     std_data,
     through_origin = TRUE,
-    model = "linear"
-    #  show_pval = FALSE,
-    # show_R2 = FALSE
+    model = "linear",
+    conc_col = "std_conc",
+    value_col = "abs",
+    group_col = "column",
+    colour_col = NULL,
+    label_col = "well_id",
+    unit_col = NULL,
+    smooth_alpha = 0.3,
+    smooth_linewidth = 0.5,
+    smooth_linetype = 2
 ) {
+  # colour_col defaults to group_col when not given, preserving original
+  # behaviour (same variable drives both grouping and colour); set it
+  # independently to colour by something else meaningful (e.g. date,
+  # dilution factor) while still fitting one line per group_col
+  if (is.null(colour_col)) colour_col <- group_col
 
-  # set parameters
-  std_unit <- std_data$std_unit
-  y_range <- max(as.numeric(std_data$abs))-min(as.numeric(std_data$abs))
+  # build the x-axis label, optionally including a unit: unit_col can be
+  # NULL (no unit shown, matches original behaviour), a literal string
+  # applied uniformly (e.g. "mg/L"), or the name of a column to read the
+  # unit from
+  if (is.null(unit_col)) {
+    x_label <- "Concentration of Standard Curve"
+    } else if (unit_col %in% names(std_data)) {
+      unit_text <- paste(unique(std_data[[unit_col]]), collapse = ", ")
+      x_label <- paste0("Concentration of Standard Curve [", unit_text, "]")
+      } else {
+        x_label <- paste0("Concentration of Standard Curve [", unit_col, "]")
+        }
+
+  y_range <- max(as.numeric(std_data[[value_col]])) - min(as.numeric(std_data[[value_col]]))
 
   std_data |>
     ggplot2::ggplot(ggplot2::aes(
-      x = as.numeric(std_conc), y = as.numeric(abs),
-      group = column, colour = column, fill = column)) +
+      x = as.numeric(.data[[conc_col]]), y = as.numeric(.data[[value_col]]),
+      group = .data[[group_col]], colour = .data[[colour_col]], fill = .data[[colour_col]])) +
     ggplot2::theme_minimal() +
     ggplot2::ylab("Absorbance") +
-    ggplot2::xlab(paste0("Concentration of Standard Curve")) +
+    ggplot2::xlab(x_label) +
     ggplot2::geom_smooth(
       method = "lm",
       formula =
@@ -333,13 +381,12 @@ plot_std <- function(
       else if (through_origin & model == "poly") (y ~ 0 + x + I(x^2))
       else if (model == "linear") (y ~x)
       else if (model == "poly") (y ~ x + I(x^2)),
-      alpha = 0.3,
-      linewidth = 0.5, linetype = 2) +
+      alpha = smooth_alpha,
+      linewidth = smooth_linewidth, linetype = smooth_linetype) +
     #geom_line()
-    ggplot2::geom_point(aes(colour = column)) +
-    # ggplot2::geom_line(ggplot2::aes(colour = column)) +
+    ggplot2::geom_point(ggplot2::aes(colour = .data[[colour_col]])) +
     ggplot2::geom_text(
-      ggplot2::aes(label = well_id, colour = column),
+      ggplot2::aes(label = .data[[label_col]], colour = .data[[colour_col]]),
       alpha = 1, position = ggplot2::position_nudge(y = y_range/20),
       size = 4, fontface = "plain")
 }

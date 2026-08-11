@@ -4,13 +4,27 @@
 \alias{plot_std}
 \title{Display one or more standard curve(s)}
 \usage{
-plot_std(std_data, through_origin = TRUE, model = "linear")
+plot_std(
+  std_data,
+  through_origin = TRUE,
+  model = "linear",
+  conc_col = "std_conc",
+  value_col = "abs",
+  group_col = "column",
+  colour_col = NULL,
+  label_col = "well_id",
+  unit_col = NULL,
+  smooth_alpha = 0.3,
+  smooth_linewidth = 0.5,
+  smooth_linetype = 2
+)
 }
 \arguments{
 \item{std_data}{The table containing the data to be plotted. Must contain the
-columns \code{std_conc}, \code{abs}, \code{plate_id} and \code{well_id}. If the plot shows too
-many curves, consider filtering the input data frame or adding a ggplot layer
-to facet (see \code{?facet_wrap()} or \code{?facet_grid()}).}
+columns referenced by \code{conc_col}, \code{value_col}, \code{group_col}, \code{label_col},
+and \code{unit_col}. If the plot shows too many curves, consider filtering the
+input data frame or adding a ggplot layer to facet
+(see \code{?facet_wrap()} or \code{?facet_grid()}).}
 
 \item{through_origin}{Whether the smooth curve should be constrained to go
 through the origin. Default to TRUE, which only makes sense for absorbance
@@ -19,6 +33,38 @@ data that has already been blank-corrected}
 \item{model}{Which model to use for the smooth curve. Accepts either \code{linear}
 (default) or \code{poly} for polynomial model (y = ax + bx^2 + c, with c = 0
 if \code{through_origin = TRUE})}
+
+\item{conc_col}{Name of the column containing concentration. Defaults to
+\code{"std_conc"}.}
+
+\item{value_col}{Name of the column containing absorbance. Defaults to
+\code{"abs"}.}
+
+\item{group_col}{Name of the column used to group/colour/fill curves
+(e.g. one curve per plate). Defaults to \code{"column"}.}
+
+\item{colour_col}{Name of the column used for colour/fill. If \code{NULL}
+(the default), uses \code{group_col} (same variable drives both
+grouping and colour, as originally). Set independently to colour
+by something else meaningful (e.g. date, dilution factor) while
+still fitting one regression line per \code{group_col}.}
+
+\item{label_col}{Name of the column used to label individual points.
+Defaults to \code{"well_id"}.}
+
+\item{unit_col}{Optional: how to label the concentration unit on the
+x-axis. \code{NULL} (the default) shows no unit at all. Otherwise,
+either the name of a column in \code{std_data} to read the unit from,
+or a literal string (e.g. \code{"mg/L"}) applied uniformly.}
+
+\item{smooth_alpha}{Transparency of the fitted smooth-curve
+ribbon/line. Defaults to \code{0.3}.}
+
+\item{smooth_linewidth}{Width of the fitted smooth-curve line.
+Defaults to \code{0.5}.}
+
+\item{smooth_linetype}{Line type of the fitted smooth-curve line
+(\code{ggplot2} linetype code). Defaults to \code{2} (dashed).}
 }
 \value{
 A plot of one or several standard curves.
@@ -35,5 +81,6 @@ std_data <- raw_meta |>
   extract_std_data() |>
   dplyr::select(!std_conc) |>
   dplyr::left_join(curve_concentration, by = dplyr::join_by(row, dataset, plate_id))
-plot_std(std_data, through_origin = FALSE, model = "linear") + ggplot2::facet_wrap(dataset~plate_id)
+plot_std(std_data, through_origin = FALSE, model = "linear", unit_col = "std_unit") +
+  ggplot2::facet_wrap(dataset~plate_id)
 }

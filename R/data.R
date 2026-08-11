@@ -241,4 +241,33 @@
 #'
 "dbl_extr_plate"
 
-
+#' Blank-corrected standard curve data for a Total Dissolved Nitrogen (TDN) experiment
+#'
+#' Example dataset illustrating a case where a polynomial model fits
+#' better than a linear one: standard curve concentrations were
+#' increased ten-fold compared to a typical N-dosage experiment,
+#' producing highly concentrated solutions and absorbance values above
+#' 3. Used throughout the `abs-to-conc` vignette to illustrate choosing
+#' between a linear and polynomial model, and as example data for
+#' [fit_curve_models()], [plot_model_comparison()],
+#' [plot_residual_comparison()], and [review_model_choice()].
+#'
+#' @format A tibble with 224 rows and 13 columns:
+#' \describe{
+#'   \item{row}{Well row letter (A-H) on the 96-well plate.}
+#'   \item{column}{Well column number (1-12) on the 96-well plate.}
+#'   \item{well_id}{Well identifier (row + column, e.g. "B1").}
+#'   \item{unique_well_id}{Well identifier combined with `plate_id`, unique across the dataset.}
+#'   \item{dataset}{Name of the dataset ("TDN" throughout).}
+#'   \item{plate_id}{Identifier of the physical plate.}
+#'   \item{unique_curve_id}{Identifier of the standard curve a well belongs to (a plate can hold more than one curve).}
+#'   \item{map}{Well mapping/type (e.g. "Std" for standard curve wells).}
+#'   \item{abs_corrected}{Blank-corrected absorbance.}
+#'   \item{std_sp}{Standard curve species/analyte (e.g. "NO3").}
+#'   \item{std_unit}{Unit of the standard curve concentration.}
+#'   \item{date}{Date of the measurement.}
+#'   \item{std_conc}{Standard curve concentration.}
+#' }
+#' @source Example data included with the package for demonstration and
+#'     testing purposes.
+"std_corrected_TDN"
