@@ -6,6 +6,11 @@
 \usage{
 qc_raw_abs(
   data,
+  value_col = "abs",
+  map_col = "map",
+  dataset_col = "dataset",
+  plate_id_col = "plate_id",
+  well_id_col = "well_id",
   min_abs = 0.1,
   max_abs = 1,
   empty_wells = "empty",
@@ -19,7 +24,19 @@ qc_raw_abs(
 }
 \arguments{
 \item{data}{Tibble, in a similar form to our \code{\link{tidy_table}}.
-In particular, columns \code{map}, \code{abs}, \code{dataset}, \code{plate_id}, \code{well_id} must be present and named so.}
+In particular, the columns referenced by \code{map_col}, \code{value_col},
+\code{dataset_col}, \code{plate_id_col}, and \code{well_id_col} must be present.}
+
+\item{value_col}{Name of the column containing absorbance (or another
+numeric value you'd like to QC). Defaults to \code{"abs"}.}
+
+\item{map_col}{Name of the column containing well mapping/type
+information, used to identify empty wells. Defaults to \code{"map"}.}
+
+\item{dataset_col, plate_id_col, well_id_col}{Names of the columns
+identifying dataset, plate, and well — used to report which wells
+are suspicious. Default to \code{"dataset"}, \code{"plate_id"}, and
+\code{"well_id"} respectively.}
 
 \item{min_abs, max_abs}{Lowest and highest accepted value for absorbance, default at 0.1 and 1, respectively.}
 
@@ -36,7 +53,9 @@ Default is \code{TRUE}. Note that the next arguments are only relevant is \code{
 \item{plot_binwidth}{To set the binwidth of the histogram. Default is 0.01}
 
 \item{plot_col_facet}{Which column to use to facet the plots. For no facetting,
-choose \code{plot_col_facet = "none"} (For now, only facet with 1 axis is possible)}
+use \code{NULL} (the legacy \code{"none"} string is still accepted too, for backward
+compatibility). Defaults to \code{"dataset"}. (For now, only facet with 1 axis
+is possible)}
 
 \item{export_plot}{Defaults to null. Set it to a string to save the plot in the global environment,
 the string will name the object (e.g., \code{export_plot = "abs_distrib"} will save an object called \code{abs_distrib})}
@@ -54,8 +73,14 @@ Note that values lower than 0.1 are not rare, especially for blank and lower val
 }
 \examples{
 # bring some NA (abs) and empty wells in tidy_table to check that those wells are removed
-data <- tidy_table
+data <- tidy_plates
 data$abs[1] <- NA
 data$map[2] <- "empty"
 qc_raw_abs(data)
+
+# facetting the histogram: split by any column with a few distinct
+# values. Here we create artificial groups just to illustrate.
+data_grouped <- tidy_plates |>
+  dplyr::mutate(dataset = rep(c("A", "B", "C"), length.out = dplyr::n()))
+qc_raw_abs(data_grouped, plot_col_facet = "dataset")
 }

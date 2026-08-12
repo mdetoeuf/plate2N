@@ -1,4 +1,4 @@
-utils::globalVariables(c("map", "abs", "dataset", "plate_id", "well_id"))
+#utils::globalVariables(c("map", "abs", "dataset", "plate_id", "well_id"))
 
 #' Quality Check (QC) of raw absorbance data
 #'
@@ -8,7 +8,16 @@ utils::globalVariables(c("map", "abs", "dataset", "plate_id", "well_id"))
 #' Note that values lower than 0.1 are not rare, especially for blank and lower values in the standard curve.
 #'
 #' @param data Tibble, in a similar form to our [`plate2N::tidy_table`].
-#'     In particular, columns `map`, `abs`, `dataset`, `plate_id`, `well_id` must be present and named so.
+#'     In particular, the columns referenced by `map_col`, `value_col`,
+#'     `dataset_col`, `plate_id_col`, and `well_id_col` must be present.
+#' @param value_col Name of the column containing absorbance (or another
+#'     numeric value you'd like to QC). Defaults to `"abs"`.
+#' @param map_col Name of the column containing well mapping/type
+#'     information, used to identify empty wells. Defaults to `"map"`.
+#' @param dataset_col,plate_id_col,well_id_col Names of the columns
+#'     identifying dataset, plate, and well — used to report which wells
+#'     are suspicious. Default to `"dataset"`, `"plate_id"`, and
+#'     `"well_id"` respectively.
 #' @param empty_wells Character string corresponding to how empty wells are described in the plate mapping.
 #'     Defaults to "empty", can also be a vector containing several values. Note that wells described as `NA`
 #'     in the map column will also be ignored.
@@ -19,11 +28,11 @@ utils::globalVariables(c("map", "abs", "dataset", "plate_id", "well_id"))
 #'     Default is `TRUE`. Note that the next arguments are only relevant is `show_plot = TRUE`.
 #' @param plot_binwidth To set the binwidth of the histogram. Default is 0.01
 #' @param plot_col_facet Which column to use to facet the plots. For no facetting,
-#'     choose `plot_col_facet = "none"` (For now, only facet with 1 axis is possible)
+#'     use `NULL` (the legacy `"none"` string is still accepted too, for backward
+#'     compatibility). Defaults to `"dataset"`. (For now, only facet with 1 axis
+#'     is possible)
 #' @param export_plot Defaults to null. Set it to a string to save the plot in the global environment,
 #'     the string will name the object (e.g., `export_plot = "abs_distrib"` will save an object called `abs_distrib`)
-#'
-#' @import dplyr ggplot2 tidyselect
 #'
 #' @returns A table with 5 columns.
 #'     The first 3 (dataset, plate_id, well_id) allow the unique identification of suspicious wells
@@ -32,12 +41,23 @@ utils::globalVariables(c("map", "abs", "dataset", "plate_id", "well_id"))
 #'
 #' @examples
 #' # bring some NA (abs) and empty wells in tidy_table to check that those wells are removed
-#' data <- tidy_table
+#' data <- tidy_plates
 #' data$abs[1] <- NA
 #' data$map[2] <- "empty"
 #' qc_raw_abs(data)
+#'
+#' # facetting the histogram: split by any column with a few distinct
+#' # values. Here we create artificial groups just to illustrate.
+#' data_grouped <- tidy_plates |>
+#'   dplyr::mutate(dataset = rep(c("A", "B", "C"), length.out = dplyr::n()))
+#' qc_raw_abs(data_grouped, plot_col_facet = "dataset")
 qc_raw_abs <- function(
-    data, # data = tidy_table
+    data,
+    value_col = "abs",
+    map_col = "map",
+    dataset_col = "dataset",
+    plate_id_col = "plate_id",
+    well_id_col = "well_id",
     min_abs = 0.1,
     max_abs = 1,
     empty_wells = "empty",
@@ -49,24 +69,22 @@ qc_raw_abs <- function(
     export_plot = NULL
 ) {
 
+  if (nrow(data) == 0) {
+    stop("`data` has 0 rows - nothing to check.", call. = FALSE)
+    }
+
   # remove empty wells (marked as "empty" --> keep only "full" wells)
   # and remove NAs
   full <- data |>
-    dplyr::filter(!(map %in% empty_wells), !is.na(abs))
+    dplyr::filter(!(.data[[map_col]] %in% empty_wells), !is.na(.data[[value_col]]))
 
-  # initiate data frame that will contain suspicious well ids
-  # i = 1
-  suspicious_rows <- c()
-  for (i in seq_len(nrow(full))) {
-    #  if (full$absorbance[i] < min_abs || full$absorbance[i] > max_abs) {
-    if (full$abs[i] < min_abs | full$abs[i] > max_abs) {
-      #print(full$absorbance[i])
-      suspicious_rows <- append(suspicious_rows, i)
-    }
-  }
+  # identify suspicious (out-of-range) wells - vectorized instead of a
+  # row-by-row loop with append(), which was both slower (O(n^2) due to
+  # repeated reallocation) and harder to read
+  suspicious_rows <- which(full[[value_col]] < min_abs | full[[value_col]] > max_abs)
 
   # Send a warning message
-  if (!is.null(suspicious_rows)) {
+  if (length(suspicious_rows) > 0) {
     if (show_warning) {
       warning(paste0(
         length(suspicious_rows),
@@ -90,14 +108,25 @@ qc_raw_abs <- function(
   }
   suspicious_wells <- full |>
     dplyr::filter(dplyr::row_number() %in% suspicious_rows) |>
-    dplyr::select(dataset, plate_id, well_id, map, abs)
+    dplyr::select(dplyr::all_of(c(dataset_col, plate_id_col, well_id_col, map_col, value_col)))
 
   if (show_plot | !is.null(export_plot)) {
-    # get number of plots (facets) = nb of N species in data set (for now dataset, still have to work N_sp in the table)
-      plot_n_facets <- full |> dplyr::select(tidyselect::any_of(plot_col_facet)) |> unique() |> length()
+    # NULL and the legacy "none" string both mean "don't facet" - checked
+    # once here, since a direct `plot_col_facet != "none"` comparison
+    # would error when plot_col_facet is NULL (NULL == "none" returns
+    # logical(0), not FALSE)
+    facet_off <- is.null(plot_col_facet) || plot_col_facet == "none"
+
+    # get number of distinct facet groups, so facet_wrap can arrange them
+    # sensibly (only relevant when actually facetting)
+    plot_n_facets <- if (!facet_off) {
+      dplyr::n_distinct(full[[plot_col_facet]])
+    } else {
+      1
+    }
 
     hist_abs <- full |>
-      ggplot2::ggplot(ggplot2::aes(x = as.numeric(abs))) +
+      ggplot2::ggplot(ggplot2::aes(x = as.numeric(.data[[value_col]]))) +
       ggplot2::theme_minimal() +
       ggplot2::geom_histogram(binwidth = plot_binwidth) +
       ggplot2::geom_vline(ggplot2::aes(xintercept = min_abs), color = "red", alpha = 0.5) +
@@ -105,7 +134,7 @@ qc_raw_abs <- function(
       ggplot2::annotate(geom = "label", x = min_abs, y = -0.5, label = min_abs, color = "red", size = 2.5) +
       ggplot2::annotate(geom = "label", x = max_abs, y = -0.5, label = max_abs, color = "red", size = 2.5) +
       ggplot2::xlab("raw absorbance") +
-      {if (plot_col_facet != "none") ggplot2::facet_wrap(~ .data[[plot_col_facet]], nrow = plot_n_facets) }+
+      {if (!facet_off) ggplot2::facet_wrap(~ .data[[plot_col_facet]], nrow = plot_n_facets) }+
       ggplot2::labs(title = "Distribution of absorbance, all data")
 
     if (show_plot) {plot(hist_abs)}
