@@ -9,6 +9,7 @@ suspicious_extr(
   extr_def = "extr",
   suspicious_extr_per_plate = NULL,
   max_coeff = 5,
+  dataset_col = "dataset",
   plate_id_col = "plate_id",
   map_col = "map",
   value_col = "abs"
@@ -26,6 +27,10 @@ suspicious_extr(
 \item{max_coeff}{User-defined threshold value, defaults at 5\%. All plates for which
 the coefficient of variation for extractant raw absorbance is above this threshold
 will be considered "suspicious plates"}
+
+\item{dataset_col}{Name of the column identifying the dataset,
+needed internally by \code{extractant_average()}. Defaults to
+\code{"dataset"}.}
 
 \item{plate_id_col}{Name of the column identifying physical plates.
 Defaults to \code{"plate_id"}.}

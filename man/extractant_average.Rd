@@ -4,7 +4,15 @@
 \alias{extractant_average}
 \title{Computing the per-plate average for raw absorbance of the extractant (blank for samples)}
 \usage{
-extractant_average(data = NULL, extractant_data = NULL, extr_def = "extr")
+extractant_average(
+  data = NULL,
+  extractant_data = NULL,
+  extr_def = "extr",
+  dataset_col = "dataset",
+  plate_id_col = "plate_id",
+  map_col = "map",
+  value_col = "abs"
+)
 }
 \arguments{
 \item{data}{A tibble like \code{tidy_plates}}
@@ -15,6 +23,18 @@ Defaults to NULL, where it would be computed from \code{data} using \code{extrac
 \item{extr_def}{A string that characterizes wells containing the extractant
 in the mapping (\code{map}column) of the plate. Defaults to "extr". Can be a vector
 containing several values (see examples)}
+
+\item{dataset_col}{Name of the column identifying the dataset. Defaults
+to \code{"dataset"}.}
+
+\item{plate_id_col}{Name of the column identifying physical plates.
+Defaults to \code{"plate_id"}.}
+
+\item{map_col}{Name of the column containing well mapping/type
+information. Defaults to \code{"map"}.}
+
+\item{value_col}{Name of the numeric absorbance column. Defaults to
+\code{"abs"}.}
 }
 \value{
 A tibble with one row per plate, contianing the average, standard

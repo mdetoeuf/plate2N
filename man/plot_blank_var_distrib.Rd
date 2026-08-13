@@ -4,13 +4,20 @@
 \alias{plot_blank_var_distrib}
 \title{Plot dataset-wide distribution of withing-plate variation for extractant data}
 \usage{
-plot_blank_var_distrib(extractant_average = NULL, data = NULL)
+plot_blank_var_distrib(
+  extractant_average = NULL,
+  data = NULL,
+  var_col = "blank_coeff_var_percent"
+)
 }
 \arguments{
 \item{extractant_average}{Defaults to NULL, where it is computed from \code{data}
 using \code{extractant_average(data)}}
 
 \item{data}{A tibble like \code{tidy_plates}, must be provided if \code{extractant_average} is NULL.}
+
+\item{var_col}{Name of the column holding the coefficient of variation
+to plot. Defaults to \code{"blank_coeff_var_percent"}.}
 }
 \value{
 A plot of the distribution of the coefficient of variation of raw

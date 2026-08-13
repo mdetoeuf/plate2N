@@ -4,13 +4,16 @@
 \alias{extract_extractant}
 \title{Extracting "extractant" data (blank for samples) from plate tidy table}
 \usage{
-extract_extractant(data, extr_def = "extr")
+extract_extractant(data, extr_def = "extr", map_col = "map")
 }
 \arguments{
 \item{data}{A tibble like \code{tidy_plates}}
 
 \item{extr_def}{A string that characterizes wells containing the extractant
 in the mapping (\code{map}column) of the plate}
+
+\item{map_col}{Name of the column containing well mapping/type
+information. Defaults to \code{"map"}.}
 }
 \value{
 A subset of \code{data}, containing only extractant data

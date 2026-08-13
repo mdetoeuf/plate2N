@@ -107,6 +107,9 @@ qc_raw_extr <- function(
 #' @param max_coeff User-defined threshold value, defaults at 5%. All plates for which
 #'     the coefficient of variation for extractant raw absorbance is above this threshold
 #'     will be considered "suspicious plates"
+#' @param dataset_col Name of the column identifying the dataset,
+#'     needed internally by `extractant_average()`. Defaults to
+#'     `"dataset"`.
 #' @param plate_id_col Name of the column identifying physical plates.
 #'     Defaults to `"plate_id"`.
 #' @param map_col Name of the column identifying extractants/layers.
@@ -141,13 +144,16 @@ suspicious_extr <- function(
     extr_def = "extr",
     suspicious_extr_per_plate = NULL,
     max_coeff = 5,
+    dataset_col = "dataset",
     plate_id_col = "plate_id",
     map_col = "map",
     value_col = "abs"
 ) {
   # local variable, deliberately renamed from "extractant_average" to
   # avoid shadowing the extractant_average() function it calls
-  extractant_avg <- extractant_average(data, extr_def = extr_def)
+  extractant_avg <- extractant_average(
+    data, extr_def = extr_def, dataset_col = dataset_col,
+    plate_id_col = plate_id_col, map_col = map_col, value_col = value_col)
 
   if (is.null(suspicious_extr_per_plate)) {
     suspicious_extr_per_plate <- qc_raw_extr(
@@ -161,7 +167,7 @@ suspicious_extr <- function(
   suspicious_extr_per_plate <- suspicious_extr_per_plate |>
     dplyr::select(dplyr::all_of(c(plate_id_col, map_col)))
 
-  suspicious_extractant <- extract_extractant(data, extr_def = extr_def) |>
+  suspicious_extractant <- extract_extractant(data, extr_def = extr_def, map_col = map_col) |>
     dplyr::right_join(suspicious_extr_per_plate, by = c(plate_id_col, map_col)) |>
     dplyr::arrange(.data[[plate_id_col]], .data[[map_col]]) |>
     dplyr::mutate(dplyr::across(dplyr::all_of(value_col), as.numeric))
