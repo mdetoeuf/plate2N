@@ -51,7 +51,7 @@ extr_avg <- function(
       .by = dplyr::all_of(c(dataset_col, plate_id_col, map_col)),
       blank_avg = mean(.data[[value_col]]),
       blank_sdev = stats::sd(.data[[value_col]])) |>
-    dplyr::mutate(blank_coeff_var_percent = 100 * blank_sdev / blank_avg)
+    dplyr::mutate(blank_coeff_var_percent = 100 * .data[["blank_sdev"]] / .data[["blank_avg"]])
 
   return(avg_result)
 
