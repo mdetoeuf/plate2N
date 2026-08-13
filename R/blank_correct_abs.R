@@ -75,19 +75,25 @@ blank_correct_abs <- function(
     to_correct <- to_correct |> dplyr::mutate(extr_id = rep(extr_def))
   }
 
-  # normalize per_plate_avg_blank's own map-like column to "extr_id" too,
-  # so both tables can be joined on the same key regardless of whether
-  # per_plate_avg_blank was already built with that name
-  if (map_col %in% names(per_plate_avg_blank)) {
+  # only join on extr_id when per_plate_avg_blank genuinely distinguishes
+  # blanks per extractant (i.e. it originally had a map-like column) -
+  # otherwise (e.g. a standard-curve blank average, with no extractant
+  # concept at all) the blank applies uniformly, and forcing extr_id
+  # into the join key would require an exact match that was never
+  # meaningful to begin with - restores the original implicit join's
+  # actual behavior, just made explicit instead of accidental
+  blank_has_extr_id <- map_col %in% names(per_plate_avg_blank)
+  if (blank_has_extr_id) {
     per_plate_avg_blank <- per_plate_avg_blank |> dplyr::rename(extr_id = dplyr::all_of(map_col))
   }
+
+  join_key <- c(dataset_col, plate_id_col)
+  if (blank_has_extr_id) join_key <- c(join_key, "extr_id")
 
   # blank correction
   corrected_data <-
     to_correct |>
-    dplyr::right_join(
-      per_plate_avg_blank,
-      by = c(dataset_col, plate_id_col, "extr_id")) |>
+    dplyr::right_join(per_plate_avg_blank, by = join_key) |>
     dplyr::mutate(
       abs_corrected = .data[[value_col]] - .data[[blank_avg_col]],
       .keep = "unused", .after = dplyr::all_of(map_col)) |>
