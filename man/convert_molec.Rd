@@ -4,18 +4,36 @@
 \alias{convert_molec}
 \title{Converts Concentrations From Compound Weight to Target Weight}
 \usage{
-convert_molec(conc_data, masses = molar_masses)
+convert_molec(
+  conc_data,
+  masses = molar_masses,
+  std_sp_col = "std_sp",
+  target_sp_col = "target_sp",
+  value_col = "conc_mgNsp_L",
+  output_col = "conc_mgN_L"
+)
 }
 \arguments{
-\item{conc_data}{A tibble containing columns "std_sp" (chr), "target_sp" (chr),
-"conc_mgNsp_L" (dbl). Columns "target_sp" means "to convert to" (e.g., "N" for mg N / L),
-and "std_sp" means "to convert from" (e.g., "NH4" for mg NH4 / L)}
+\item{conc_data}{A tibble containing the columns referenced by
+\code{std_sp_col}, \code{target_sp_col}, and \code{value_col}.}
 
 \item{masses}{A named vector of molar masses (names of the elements = compounds.)}
+
+\item{std_sp_col}{Name of the column identifying which compound to
+convert FROM (e.g. "NH4" for mg NH4 / L). Defaults to \code{"std_sp"}.}
+
+\item{target_sp_col}{Name of the column identifying which compound to
+convert TO (e.g. "N" for mg N / L). Defaults to \code{"target_sp"}.}
+
+\item{value_col}{Name of the column containing the concentration to
+convert. Defaults to \code{"conc_mgNsp_L"}.}
+
+\item{output_col}{Name of the new column holding the converted
+concentration. Defaults to \code{"conc_mgN_L"}.}
 }
 \value{
-A tibble of the same format, with an added column. For now, this new column
-is named `conc_mgN_L". But we could consider adding an argument to define column names
+A tibble of the same format, with the converted concentration
+added as a new column (see \code{output_col}).
 }
 \description{
 Convert units of concentrations from "mg Compound L-1" to "mg Target L-1". This
