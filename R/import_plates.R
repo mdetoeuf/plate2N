@@ -65,7 +65,7 @@ txt_to_tibble <- function(
   tibble <- columns |> dplyr::filter(row != "row")
   # initiate an empty list
   abs_data_list <- list()
-  # i = 3
+
   for (i in seq_along(all_txt_files)) {
 
     # get name of file nb i
@@ -73,16 +73,14 @@ txt_to_tibble <- function(
 
     # store plate id in a variable
     plate_id <- stringr::str_extract(all_txt_files[i], pattern = "(.*)\\.TXT$", group = 1)
-    #stringr::str_extract("NO3.1F1.TXT", pattern = , group = 1)
 
     # initiate headers
     plate_header <- columns |>
       dplyr::mutate(row = plate_id, .before = 1)
-    #   names(plate_header) <- names(empty_plate)
 
     # extract only absorbance data from file to exploit as a tibble
     plate_abs <-
-      readr::read_tsv(file, col_names = TRUE, skip = 5, show_col_types = FALSE, name_repair = "unique_quiet", col_types = cols(.default = col_character())) |>
+      readr::read_tsv(file, col_names = TRUE, skip = 5, show_col_types = FALSE, name_repair = "unique_quiet", col_types = readr::cols(.default = readr::col_character())) |>
       tidyr::drop_na()
     names(plate_abs) <- names(columns)
 
@@ -153,7 +151,7 @@ csv_to_tibble <- function(
 
 
 utils::globalVariables(c(
-  "row", "X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9", "X10", "X11", "X12", "filepath"))
+  "row", "X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8", "X9", "X10", "X11", "X12"))
 #' Import 96-well plate data from Skanit format
 #'
 #' @param skanit_csv The csv exported from Skanit (or generated from the first
@@ -220,7 +218,6 @@ skanit_to_tibble <- function(
 
   # extract first column
   file_col1 <- file[[1]]
-  #file_col1
 
   if (length(file_col1) < 3) {
     stop("The imported file does not contain enough rows to represent even one plate (a minimum of 9 rows is expected: a plate-id row plus rows A-H). Check the file's structure and import.")
@@ -248,7 +245,6 @@ skanit_to_tibble <- function(
   for (i in seq_along(nrow_sample)){
     seq <- append(seq,seq(nrow_sample[i],nrow_sample[i]+8,1))
   }
-  #seq
 
   # subset of the file with all mapping elements
   anti_file <- file_plate_ids |> dplyr::slice(seq)
@@ -259,7 +255,7 @@ skanit_to_tibble <- function(
     by = dplyr::join_by(row, X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12))
 
   # If numbers formatted with commas, replace them with dots
-  if (clean_file$X1[2] |> str_extract(pattern = "\\W") == ",") {
+  if (clean_file$X1[2] |> stringr::str_extract(pattern = "\\W") == ",") {
     for (i in seq_len(ncol(clean_file))) {
       replacement <- gsub("\\,", ".", clean_file[[i]])
       clean_file[i] <- replacement
