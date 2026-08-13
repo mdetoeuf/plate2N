@@ -9,13 +9,16 @@ qc_raw_extr(
   extractant_average = NULL,
   extr_def = "extr",
   max_coeff = 5,
+  var_col = "blank_coeff_var_percent",
+  plate_id_col = "plate_id",
+  map_col = "map",
   suppress_message = FALSE,
   suppress_warning = FALSE
 )
 }
 \arguments{
 \item{data}{A tibble, as in \code{tidy_plates}, optional. It is only used if argument
-\code{extractant_data} is \code{NULL} to compute it with \code{extractant_average()} and
+\code{extractant_average} is \code{NULL} to compute it with \code{extractant_average()} and
 the argument \code{extr_def}.}
 
 \item{extractant_average}{Defaults to NULL, where it is computed from \code{data}
@@ -27,6 +30,15 @@ Defaults to "extr"}
 \item{max_coeff}{User-defined, in \% (defaults at 5): determines the threshold
 coefficient of variation for raw absorbance of extractant wells, above which
 plates will be considered "suspicious"}
+
+\item{var_col}{Name of the column in \code{extractant_average} holding the
+coefficient of variation. Defaults to \code{"blank_coeff_var_percent"}.}
+
+\item{plate_id_col}{Name of the column identifying physical plates.
+Defaults to \code{"plate_id"}.}
+
+\item{map_col}{Name of the column identifying extractants/layers.
+Defaults to \code{"map"}.}
 
 \item{suppress_message}{Logical, whether or not to suppress the "success" message (given when no plate is above the \code{max_coeff})}
 
@@ -56,6 +68,4 @@ dbl_extr_plate
 (suspicious_extr_per_plate <- qc_raw_extr(
     dbl_extr_plate, extr_def = c("extr_1", "extr_2"),
     max_coeff = 5, suppress_message = TRUE, suppress_warning = TRUE))
-
-
 }

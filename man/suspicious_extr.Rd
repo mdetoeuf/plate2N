@@ -8,7 +8,10 @@ suspicious_extr(
   data,
   extr_def = "extr",
   suspicious_extr_per_plate = NULL,
-  max_coeff = 5
+  max_coeff = 5,
+  plate_id_col = "plate_id",
+  map_col = "map",
+  value_col = "abs"
 )
 }
 \arguments{
@@ -23,6 +26,15 @@ suspicious_extr(
 \item{max_coeff}{User-defined threshold value, defaults at 5\%. All plates for which
 the coefficient of variation for extractant raw absorbance is above this threshold
 will be considered "suspicious plates"}
+
+\item{plate_id_col}{Name of the column identifying physical plates.
+Defaults to \code{"plate_id"}.}
+
+\item{map_col}{Name of the column identifying extractants/layers.
+Defaults to \code{"map"}.}
+
+\item{value_col}{Name of the numeric absorbance column, coerced to
+numeric on output. Defaults to \code{"abs"}.}
 }
 \value{
 A subset of \code{data} containing only plates where raw extractant values
