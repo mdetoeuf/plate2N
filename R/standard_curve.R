@@ -148,7 +148,7 @@ extract_std_blank <- function(
     dplyr::select(!dplyr::all_of(unique_well_id_col)) |>
     dplyr::slice_min(.data[[value_col]], with_ties = FALSE) |>
     dplyr::rename(well_min = dplyr::all_of(well_id_col)) |>
-    dplyr::select(well_min, dplyr::all_of(c(dataset_col, plate_id_col, column_col, "unique_curve_id")))
+    dplyr::select(dplyr::all_of(c("well_min", dataset_col, plate_id_col, column_col, "unique_curve_id")))
 
   # extract the well that SHOULD contain the blank, based on the
   # declared pipetting direction (row A for top_down, row H for
