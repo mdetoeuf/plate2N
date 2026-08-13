@@ -11,13 +11,14 @@ plot_list_qc_microresp(
   value_col = "co2_g_h",
   label_col = "well_id",
   panel_col = NULL,
+  dataset_col = "dataset",
   max_plates_per_panel = 10
 )
 }
 \arguments{
 \item{data}{A tibble containing the columns referenced by \code{map_col},
-\code{plate_id_col}, \code{value_col}, \code{label_col}, and (if given) \code{panel_col}.
-Must also contain a \code{dataset} column (used only in plot titles).}
+\code{plate_id_col}, \code{value_col}, \code{label_col}, \code{dataset_col}, and (if
+given) \code{panel_col}.}
 
 \item{map_col}{Name of the column identifying substrates/treatments/layers
 for this call — one QC plot is produced per unique value, and the
@@ -42,6 +43,9 @@ plates are automatically split into evenly-sized panels labelled
 "Panel X of Y", each capped at \code{max_plates_per_panel} plates, with
 ridges in a single uniform colour (no meaningful grouping to colour
 by in this case).}
+
+\item{dataset_col}{Name of the column identifying the dataset, used
+only in plot titles. Defaults to \code{"dataset"}.}
 
 \item{max_plates_per_panel}{Maximum number of plates shown per panel when
 \code{panel_col} is \code{NULL}, used to determine how many panels are needed

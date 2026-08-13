@@ -178,8 +178,8 @@ plot_ridges_values <- function(
 #' column, passing the relevant column name as `map_col` each time.
 #'
 #' @param data A tibble containing the columns referenced by `map_col`,
-#'     `plate_id_col`, `value_col`, `label_col`, and (if given) `panel_col`.
-#'     Must also contain a `dataset` column (used only in plot titles).
+#'     `plate_id_col`, `value_col`, `label_col`, `dataset_col`, and (if
+#'     given) `panel_col`.
 #' @param map_col Name of the column identifying substrates/treatments/layers
 #'     for this call — one QC plot is produced per unique value, and the
 #'     returned list has one entry per value (see `Value`). Defaults to
@@ -199,6 +199,8 @@ plot_ridges_values <- function(
 #'     "Panel X of Y", each capped at `max_plates_per_panel` plates, with
 #'     ridges in a single uniform colour (no meaningful grouping to colour
 #'     by in this case).
+#' @param dataset_col Name of the column identifying the dataset, used
+#'     only in plot titles. Defaults to `"dataset"`.
 #' @param max_plates_per_panel Maximum number of plates shown per panel when
 #'     `panel_col` is `NULL`, used to determine how many panels are needed
 #'     (`ceiling(n_plates / max_plates_per_panel)`) — plates are then spread
@@ -223,10 +225,11 @@ plot_list_qc_microresp <- function(
     value_col = "co2_g_h",
     label_col = "well_id",
     panel_col = NULL,
+    dataset_col = "dataset",
     max_plates_per_panel = 10
 ) {
   substrates <- data |> dplyr::select(dplyr::all_of(map_col)) |> unique()
-  dataset <- data$dataset |> unique()
+  dataset <- data[[dataset_col]] |> unique()
 
   plot_list <- list()
 
