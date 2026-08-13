@@ -55,6 +55,7 @@ raw <- csv_to_tibble("my_plate_data.csv")
 
 ## What's new
 
+- **Configurable column names throughout** — every column-facing function across the package now accepts arguments for its input column names (e.g. `value_col`, `map_col`, `plate_id_col`), all defaulting to the package's existing conventions. This means your own data doesn't need to match plate2N's column names exactly anymore, while anyone happy with the defaults sees no change at all. Along the way, a number of real bugs were also found and fixed (see individual commit messages for details).
 - **MicroResp pipeline** — a complete, documented workflow for MicroResp respiration data, from import through Shannon diversity and MBC/qCO2 indices
 - **Per-sample outlier tools** (`plot_qc_sample_pair()`, `plot_list_qc_samples()`) — paired boxplot + ridgeline views for spotting and identifying outlier wells at the sample level, reusable across pipelines
 - **Model-choice toolkit** (`fit_curve_model()`, `plot_model_comparison()`, `plot_residual_comparison()`, `review_model_choice()`) — fit, visually compare, and review linear vs. polynomial standard curve models, for one curve or many at once

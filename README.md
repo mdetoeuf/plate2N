@@ -55,6 +55,14 @@ raw <- csv_to_tibble("my_plate_data.csv")
 
 ## What’s new
 
+- **Configurable column names throughout** — every column-facing
+  function across the package now accepts arguments for its input column
+  names (e.g. `value_col`, `map_col`, `plate_id_col`), all defaulting to
+  the package’s existing conventions. This means your own data doesn’t
+  need to match plate2N’s column names exactly anymore, while anyone
+  happy with the defaults sees no change at all. Along the way, a number
+  of real bugs were also found and fixed (see individual commit messages
+  for details).
 - **MicroResp pipeline** — a complete, documented workflow for MicroResp
   respiration data, from import through Shannon diversity and MBC/qCO2
   indices
