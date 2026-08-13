@@ -5,7 +5,14 @@ Keeps only wells corresponding to standard curves
 ## Usage
 
 ``` r
-extract_std_data(data, std_def = "Std")
+extract_std_data(
+  data,
+  std_def = "Std",
+  map_col = "map",
+  dataset_col = "dataset",
+  plate_id_col = "plate_id",
+  column_col = "column"
+)
 ```
 
 ## Arguments
@@ -21,6 +28,25 @@ extract_std_data(data, std_def = "Std")
 
   A string, defaults with `"Std"`: how data from wells containing the
   standard curve are referred to.
+
+- map_col:
+
+  Name of the column containing well mapping/type information. Defaults
+  to `"map"`.
+
+- dataset_col:
+
+  Name of the column identifying the dataset. Defaults to `"dataset"`.
+
+- plate_id_col:
+
+  Name of the column identifying physical plates. Defaults to
+  `"plate_id"`.
+
+- column_col:
+
+  Name of the column identifying the plate column (1-12). Defaults to
+  `"column"`.
 
 ## Value
 

@@ -12,7 +12,13 @@ correct_std_blank(
   pipetting_direction = "top_down",
   std_blank_average = NULL,
   std_blank_trusted = NULL,
-  std_blank = NULL
+  std_blank = NULL,
+  row_col = "row",
+  dataset_col = "dataset",
+  plate_id_col = "plate_id",
+  column_col = "column",
+  map_col = "map",
+  value_col = "abs"
 )
 ```
 
@@ -57,6 +63,33 @@ correct_std_blank(
 
   If NULL (default), it will be extracted/computed from `data`, using
   [`extract_std_blank()`](https://mdetoeuf.github.io/plate2N/reference/extract_std_blank.md).
+
+- row_col:
+
+  Name of the column containing well row (A-H). Defaults to `"row"`.
+
+- dataset_col:
+
+  Name of the column identifying the dataset. Defaults to `"dataset"`.
+
+- plate_id_col:
+
+  Name of the column identifying physical plates. Defaults to
+  `"plate_id"`.
+
+- column_col:
+
+  Name of the column identifying the plate column (1-12). Defaults to
+  `"column"`.
+
+- map_col:
+
+  Name of the column containing well mapping/type information. Defaults
+  to `"map"`.
+
+- value_col:
+
+  Name of the numeric absorbance column. Defaults to `"abs"`.
 
 ## Value
 

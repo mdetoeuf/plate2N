@@ -13,6 +13,11 @@ lower values in the standard curve.
 ``` r
 qc_raw_abs(
   data,
+  value_col = "abs",
+  map_col = "map",
+  dataset_col = "dataset",
+  plate_id_col = "plate_id",
+  well_id_col = "well_id",
   min_abs = 0.1,
   max_abs = 1,
   empty_wells = "empty",
@@ -31,8 +36,24 @@ qc_raw_abs(
 
   Tibble, in a similar form to our
   [`tidy_table`](https://mdetoeuf.github.io/plate2N/reference/tidy_table.md).
-  In particular, columns `map`, `abs`, `dataset`, `plate_id`, `well_id`
-  must be present and named so.
+  In particular, the columns referenced by `map_col`, `value_col`,
+  `dataset_col`, `plate_id_col`, and `well_id_col` must be present.
+
+- value_col:
+
+  Name of the column containing absorbance (or another numeric value
+  you'd like to QC). Defaults to `"abs"`.
+
+- map_col:
+
+  Name of the column containing well mapping/type information, used to
+  identify empty wells. Defaults to `"map"`.
+
+- dataset_col, plate_id_col, well_id_col:
+
+  Names of the columns identifying dataset, plate, and well — used to
+  report which wells are suspicious. Default to `"dataset"`,
+  `"plate_id"`, and `"well_id"` respectively.
 
 - min_abs, max_abs:
 
@@ -64,9 +85,10 @@ qc_raw_abs(
 
 - plot_col_facet:
 
-  Which column to use to facet the plots. For no facetting, choose
-  `plot_col_facet = "none"` (For now, only facet with 1 axis is
-  possible)
+  Which column to use to facet the plots. For no facetting, use `NULL`
+  (the legacy `"none"` string is still accepted too, for backward
+  compatibility). Defaults to `"dataset"`. (For now, only facet with 1
+  axis is possible)
 
 - export_plot:
 
@@ -87,25 +109,48 @@ suspicious wells
 
 ``` r
 # bring some NA (abs) and empty wells in tidy_table to check that those wells are removed
-data <- tidy_table
+data <- tidy_plates
 data$abs[1] <- NA
 data$map[2] <- "empty"
 qc_raw_abs(data)
-#> Warning: 957 wells out of 958 are out of range for absorbance, i.e., not in the set boundaries of [0.1; 1]. 
+#> Warning: 160 wells out of 382 are out of range for absorbance, i.e., not in the set boundaries of [0.1; 1]. 
 #> See table to identify suspicious wells. 
 
-#> # A tibble: 957 × 5
-#>    dataset plate_id well_id map     abs   
-#>    <chr>   <chr>    <chr>   <chr>   <chr> 
-#>  1 expe1   M17      A1      Std0193 1.5611
-#>  2 expe1   M18      A1      Std0289 1.7013
-#>  3 expe1   M19      A1      Std0385 1.6865
-#>  4 expe1   M20      A1      Std0481 1.7936
-#>  5 expe1   M21      A1      Std0577 1.7925
-#>  6 expe1   M22      A1      Std0673 1.8274
-#>  7 expe1   M23      A1      Std0769 1.9330
-#>  8 expe1   M12      A2      Std0002 1.4802
-#>  9 expe1   M16      A2      Std0098 1.5590
-#> 10 expe1   M17      A2      Std0194 1.5946
-#> # ℹ 947 more rows
+#> # A tibble: 160 × 5
+#>    dataset plate_id well_id map       abs  
+#>    <chr>   <chr>    <chr>   <chr>     <chr>
+#>  1 Nmin    NO3_1F4  A1      Std       0.092
+#>  2 Nmin    NO3_1F3  A2      89_t1_z3  0.095
+#>  3 Nmin    NO3_1F3  A3      90_t1_z3  0.097
+#>  4 Nmin    NO3_1F2  A4      99_t1_z1  0.093
+#>  5 Nmin    NO3_1F3  A5      92_t1_z2  0.094
+#>  6 Nmin    NO3_1F4  A5      84_t1_z2  0.098
+#>  7 Nmin    NO3_1F5  A5      100_t1_z2 0.093
+#>  8 Nmin    NO3_1F3  A6      93_t1_z2  0.093
+#>  9 Nmin    NO3_1F3  A7      94_t1_z3  0.099
+#> 10 Nmin    NO3_1F1  A8      extr      0.083
+#> # ℹ 150 more rows
+
+# facetting the histogram: split by any column with a few distinct
+# values. Here we create artificial groups just to illustrate.
+data_grouped <- tidy_plates |>
+  dplyr::mutate(dataset = rep(c("A", "B", "C"), length.out = dplyr::n()))
+qc_raw_abs(data_grouped, plot_col_facet = "dataset")
+#> Warning: 162 wells out of 384 are out of range for absorbance, i.e., not in the set boundaries of [0.1; 1]. 
+#> See table to identify suspicious wells. 
+
+#> # A tibble: 162 × 5
+#>    dataset plate_id well_id map       abs  
+#>    <chr>   <chr>    <chr>   <chr>     <chr>
+#>  1 A       NO3_1F1  A1      Std       0.092
+#>  2 B       NO3_1F2  A1      Std       0.091
+#>  3 A       NO3_1F4  A1      Std       0.092
+#>  4 B       NO3_1F3  A2      89_t1_z3  0.095
+#>  5 A       NO3_1F3  A3      90_t1_z3  0.097
+#>  6 B       NO3_1F2  A4      99_t1_z1  0.093
+#>  7 B       NO3_1F3  A5      92_t1_z2  0.094
+#>  8 C       NO3_1F4  A5      84_t1_z2  0.098
+#>  9 A       NO3_1F5  A5      100_t1_z2 0.093
+#> 10 A       NO3_1F3  A6      93_t1_z2  0.093
+#> # ℹ 152 more rows
 ```

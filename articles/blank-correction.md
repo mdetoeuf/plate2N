@@ -731,9 +731,6 @@ std_corrected <-
   ) |> 
   # only keep relevant columns (remove metadata clutter, optional)
   dplyr::select(row:abs_corrected)
-#> Joining with `by = join_by(dataset, plate_id)`
-#> Joining with `by = join_by(row, column, well_id, unique_well_id, dataset,
-#> plate_id, unique_curve_id, map, std_sp, std_unit, std_conc, extr_id)`
 
 # Check it out
 std_corrected
@@ -965,6 +962,8 @@ raw_meta |>
   qc_raw_extr(suppress_warning = FALSE, max_coeff = 60)
 #> 
 #>         Good news: all plates show a satisfactorily small variation for raw blank (extractant) absorbance values. This means that the coefficient of variation is below the threshold of 60%.
+#> # A tibble: 0 × 2
+#> # ℹ 2 variables: plate_id <chr>, map <chr>
 ```
 
 To obtain the full extractant data corresponding to our
@@ -978,7 +977,6 @@ Make sure to use the same threshold.
   raw_meta, 
   suspicious_extr_per_plate = suspicious_extr_per_plate, 
   max_coeff = threshold))
-#> Joining with `by = join_by(plate_id, map)`
 #> # A tibble: 16 × 11
 #>    row   column well_id unique_well_id dataset plate_id map     abs std_sp
 #>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr> <dbl> <chr> 
@@ -1305,7 +1303,6 @@ plot_blank_var_distrib(extr_avg_dbl)
   dbl_extr_plate, extr_def = c("extr_1", "extr_2"),
   suspicious_extr_per_plate = suspicious_extr_per_plate_dbl, 
   max_coeff = 5))
-#> Joining with `by = join_by(plate_id, map)`
 #> # A tibble: 40 × 9
 #>    row   column well_id unique_well_id dataset plate_id map      abs extr_id
 #>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr>  <dbl> <chr>  
@@ -1463,9 +1460,6 @@ sample_corrected <-
     raw_wells_data = raw_meta, 
     per_plate_avg_blank = extr_avg_clean,
     map_to_exclude = c("empty","Std","extr")) 
-#> Joining with `by = join_by(dataset, plate_id, extr_id)`
-#> Joining with `by = join_by(row, column, well_id, unique_well_id, dataset,
-#> plate_id, map, std_sp, std_unit, std_conc, extr_id)`
 
 # for case of 2 extractants:
 sample_corrected_dbl <- 
@@ -1474,9 +1468,6 @@ sample_corrected_dbl <-
     per_plate_avg_blank = extr_avg_clean_dbl,
     extr_def = c("extr_1", "extr_2"),
     map_to_exclude = c("empty","Std","extr_1", "extr_2")) 
-#> Joining with `by = join_by(dataset, plate_id, extr_id)`
-#> Joining with `by = join_by(row, column, well_id, unique_well_id, dataset,
-#> plate_id, map, extr_id)`
 ```
 
 Let’s have a look at the output and notice the absence of the value `1`

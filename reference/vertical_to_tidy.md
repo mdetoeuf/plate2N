@@ -23,11 +23,12 @@ vertical_to_tidy(vertical_data, column_def = c("abs", "map"))
 
 - column_def:
 
-  Strings defining the types of data layout to be recovered. They
-  correspond to the prefixes added to column names in a previous step
-  with
-  [`join_abs_map()`](https://mdetoeuf.github.io/plate2N/reference/join_abs_map.md).
-  It defaults to `c("abs", "map")`.
+  Strings defining the types of data layout to be recovered. **Currently
+  unused** — `pivot_wider()` already picks up whatever layout types are
+  actually present in the data dynamically, so this parameter has no
+  effect. Kept for backward compatibility with existing calls that pass
+  it by name; may be deprecated in a future version. Defaults to
+  `c("abs", "map")`.
 
 ## Value
 

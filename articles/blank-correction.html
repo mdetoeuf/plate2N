@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -712,9 +712,6 @@
 <span>  <span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="co"># only keep relevant columns (remove metadata clutter, optional)</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">row</span><span class="op">:</span><span class="va">abs_corrected</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Joining with `by = join_by(dataset, plate_id)`</span></span>
-<span><span class="co">#&gt; Joining with `by = join_by(row, column, well_id, unique_well_id, dataset,</span></span>
-<span><span class="co">#&gt; plate_id, unique_curve_id, map, std_sp, std_unit, std_conc, extr_id)`</span></span>
 <span></span>
 <span><span class="co"># Check it out</span></span>
 <span><span class="va">std_corrected</span></span>
@@ -867,7 +864,9 @@
 <span><span class="va">raw_meta</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="../reference/qc_raw_extr.html">qc_raw_extr</a></span><span class="op">(</span>suppress_warning <span class="op">=</span> <span class="cn">FALSE</span>, max_coeff <span class="op">=</span> <span class="fl">60</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;         Good news: all plates show a satisfactorily small variation for raw blank (extractant) absorbance values. This means that the coefficient of variation is below the threshold of 60%.</span></span></code></pre></div>
+<span><span class="co">#&gt;         Good news: all plates show a satisfactorily small variation for raw blank (extractant) absorbance values. This means that the coefficient of variation is below the threshold of 60%.</span></span>
+<span><span class="co">#&gt; # A tibble: 0 × 2</span></span>
+<span><span class="co">#&gt; # ℹ 2 variables: plate_id &lt;chr&gt;, map &lt;chr&gt;</span></span></code></pre></div>
 </div>
 <p>To obtain the full extractant data corresponding to our <code>suspicious plate_ids</code>, we can use <code><a href="../reference/suspicious_extr.html">suspicious_extr()</a></code>. Make sure to use the same threshold.</p>
 <div class="cell">
@@ -876,7 +875,6 @@
 <span>  <span class="va">raw_meta</span>, </span>
 <span>  suspicious_extr_per_plate <span class="op">=</span> <span class="va">suspicious_extr_per_plate</span>, </span>
 <span>  max_coeff <span class="op">=</span> <span class="va">threshold</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Joining with `by = join_by(plate_id, map)`</span></span>
 <span><span class="co">#&gt; # A tibble: 16 × 11</span></span>
 <span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id map     abs std_sp</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt; &lt;dbl&gt; &lt;chr&gt; </span></span>
@@ -1150,7 +1148,6 @@
 <span>  <span class="va">dbl_extr_plate</span>, extr_def <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"extr_1"</span>, <span class="st">"extr_2"</span><span class="op">)</span>,</span>
 <span>  suspicious_extr_per_plate <span class="op">=</span> <span class="va">suspicious_extr_per_plate_dbl</span>, </span>
 <span>  max_coeff <span class="op">=</span> <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Joining with `by = join_by(plate_id, map)`</span></span>
 <span><span class="co">#&gt; # A tibble: 40 × 9</span></span>
 <span><span class="co">#&gt;    row   column well_id unique_well_id dataset plate_id map      abs extr_id</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;  &lt;dbl&gt; &lt;chr&gt;  </span></span>
@@ -1310,9 +1307,6 @@
 <span>    raw_wells_data <span class="op">=</span> <span class="va">raw_meta</span>, </span>
 <span>    per_plate_avg_blank <span class="op">=</span> <span class="va">extr_avg_clean</span>,</span>
 <span>    map_to_exclude <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"empty"</span>,<span class="st">"Std"</span>,<span class="st">"extr"</span><span class="op">)</span><span class="op">)</span> </span>
-<span><span class="co">#&gt; Joining with `by = join_by(dataset, plate_id, extr_id)`</span></span>
-<span><span class="co">#&gt; Joining with `by = join_by(row, column, well_id, unique_well_id, dataset,</span></span>
-<span><span class="co">#&gt; plate_id, map, std_sp, std_unit, std_conc, extr_id)`</span></span>
 <span></span>
 <span><span class="co"># for case of 2 extractants:</span></span>
 <span><span class="va">sample_corrected_dbl</span> <span class="op">&lt;-</span> </span>
@@ -1320,10 +1314,7 @@
 <span>    raw_wells_data <span class="op">=</span> <span class="va">dbl_extr_plate</span>, </span>
 <span>    per_plate_avg_blank <span class="op">=</span> <span class="va">extr_avg_clean_dbl</span>,</span>
 <span>    extr_def <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"extr_1"</span>, <span class="st">"extr_2"</span><span class="op">)</span>,</span>
-<span>    map_to_exclude <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"empty"</span>,<span class="st">"Std"</span>,<span class="st">"extr_1"</span>, <span class="st">"extr_2"</span><span class="op">)</span><span class="op">)</span> </span>
-<span><span class="co">#&gt; Joining with `by = join_by(dataset, plate_id, extr_id)`</span></span>
-<span><span class="co">#&gt; Joining with `by = join_by(row, column, well_id, unique_well_id, dataset,</span></span>
-<span><span class="co">#&gt; plate_id, map, extr_id)`</span></span></code></pre></div>
+<span>    map_to_exclude <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"empty"</span>,<span class="st">"Std"</span>,<span class="st">"extr_1"</span>, <span class="st">"extr_2"</span><span class="op">)</span><span class="op">)</span> </span></code></pre></div>
 </div>
 <p>Let’s have a look at the output and notice the absence of the value <code>1</code> in the column <code>column</code> (no data for standard curve<a class="footnote-ref" role="doc-noteref" tabindex="0" data-bs-toggle="popover" data-bs-content='&lt;p&gt;In case the blanks are the same for sample wells and standard curve wells, this blank-correction should also be applied on Standard curve data. In this case, remove &lt;code&gt;"Std"&lt;/code&gt; from the call to &lt;code&gt;map_to_exclude&lt;/code&gt;.&lt;/p&gt;'><sup>6</sup></a>), and of the value <code>extr</code> in the column <code>map</code> (though it was present in <code>raw_meta</code> and still can be found under <code>extr_id</code> in the case of 2 extractants per plate, which we kept in case the info is relevant for downstream analysis.</p>
 <div class="cell">

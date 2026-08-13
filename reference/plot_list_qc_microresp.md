@@ -21,6 +21,7 @@ plot_list_qc_microresp(
   value_col = "co2_g_h",
   label_col = "well_id",
   panel_col = NULL,
+  dataset_col = "dataset",
   max_plates_per_panel = 10
 )
 ```
@@ -30,8 +31,8 @@ plot_list_qc_microresp(
 - data:
 
   A tibble containing the columns referenced by `map_col`,
-  `plate_id_col`, `value_col`, `label_col`, and (if given) `panel_col`.
-  Must also contain a `dataset` column (used only in plot titles).
+  `plate_id_col`, `value_col`, `label_col`, `dataset_col`, and (if
+  given) `panel_col`.
 
 - map_col:
 
@@ -64,6 +65,11 @@ plot_list_qc_microresp(
   automatically split into evenly-sized panels labelled "Panel X of Y",
   each capped at `max_plates_per_panel` plates, with ridges in a single
   uniform colour (no meaningful grouping to colour by in this case).
+
+- dataset_col:
+
+  Name of the column identifying the dataset, used only in plot titles.
+  Defaults to `"dataset"`.
 
 - max_plates_per_panel:
 

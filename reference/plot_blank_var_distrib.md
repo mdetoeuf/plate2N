@@ -6,7 +6,11 @@ of raw absorbance of the extractant
 ## Usage
 
 ``` r
-plot_blank_var_distrib(extractant_average = NULL, data = NULL)
+plot_blank_var_distrib(
+  extractant_average = NULL,
+  data = NULL,
+  var_col = "blank_coeff_var_percent"
+)
 ```
 
 ## Arguments
@@ -20,6 +24,11 @@ plot_blank_var_distrib(extractant_average = NULL, data = NULL)
 
   A tibble like `tidy_plates`, must be provided if `extractant_average`
   is NULL.
+
+- var_col:
+
+  Name of the column holding the coefficient of variation to plot.
+  Defaults to `"blank_coeff_var_percent"`.
 
 ## Value
 

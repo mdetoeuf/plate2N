@@ -109,7 +109,6 @@ suspicious_plate_id <- qc_raw_extr(
    data, max_coeff = 5, suppress_message = TRUE, suppress_warning = TRUE)
 suspicious_extr <- suspicious_extr(
    data, max_coeff = 5, suspicious_extr_per_plate = suspicious_plate_id)
-#> Joining with `by = join_by(plate_id, map)`
 boxplot_outlier_extr(
     suspicious_extractant = suspicious_extr,
     max_coeff = 5)
@@ -145,7 +144,6 @@ dbl_extr_plate
 (suspicious_extr <- suspicious_extr(
     dbl_extr_plate, extr_def = c("extr_1", "extr_2"),
     max_coeff = 5, suspicious_extr_per_plate = suspicious_extr_per_plate))
-#> Joining with `by = join_by(plate_id, map)`
 #> # A tibble: 40 × 9
 #>    row   column well_id unique_well_id dataset plate_id map      abs extr_id
 #>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr>  <dbl> <chr>  

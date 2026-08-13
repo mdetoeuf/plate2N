@@ -13,7 +13,7 @@ usually pipetted in row A (pipetting_direction = "top_down"), or in row H (pipet
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,19 @@ usually pipetted in row A (<code>pipetting_direction = "top_down"</code>), or in
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">extract_std_blank</span><span class="op">(</span><span class="va">data</span>, std_def <span class="op">=</span> <span class="st">"Std"</span>, pipetting_direction <span class="op">=</span> <span class="st">"top_down"</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">extract_std_blank</span><span class="op">(</span></span>
+<span>  <span class="va">data</span>,</span>
+<span>  std_def <span class="op">=</span> <span class="st">"Std"</span>,</span>
+<span>  pipetting_direction <span class="op">=</span> <span class="st">"top_down"</span>,</span>
+<span>  row_col <span class="op">=</span> <span class="st">"row"</span>,</span>
+<span>  well_id_col <span class="op">=</span> <span class="st">"well_id"</span>,</span>
+<span>  unique_well_id_col <span class="op">=</span> <span class="st">"unique_well_id"</span>,</span>
+<span>  dataset_col <span class="op">=</span> <span class="st">"dataset"</span>,</span>
+<span>  plate_id_col <span class="op">=</span> <span class="st">"plate_id"</span>,</span>
+<span>  column_col <span class="op">=</span> <span class="st">"column"</span>,</span>
+<span>  map_col <span class="op">=</span> <span class="st">"map"</span>,</span>
+<span>  value_col <span class="op">=</span> <span class="st">"abs"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -83,17 +95,53 @@ A top_down pipetting means that the curve was pipetted vertically (in a single c
 with the smallest value (blank) in row A and the highest value in row H.
 Conversely, bottom_up pipetting would have the blank in row H and the most concentrated solution in row A</p></dd>
 
+
+<dt id="arg-row-col">row_col<a class="anchor" aria-label="anchor" href="#arg-row-col"></a></dt>
+<dd><p>Name of the column containing well row (A-H). Defaults
+to <code>"row"</code>.</p></dd>
+
+
+<dt id="arg-well-id-col">well_id_col<a class="anchor" aria-label="anchor" href="#arg-well-id-col"></a></dt>
+<dd><p>Name of the column identifying wells. Defaults to
+<code>"well_id"</code>.</p></dd>
+
+
+<dt id="arg-unique-well-id-col">unique_well_id_col<a class="anchor" aria-label="anchor" href="#arg-unique-well-id-col"></a></dt>
+<dd><p>Name of the column identifying wells
+uniquely across plates. Defaults to <code>"unique_well_id"</code>.</p></dd>
+
+
+<dt id="arg-dataset-col">dataset_col<a class="anchor" aria-label="anchor" href="#arg-dataset-col"></a></dt>
+<dd><p>Name of the column identifying the dataset. Defaults
+to <code>"dataset"</code>.</p></dd>
+
+
+<dt id="arg-plate-id-col">plate_id_col<a class="anchor" aria-label="anchor" href="#arg-plate-id-col"></a></dt>
+<dd><p>Name of the column identifying physical plates.
+Defaults to <code>"plate_id"</code>.</p></dd>
+
+
+<dt id="arg-column-col">column_col<a class="anchor" aria-label="anchor" href="#arg-column-col"></a></dt>
+<dd><p>Name of the column identifying the plate column
+(1-12). Defaults to <code>"column"</code>.</p></dd>
+
+
+<dt id="arg-map-col">map_col<a class="anchor" aria-label="anchor" href="#arg-map-col"></a></dt>
+<dd><p>Name of the column containing well mapping/type
+information. Defaults to <code>"map"</code>.</p></dd>
+
+
+<dt id="arg-value-col">value_col<a class="anchor" aria-label="anchor" href="#arg-value-col"></a></dt>
+<dd><p>Name of the numeric absorbance column. Defaults to
+<code>"abs"</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of 4 elements characterizing blank wells:
+    <p>A list of 3 elements characterizing blank wells:
 - <code>list$all</code> contains all supposed blank values (minimum values from each curve)
 - <code>list$trusted</code> contains all trusted blank values (minimum values and wells in the "correct" row (A or H))
-- <code>list$untrusted</code> contains all untrusted wells
-- <code>list$average</code> contains a summarized table with a per-plate computation of average,
-standard deviation and coefficient of variation of blank values.
-Note that a coefficient of variation has little value when computed on 2 values,
-especially when the values are small numbers (typically, blank absorbances are often lower than 0.1)</p>
+- <code>list$untrusted</code> contains all untrusted wells</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -102,22 +150,16 @@ especially when the values are small numbers (typically, blank absorbances are o
 - Second, within this "standard data", for each dataset, plate and column (= 1 curve), the smallest absorbance value is extracted.
 - We then check that the smallest per-curve value is indeed found in plate row "A"
 (top_down pipetting) or row "H" (bottom_up pipetting).
-- Should that not be the case, those wells are considered "untrusted" and are removed from the "trusted" blank values.
-- Per-plate averages for blank values are then computed</p>
+- Should that not be the case, those wells are considered "untrusted" and are removed from the "trusted" blank values.</p>
+<p>Per-plate averages are computed separately, by <code><a href="std_blank_average.html">std_blank_average()</a></code> —
+deliberately kept as its own step, taken on whichever of <code>$all</code>/
+<code>$trusted</code>/<code>$untrusted</code> (possibly manually reviewed/edited) the user
+decides to trust.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># reconstruct a proper data table to start from</span></span></span>
-<span class="r-in"><span><span class="co"># map_file &lt;- system.file("extdata", "csv_map.csv", package = "plate2N")</span></span></span>
-<span class="r-in"><span><span class="co"># abs_folder &lt;- system.file("extdata", "txt_examples/", package = "plate2N")</span></span></span>
-<span class="r-in"><span><span class="co"># map_tibble &lt;- csv_to_tibble(map_file)</span></span></span>
-<span class="r-in"><span><span class="co"># abs_tibble &lt;- txt_to_tibble(abs_folder)</span></span></span>
-<span class="r-in"><span><span class="co"># joined_vertical &lt;- join_abs_map(abs_tibble, map_tibble, dataset = "Nmin-")</span></span></span>
-<span class="r-in"><span><span class="co"># tidy_data &lt;- vertical_to_tidy(joined_vertical)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># check out input table</span></span></span>
-<span class="r-in"><span><span class="va">tidy_plates</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">tidy_plates</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 480 × 8</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    row   column well_id unique_well_id dataset plate_id map      abs  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span></span>
@@ -132,8 +174,6 @@ especially when the values are small numbers (typically, blank absorbances are o
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  81_t1_z1 0.118</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  Std_3_t1 0.167</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 470 more rows</span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># run the function</span></span></span>
 <span class="r-in"><span><span class="va">std_blank</span> <span class="op">&lt;-</span> <span class="va">tidy_plates</span> <span class="op">|&gt;</span> <span class="fu">extract_std_blank</span><span class="op">(</span>std_def <span class="op">=</span> <span class="st">"Std"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">std_blank</span><span class="op">$</span><span class="va">all</span> ; <span class="va">std_blank</span><span class="op">$</span><span class="va">trusted</span> ; <span class="va">std_blank</span><span class="op">$</span><span class="va">untrusted</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 10 × 8</span></span>
@@ -167,7 +207,6 @@ especially when the values are small numbers (typically, blank absorbances are o
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> A1      Nmin    NO3_1F3  1      NO3_1F3_col1    A     A1_NO3_1F3     0.11 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> A1      Nmin    NO3_1F5  1      NO3_1F5_col1    A     A1_NO3_1F5     0.113</span>
-<span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

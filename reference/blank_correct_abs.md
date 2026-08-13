@@ -9,7 +9,13 @@ blank_correct_abs(
   raw_wells_data,
   per_plate_avg_blank,
   extr_def = "extr",
-  map_to_exclude = c("empty", "Std", "extr")
+  map_to_exclude = c("empty", "Std", "extr"),
+  value_col = "abs",
+  map_col = "map",
+  blank_avg_col = "blank_avg",
+  dataset_col = "dataset",
+  plate_id_col = "plate_id",
+  unique_well_id_col = "unique_well_id"
 )
 ```
 
@@ -19,33 +25,63 @@ blank_correct_abs(
 
   A tibble, based on `tidy_plates`, can contain metadata as well.
   `raw_wells_data` contains the raw absorbance data to be
-  blank-corrected. Must contain columns "abs" and "map".
+  blank-corrected. Must contain the columns referenced by `value_col`
+  and `map_col`.
 
 - per_plate_avg_blank:
 
-  Contains the per-plate average absorbance of the blank Must contain
-  column "blank_avg" (rename it prior to function call if needed)
+  Contains the per-plate average absorbance of the blank. Must contain
+  the column referenced by `blank_avg_col` (rename it prior to function
+  call if needed).
 
 - extr_def:
 
   A string that characterizes wells containing the extractant in the
-  mapping (`map`column) of the plate. Defaults to "extr". Can be a
+  mapping (`map_col` column) of the plate. Defaults to "extr". Can be a
   vector containing several values (see examples)
 
 - map_to_exclude:
 
-  A vector of strings containing all `map` definitions of wells that are
-  not data per se (e.g., empty wells, etc.). Defaults to
+  A vector of strings containing all `map_col` definitions of wells that
+  are not data per se (e.g., empty wells, etc.). Defaults to
   `c("empty","Std","extr")`. If wells to exclude are not defined by a
-  unique "map" (e.g., blank wells of the standard curve), make sure to
-  filter out those rows from `raw_wells_data` before the function call.
+  unique `map_col` value (e.g., blank wells of the standard curve), make
+  sure to filter out those rows from `raw_wells_data` before the
+  function call.
+
+- value_col:
+
+  Name of the column containing raw absorbance. Defaults to `"abs"`.
+
+- map_col:
+
+  Name of the column containing well mapping/type information, in both
+  `raw_wells_data` and (if present) `per_plate_avg_blank`. Defaults to
+  `"map"`.
+
+- blank_avg_col:
+
+  Name of the column in `per_plate_avg_blank` containing the per-plate
+  average blank absorbance. Defaults to `"blank_avg"`.
+
+- dataset_col, plate_id_col:
+
+  Names of the columns identifying dataset and physical plate, used to
+  join `raw_wells_data` with `per_plate_avg_blank`. Default to
+  `"dataset"` and `"plate_id"`.
+
+- unique_well_id_col:
+
+  Name of the column uniquely identifying a well, used only to check for
+  any accidentally-dropped rows after the join. Defaults to
+  `"unique_well_id"`.
 
 ## Value
 
 A tibble with the blank-corrected absorbance. It has the same structure
-as `raw_wells_data`, but the `abs` column has been removed, and column
-`abs_corrected` has been added. The output tibble normally contains less
-rows than the input tibble (due to `map_to_exclude`)
+as `raw_wells_data`, but the `value_col` column has been removed, and
+column `abs_corrected` has been added. The output tibble normally
+contains less rows than the input tibble (due to `map_to_exclude`)
 
 ## Examples
 
@@ -56,9 +92,6 @@ blank_correct_abs(
     raw_wells_data = data,
     per_plate_avg_blank = extractant_average,
     map_to_exclude = c("empty","Std","extr"))
-#> Joining with `by = join_by(dataset, plate_id, extr_id)`
-#> Joining with `by = join_by(row, column, well_id, unique_well_id, dataset,
-#> plate_id, map, extr_id)`
 #> # A tibble: 264 × 11
 #>    row   column well_id unique_well_id dataset plate_id map      abs_corrected
 #>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr>            <dbl>
@@ -84,9 +117,6 @@ blank_correct_abs(
     per_plate_avg_blank = extractant_average,
     extr_def = c("extr_1", "extr_2"),
     map_to_exclude = c("empty","Std","extr_1", "extr_2"))
-#> Joining with `by = join_by(dataset, plate_id, extr_id)`
-#> Joining with `by = join_by(row, column, well_id, unique_well_id, dataset,
-#> plate_id, map, extr_id)`
 #> # A tibble: 232 × 11
 #>    row   column well_id unique_well_id dataset plate_id map      abs_corrected
 #>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr>            <dbl>

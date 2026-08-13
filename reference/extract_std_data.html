@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,7 +51,14 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">extract_std_data</span><span class="op">(</span><span class="va">data</span>, std_def <span class="op">=</span> <span class="st">"Std"</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">extract_std_data</span><span class="op">(</span></span>
+<span>  <span class="va">data</span>,</span>
+<span>  std_def <span class="op">=</span> <span class="st">"Std"</span>,</span>
+<span>  map_col <span class="op">=</span> <span class="st">"map"</span>,</span>
+<span>  dataset_col <span class="op">=</span> <span class="st">"dataset"</span>,</span>
+<span>  plate_id_col <span class="op">=</span> <span class="st">"plate_id"</span>,</span>
+<span>  column_col <span class="op">=</span> <span class="st">"column"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -66,6 +73,26 @@ dataset, map, plate_id, column</p></dd>
 
 <dt id="arg-std-def">std_def<a class="anchor" aria-label="anchor" href="#arg-std-def"></a></dt>
 <dd><p>A string, defaults with <code>"Std"</code>: how data from wells containing the standard curve are referred to.</p></dd>
+
+
+<dt id="arg-map-col">map_col<a class="anchor" aria-label="anchor" href="#arg-map-col"></a></dt>
+<dd><p>Name of the column containing well mapping/type
+information. Defaults to <code>"map"</code>.</p></dd>
+
+
+<dt id="arg-dataset-col">dataset_col<a class="anchor" aria-label="anchor" href="#arg-dataset-col"></a></dt>
+<dd><p>Name of the column identifying the dataset. Defaults
+to <code>"dataset"</code>.</p></dd>
+
+
+<dt id="arg-plate-id-col">plate_id_col<a class="anchor" aria-label="anchor" href="#arg-plate-id-col"></a></dt>
+<dd><p>Name of the column identifying physical plates.
+Defaults to <code>"plate_id"</code>.</p></dd>
+
+
+<dt id="arg-column-col">column_col<a class="anchor" aria-label="anchor" href="#arg-column-col"></a></dt>
+<dd><p>Name of the column identifying the plate column
+(1-12). Defaults to <code>"column"</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

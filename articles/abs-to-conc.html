@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -579,7 +579,6 @@
 <span><span class="co"># Check it out (notice )</span></span>
 <span><span class="va">std_dilution_avg</span></span>
 <span><span class="co">#&gt; # A tibble: 35 × 25</span></span>
-<span><span class="co">#&gt; # Groups:   plate_id [5]</span></span>
 <span><span class="co">#&gt;    plate_id row   column well_id unique_curve_id abs_mean dataset map   date </span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;    &lt;chr&gt;  &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;              &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt; &lt;lgl&gt;</span></span>
 <span><span class="co">#&gt;  1 NO3_1F1  B         13 B13     NO3_1F1_col13    0.00700 Nmin    Std   NA   </span></span>
@@ -610,21 +609,26 @@
 <span><span class="co">#&gt; # A tibble: 5 × 12</span></span>
 <span><span class="co">#&gt;   dataset plate_id unique_curve_id std_sp  slope r_squared adj_r_squared</span></span>
 <span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;           &lt;chr&gt;   &lt;dbl&gt;     &lt;dbl&gt;         &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1 Nmin    NO3_1F1  NO3_1F1_col13   NO3    0.0184     0.999         0.999</span></span>
-<span><span class="co">#&gt; 2 Nmin    NO3_1F2  NO3_1F2_col13   NO3    0.0184     0.999         0.999</span></span>
-<span><span class="co">#&gt; 3 Nmin    NO3_1F3  NO3_1F3_col13   NO3    0.0186     0.999         0.999</span></span>
-<span><span class="co">#&gt; 4 Nmin    NO3_1F4  NO3_1F4_col13   NO3    0.0183     0.999         0.999</span></span>
-<span><span class="co">#&gt; 5 Nmin    NO3_1F5  NO3_1F5_col13   NO3    0.0189     0.999         0.999</span></span>
+<span><span class="co">#&gt; 1 Nmin    NO3_1F1  NO3_1F1_col13   NO3    0.0185     0.999         0.999</span></span>
+<span><span class="co">#&gt; 2 Nmin    NO3_1F2  NO3_1F2_col13   NO3    0.0185     0.999         0.999</span></span>
+<span><span class="co">#&gt; 3 Nmin    NO3_1F3  NO3_1F3_col13   NO3    0.0185     0.999         0.999</span></span>
+<span><span class="co">#&gt; 4 Nmin    NO3_1F4  NO3_1F4_col13   NO3    0.0185     0.999         0.999</span></span>
+<span><span class="co">#&gt; 5 Nmin    NO3_1F5  NO3_1F5_col13   NO3    0.0185     0.999         0.999</span></span>
 <span><span class="co">#&gt; # ℹ 5 more variables: lm_p &lt;dbl&gt;, normality_lm_residuals &lt;chr&gt;,</span></span>
 <span><span class="co">#&gt; #   shapiro_p &lt;dbl&gt;, homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;</span></span>
 <span></span>
 <span><span class="co"># look for suspicious curves</span></span>
 <span><span class="op">(</span><span class="va">lm_suspicious_mean</span> <span class="op">&lt;-</span> <span class="va">lm_std_mean</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/suspicious_lm.html">suspicious_lm</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 0 × 12</span></span>
-<span><span class="co">#&gt; # ℹ 12 variables: dataset &lt;chr&gt;, plate_id &lt;chr&gt;, unique_curve_id &lt;chr&gt;,</span></span>
-<span><span class="co">#&gt; #   std_sp &lt;chr&gt;, slope &lt;dbl&gt;, r_squared &lt;dbl&gt;, adj_r_squared &lt;dbl&gt;,</span></span>
-<span><span class="co">#&gt; #   lm_p &lt;dbl&gt;, normality_lm_residuals &lt;chr&gt;, shapiro_p &lt;dbl&gt;,</span></span>
-<span><span class="co">#&gt; #   homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt; # A tibble: 5 × 12</span></span>
+<span><span class="co">#&gt;   dataset plate_id unique_curve_id std_sp  slope r_squared adj_r_squared</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;           &lt;chr&gt;   &lt;dbl&gt;     &lt;dbl&gt;         &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 Nmin    NO3_1F1  NO3_1F1_col13   NO3    0.0185     0.999         0.999</span></span>
+<span><span class="co">#&gt; 2 Nmin    NO3_1F2  NO3_1F2_col13   NO3    0.0185     0.999         0.999</span></span>
+<span><span class="co">#&gt; 3 Nmin    NO3_1F3  NO3_1F3_col13   NO3    0.0185     0.999         0.999</span></span>
+<span><span class="co">#&gt; 4 Nmin    NO3_1F4  NO3_1F4_col13   NO3    0.0185     0.999         0.999</span></span>
+<span><span class="co">#&gt; 5 Nmin    NO3_1F5  NO3_1F5_col13   NO3    0.0185     0.999         0.999</span></span>
+<span><span class="co">#&gt; # ℹ 5 more variables: lm_p &lt;dbl&gt;, normality_lm_residuals &lt;chr&gt;,</span></span>
+<span><span class="co">#&gt; #   shapiro_p &lt;dbl&gt;, homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;</span></span></code></pre></div>
 </div>
 <p>Good news, there are no more suspicious linear models anymore. Should there be any, one more round of QC as described above can still be helpful in some cases (<code><a href="../reference/plot_list_lm.html">plot_list_lm()</a></code>). However, one should not expect to always reach normality of residuals with only 7 points. If the curve fits and the p-value of the model if very low, non-normality and heteroscedasticity can be accepted. They are used as tools to “flag” suspicious curves, but should not be used as too strict criteria.</p>
 <p>Let’s store the last correction into a clean variable name to reduce possible confusion, and let’s compute all the plots in a big list, for storage purposes. We could then export this as one output data in a single list with <code><a href="https://readr.tidyverse.org/reference/read_rds.html" class="external-link">readr::write_rds()</a></code>, or save the plots with <code>ggsave()</code>.</p>
@@ -753,16 +757,16 @@
 <span><span class="co">#&gt; # A tibble: 264 × 13</span></span>
 <span><span class="co">#&gt;    dataset plate_id map   well_id abs_corrected std_sp target_sp std_unit  slope</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt; &lt;chr&gt;           &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;     &lt;chr&gt;     &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt;  1 Nmin    NO3_1F1  81_t… A2            0.0312  NO3    N         mg NO3-… 0.0184</span></span>
-<span><span class="co">#&gt;  2 Nmin    NO3_1F2  97_t… A2           -0.00975 NO3    N         mg NO3-… 0.0184</span></span>
-<span><span class="co">#&gt;  3 Nmin    NO3_1F3  89_t… A2            0.0104  NO3    N         mg NO3-… 0.0186</span></span>
-<span><span class="co">#&gt;  4 Nmin    NO3_1F4  81_t… A2            0.0437  NO3    N         mg NO3-… 0.0183</span></span>
-<span><span class="co">#&gt;  5 Nmin    NO3_1F5  Std_… A2            0.0832  NO3    N         mg NO3-… 0.0189</span></span>
-<span><span class="co">#&gt;  6 Nmin    NO3_1F1  82_t… A3            0.0452  NO3    N         mg NO3-… 0.0184</span></span>
-<span><span class="co">#&gt;  7 Nmin    NO3_1F2  98_t… A3           -0.0128  NO3    N         mg NO3-… 0.0184</span></span>
-<span><span class="co">#&gt;  8 Nmin    NO3_1F3  90_t… A3            0.0124  NO3    N         mg NO3-… 0.0186</span></span>
-<span><span class="co">#&gt;  9 Nmin    NO3_1F4  82_t… A3            0.0638  NO3    N         mg NO3-… 0.0183</span></span>
-<span><span class="co">#&gt; 10 Nmin    NO3_1F5  98_t… A3            0.0232  NO3    N         mg NO3-… 0.0189</span></span>
+<span><span class="co">#&gt;  1 Nmin    NO3_1F1  81_t… A2            0.0312  NO3    N         mg NO3-… 0.0185</span></span>
+<span><span class="co">#&gt;  2 Nmin    NO3_1F2  97_t… A2           -0.00975 NO3    N         mg NO3-… 0.0185</span></span>
+<span><span class="co">#&gt;  3 Nmin    NO3_1F3  89_t… A2            0.0104  NO3    N         mg NO3-… 0.0185</span></span>
+<span><span class="co">#&gt;  4 Nmin    NO3_1F4  81_t… A2            0.0437  NO3    N         mg NO3-… 0.0185</span></span>
+<span><span class="co">#&gt;  5 Nmin    NO3_1F5  Std_… A2            0.0832  NO3    N         mg NO3-… 0.0185</span></span>
+<span><span class="co">#&gt;  6 Nmin    NO3_1F1  82_t… A3            0.0452  NO3    N         mg NO3-… 0.0185</span></span>
+<span><span class="co">#&gt;  7 Nmin    NO3_1F2  98_t… A3           -0.0128  NO3    N         mg NO3-… 0.0185</span></span>
+<span><span class="co">#&gt;  8 Nmin    NO3_1F3  90_t… A3            0.0124  NO3    N         mg NO3-… 0.0185</span></span>
+<span><span class="co">#&gt;  9 Nmin    NO3_1F4  82_t… A3            0.0638  NO3    N         mg NO3-… 0.0185</span></span>
+<span><span class="co">#&gt; 10 Nmin    NO3_1F5  98_t… A3            0.0232  NO3    N         mg NO3-… 0.0185</span></span>
 <span><span class="co">#&gt; # ℹ 254 more rows</span></span>
 <span><span class="co">#&gt; # ℹ 4 more variables: adj_r_squared &lt;dbl&gt;, lm_p &lt;dbl&gt;, conc_mgNsp_L &lt;dbl&gt;,</span></span>
 <span><span class="co">#&gt; #   conc_mgN_L &lt;dbl&gt;</span></span></code></pre></div>

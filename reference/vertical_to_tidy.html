@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,8 +64,11 @@
 
 <dt id="arg-column-def">column_def<a class="anchor" aria-label="anchor" href="#arg-column-def"></a></dt>
 <dd><p>Strings defining the types of data layout to be recovered.
-They correspond to the prefixes added to column names in a previous step
-with <code><a href="join_abs_map.html">join_abs_map()</a></code>. It defaults to <code>c("abs", "map")</code>.</p></dd>
+<strong>Currently unused</strong> — <code>pivot_wider()</code> already picks up whatever
+layout types are actually present in the data dynamically, so
+this parameter has no effect. Kept for backward compatibility
+with existing calls that pass it by name; may be deprecated in
+a future version. Defaults to <code>c("abs", "map")</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

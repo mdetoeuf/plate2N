@@ -12,6 +12,9 @@ qc_raw_extr(
   extractant_average = NULL,
   extr_def = "extr",
   max_coeff = 5,
+  var_col = "blank_coeff_var_percent",
+  plate_id_col = "plate_id",
+  map_col = "map",
   suppress_message = FALSE,
   suppress_warning = FALSE
 )
@@ -22,7 +25,7 @@ qc_raw_extr(
 - data:
 
   A tibble, as in `tidy_plates`, optional. It is only used if argument
-  `extractant_data` is `NULL` to compute it with
+  `extractant_average` is `NULL` to compute it with
   [`extractant_average()`](https://mdetoeuf.github.io/plate2N/reference/extractant_average.md)
   and the argument `extr_def`.
 
@@ -41,6 +44,21 @@ qc_raw_extr(
   User-defined, in % (defaults at 5): determines the threshold
   coefficient of variation for raw absorbance of extractant wells, above
   which plates will be considered "suspicious"
+
+- var_col:
+
+  Name of the column in `extractant_average` holding the coefficient of
+  variation. Defaults to `"blank_coeff_var_percent"`.
+
+- plate_id_col:
+
+  Name of the column identifying physical plates. Defaults to
+  `"plate_id"`.
+
+- map_col:
+
+  Name of the column identifying extractants/layers. Defaults to
+  `"map"`.
 
 - suppress_message:
 
@@ -106,5 +124,4 @@ dbl_extr_plate
 #> 3 NO3_1F1  extr_2
 #> 4 NO3_1F2  extr_2
 #> 5 NO3_1F5  extr_2
-
 ```

@@ -8,7 +8,17 @@ absorbance data.
 ## Usage
 
 ``` r
-lm_std_curve(grouped_data, model = "linear")
+lm_std_curve(
+  grouped_data,
+  model = "linear",
+  conc_col = "std_conc",
+  value_col = "abs_corrected",
+  curve_id_col = "unique_curve_id",
+  dataset_col = "dataset",
+  plate_id_col = "plate_id",
+  std_sp_col = "std_sp",
+  through_origin = TRUE
+)
 ```
 
 ## Arguments
@@ -17,13 +27,48 @@ lm_std_curve(grouped_data, model = "linear")
 
   A tibble, grouped per curve (e.g., use
   `dplyr::group_by(plate_id, column)` on your data before calling the
-  function). Must contain columns `std_conc`, `unique_curve_id` and
-  `abs_corrected`
+  function). Must contain the columns referenced by `conc_col`,
+  `value_col`, `curve_id_col`, `dataset_col`, `plate_id_col`, and
+  `std_sp_col`.
 
 - model:
 
   Which model to use. Accepts either `linear` (default) or `poly` for
   polynomial model.
+
+- conc_col:
+
+  Name of the column containing concentration. Defaults to `"std_conc"`.
+
+- value_col:
+
+  Name of the column containing (blank-corrected) absorbance. Defaults
+  to `"abs_corrected"`.
+
+- curve_id_col:
+
+  Name of the column identifying which curve a row belongs to. Defaults
+  to `"unique_curve_id"`.
+
+- dataset_col:
+
+  Name of the column identifying the dataset. Defaults to `"dataset"`.
+
+- plate_id_col:
+
+  Name of the column identifying physical plates. Defaults to
+  `"plate_id"`.
+
+- std_sp_col:
+
+  Name of the column identifying the standard species. Defaults to
+  `"std_sp"`.
+
+- through_origin:
+
+  Whether to force the model through the origin. Defaults to `TRUE`. See
+  [`fit_curve_model()`](https://mdetoeuf.github.io/plate2N/reference/fit_curve_model.md)
+  for the same argument's meaning.
 
 ## Value
 
@@ -31,7 +76,10 @@ A table containing relevant parameters of the linear model, with - 1 row
 per "group" (e.g., plate \* column, which is relevant to spot
 outliers). - columns: `unique_curve_id`, `slope`, `r_squared`,
 `adj_r_squared`, `lm_p`, `normality_lm_residuals`, `shapiro_p`,
-`homoscedasticity_lm_residuals`, `breusch_pagan_p`
+`homoscedasticity_lm_residuals`, `breusch_pagan_p`. When
+`model = "poly"`, also `poly_a`/`poly_a_p` (the squared, `x^2`, term's
+coefficient and p-value) and `poly_b`/`poly_b_p` (the linear, `x`,
+term's coefficient and p-value).
 
 ## Details
 
@@ -39,6 +87,19 @@ Formula within [`lm()`](https://rdrr.io/r/stats/lm.html). For linear
 model: `y = m*x + c`; For polynomial model: `y = a*x^2 + b*x + c`;
 With - y = blank-corrected absorbance - x = concentration - c = 0
 because we use blank-corrected absorbance data
+
+Fitting itself is delegated to
+[`fit_curve_model()`](https://mdetoeuf.github.io/plate2N/reference/fit_curve_model.md)
+(the same function used by the `model-choice` toolkit), with diagnostic
+statistics computed by
+[`lm_diagnostics()`](https://mdetoeuf.github.io/plate2N/reference/lm_diagnostics.md)
+— call that directly if you only need diagnostics for a single
+already-fitted model.
+
+## See also
+
+[`fit_curve_model()`](https://mdetoeuf.github.io/plate2N/reference/fit_curve_model.md),
+[`lm_diagnostics()`](https://mdetoeuf.github.io/plate2N/reference/lm_diagnostics.md)
 
 ## Examples
 

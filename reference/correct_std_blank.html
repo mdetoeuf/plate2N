@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,7 +57,13 @@
 <span>  pipetting_direction <span class="op">=</span> <span class="st">"top_down"</span>,</span>
 <span>  std_blank_average <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  std_blank_trusted <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  std_blank <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  std_blank <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  row_col <span class="op">=</span> <span class="st">"row"</span>,</span>
+<span>  dataset_col <span class="op">=</span> <span class="st">"dataset"</span>,</span>
+<span>  plate_id_col <span class="op">=</span> <span class="st">"plate_id"</span>,</span>
+<span>  column_col <span class="op">=</span> <span class="st">"column"</span>,</span>
+<span>  map_col <span class="op">=</span> <span class="st">"map"</span>,</span>
+<span>  value_col <span class="op">=</span> <span class="st">"abs"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -96,6 +102,36 @@ in any way (see <code>?extract_std_blank()</code> for more details)</p></dd>
 
 <dt id="arg-std-blank">std_blank<a class="anchor" aria-label="anchor" href="#arg-std-blank"></a></dt>
 <dd><p>If NULL (default), it will be extracted/computed from <code>data</code>, using <code><a href="extract_std_blank.html">extract_std_blank()</a></code>.</p></dd>
+
+
+<dt id="arg-row-col">row_col<a class="anchor" aria-label="anchor" href="#arg-row-col"></a></dt>
+<dd><p>Name of the column containing well row (A-H). Defaults
+to <code>"row"</code>.</p></dd>
+
+
+<dt id="arg-dataset-col">dataset_col<a class="anchor" aria-label="anchor" href="#arg-dataset-col"></a></dt>
+<dd><p>Name of the column identifying the dataset. Defaults
+to <code>"dataset"</code>.</p></dd>
+
+
+<dt id="arg-plate-id-col">plate_id_col<a class="anchor" aria-label="anchor" href="#arg-plate-id-col"></a></dt>
+<dd><p>Name of the column identifying physical plates.
+Defaults to <code>"plate_id"</code>.</p></dd>
+
+
+<dt id="arg-column-col">column_col<a class="anchor" aria-label="anchor" href="#arg-column-col"></a></dt>
+<dd><p>Name of the column identifying the plate column
+(1-12). Defaults to <code>"column"</code>.</p></dd>
+
+
+<dt id="arg-map-col">map_col<a class="anchor" aria-label="anchor" href="#arg-map-col"></a></dt>
+<dd><p>Name of the column containing well mapping/type
+information. Defaults to <code>"map"</code>.</p></dd>
+
+
+<dt id="arg-value-col">value_col<a class="anchor" aria-label="anchor" href="#arg-value-col"></a></dt>
+<dd><p>Name of the numeric absorbance column. Defaults to
+<code>"abs"</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

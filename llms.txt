@@ -34,136 +34,197 @@ concentrations.
 - [`add_spacers()`](https://mdetoeuf.github.io/plate2N/reference/add_spacers.md)
   : Interleave plots with spacer panels for visual gaps in patchwork
   layouts
+
 - [`blank_correct_abs()`](https://mdetoeuf.github.io/plate2N/reference/blank_correct_abs.md)
   : Transform Raw Absorbance Data into Blank-corrected Absorbance
+
 - [`boxplot_outlier_extr()`](https://mdetoeuf.github.io/plate2N/reference/boxplot_outlier_extr.md)
   : Identify outlier-wells within plates containing suspicious
   extractant data
+
 - [`boxplot_values()`](https://mdetoeuf.github.io/plate2N/reference/boxplot_values.md)
   : Boxplot of values by sample, with optional colour and point labels
+
 - [`convert_molec()`](https://mdetoeuf.github.io/plate2N/reference/convert_molec.md)
   : Converts Concentrations From Compound Weight to Target Weight
+
 - [`correct_std_blank()`](https://mdetoeuf.github.io/plate2N/reference/correct_std_blank.md)
   : Replaces raw absorbance data from standard curves by blank-corrected
   absorbance values.
+
 - [`csv_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/csv_to_tibble.md)
   : Import 96-well plate data in csv format
+
 - [`dbl_extr_plate`](https://mdetoeuf.github.io/plate2N/reference/dbl_extr_plate.md)
   : Tidy Table with 2 different Extractant IDs
+
 - [`density_lm_param()`](https://mdetoeuf.github.io/plate2N/reference/density_lm_param.md)
   : Plot Distribution of Model QC Parameters (p-val, R2 and adjusted R2)
+
 - [`extract_curve()`](https://mdetoeuf.github.io/plate2N/reference/extract_curve.md)
   : Get concentration of standard curve from metadata
+
 - [`extract_extractant()`](https://mdetoeuf.github.io/plate2N/reference/extract_extractant.md)
   : Extracting "extractant" data (blank for samples) from plate tidy
   table
+
 - [`extract_std_blank()`](https://mdetoeuf.github.io/plate2N/reference/extract_std_blank.md)
   : Extraction and Quality Check (QC) of blank values for standard
   curves
+
 - [`extract_std_data()`](https://mdetoeuf.github.io/plate2N/reference/extract_std_data.md)
   : Keeps only wells corresponding to standard curves
+
 - [`extractant_average()`](https://mdetoeuf.github.io/plate2N/reference/extractant_average.md)
   : Computing the per-plate average for raw absorbance of the extractant
   (blank for samples)
+
 - [`failed_wells_example`](https://mdetoeuf.github.io/plate2N/reference/failed_wells_example.md)
   : Example of failed well table
+
 - [`failed_wells_template()`](https://mdetoeuf.github.io/plate2N/reference/failed_wells_template.md)
   : Generate a template to record "failed wells"
+
 - [`fit_curve_model()`](https://mdetoeuf.github.io/plate2N/reference/fit_curve_model.md)
   : Fit one model (linear or polynomial) for a single standard curve
+
 - [`fit_curve_models()`](https://mdetoeuf.github.io/plate2N/reference/fit_curve_models.md)
   : Fit both linear and polynomial models for one standard curve
+
 - [`join_abs_map()`](https://mdetoeuf.github.io/plate2N/reference/join_abs_map.md)
   : Merging 2 vertical plates into one
+
+- [`lm_diagnostics()`](https://mdetoeuf.github.io/plate2N/reference/lm_diagnostics.md)
+  : Compute diagnostic statistics for a fitted standard curve model
+
 - [`lm_output`](https://mdetoeuf.github.io/plate2N/reference/lm_output.md)
   : Example of Outputs from the Linear Model of the Standard Curves
+
 - [`lm_std_curve()`](https://mdetoeuf.github.io/plate2N/reference/lm_std_curve.md)
   : Perform Linear Model for Standard Curve
+
 - [`map_1_plate()`](https://mdetoeuf.github.io/plate2N/reference/map_1_plate.md)
   : Mapping a Vector with Sample ids into a 96-well Plate Format -
   Single Plate
+
 - [`map_plates()`](https://mdetoeuf.github.io/plate2N/reference/map_plates.md)
   : Mapping a Vector with Sample ids into 96-well Plate Format - Several
   Plates
+
 - [`metadata`](https://mdetoeuf.github.io/plate2N/reference/metadata.md)
   : Example of plate metadata
+
 - [`molar_masses`](https://mdetoeuf.github.io/plate2N/reference/molar_masses.md)
   : Record of molar masses for studied compounds
+
 - [`multiple_extractant_id`](https://mdetoeuf.github.io/plate2N/reference/multiple_extractant_id.md)
   : Correspondance Table between Plate Mapping and Extractant ID
+
 - [`multiplot_outlier_extr()`](https://mdetoeuf.github.io/plate2N/reference/multiplot_outlier_extr.md)
-  : Multiple distribution plot to review suspicious extractant values
-  and spot outliers
+  :
+
+  Deprecated: use
+  [`boxplot_outlier_extr()`](https://mdetoeuf.github.io/plate2N/reference/boxplot_outlier_extr.md)
+  instead
+
 - [`plot_blank_var_distrib()`](https://mdetoeuf.github.io/plate2N/reference/plot_blank_var_distrib.md)
   : Plot dataset-wide distribution of withing-plate variation for
   extractant data
+
 - [`plot_list_lm()`](https://mdetoeuf.github.io/plate2N/reference/plot_list_lm.md)
   : Compute a list of plots, one per standard curve
+
 - [`plot_list_qc_microresp()`](https://mdetoeuf.github.io/plate2N/reference/plot_list_qc_microresp.md)
   : Build per-substrate/treatment QC plots for MicroResp data, paginated
   into panels
+
 - [`plot_list_qc_samples()`](https://mdetoeuf.github.io/plate2N/reference/plot_list_qc_samples.md)
   : Build per-sample QC plots (boxplot + ridgeline pairs), paginated
+
 - [`plot_model_comparison()`](https://mdetoeuf.github.io/plate2N/reference/plot_model_comparison.md)
   : Plot linear and polynomial model fits side by side for one or more
   curves
+
 - [`plot_qc_sample_pair()`](https://mdetoeuf.github.io/plate2N/reference/plot_qc_sample_pair.md)
   : Boxplot + ridgeline pair for one chunk of samples
+
 - [`plot_residual_comparison()`](https://mdetoeuf.github.io/plate2N/reference/plot_residual_comparison.md)
   : Plot residuals of linear vs. polynomial models for one curve
+
 - [`plot_ridges_values()`](https://mdetoeuf.github.io/plate2N/reference/plot_ridges_values.md)
   : Ridge-line density plot of values, grouped by sample
+
 - [`plot_std()`](https://mdetoeuf.github.io/plate2N/reference/plot_std.md)
   : Display one or more standard curve(s)
+
 - [`qc_raw_abs()`](https://mdetoeuf.github.io/plate2N/reference/qc_raw_abs.md)
   : Quality Check (QC) of raw absorbance data
+
 - [`qc_raw_extr()`](https://mdetoeuf.github.io/plate2N/reference/qc_raw_extr.md)
   : Quality check of raw absorbance data for extractant wells
+
 - [`read_tecan()`](https://mdetoeuf.github.io/plate2N/reference/read_tecan.md)
   : Import single plate data from a single Tecan-generated file
+
 - [`reg_join_abs()`](https://mdetoeuf.github.io/plate2N/reference/reg_join_abs.md)
   : Merge Data from Regression Equation on Standard Curve with
   Absorbance Data (samples)
+
 - [`remove_wells()`](https://mdetoeuf.github.io/plate2N/reference/remove_wells.md)
   : Clean a tidy table from undesired wells
+
 - [`review_model_choice()`](https://mdetoeuf.github.io/plate2N/reference/review_model_choice.md)
   : Review linear vs. polynomial model choice across several standard
   curves
+
 - [`sample_corrected`](https://mdetoeuf.github.io/plate2N/reference/sample_corrected.md)
   : Example of Blank-corrected Absorbance Data (samples)
+
 - [`skanit_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/skanit_to_tibble.md)
   : Import 96-well plate data from Skanit format
+
 - [`std_blank_average()`](https://mdetoeuf.github.io/plate2N/reference/std_blank_average.md)
   : Computing per-plate average for raw absorbance of the standard blank
+
 - [`std_corrected`](https://mdetoeuf.github.io/plate2N/reference/std_corrected.md)
   : Example of Blank-corrected Data for Standard Curve
+
 - [`std_corrected_TDN`](https://mdetoeuf.github.io/plate2N/reference/std_corrected_TDN.md)
   : Blank-corrected standard curve data for a Total Dissolved Nitrogen
   (TDN) experiment
+
 - [`std_dilution_average()`](https://mdetoeuf.github.io/plate2N/reference/std_dilution_average.md)
   : Compute per-dilution Averages for Standard Curves
+
 - [`suspicious_extr()`](https://mdetoeuf.github.io/plate2N/reference/suspicious_extr.md)
   : Extract suspicious extractant wells
+
 - [`suspicious_lm()`](https://mdetoeuf.github.io/plate2N/reference/suspicious_lm.md)
   : Extract Suspicious Rows from Linear Model Data (non-significance,
   Non-normality, heteroscedasticity)
+
 - [`tecan_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/tecan_to_tibble.md)
   : Import plate data from a Tecan-generated .xlsx file
+
 - [`tibble_example`](https://mdetoeuf.github.io/plate2N/reference/tibble_example.md)
   : Example of a tibble format for plate data
-- [`tibble_to_list()`](https://mdetoeuf.github.io/plate2N/reference/tibble_to_list.md)
-  : Converts plates data from tibble to a list
+
 - [`tidy_plates`](https://mdetoeuf.github.io/plate2N/reference/tidy_plates.md)
   : Example of Tidy table of plate data
+
 - [`tidy_table`](https://mdetoeuf.github.io/plate2N/reference/tidy_table.md)
   : Example of Tidy table of plate data
+
 - [`txt_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/txt_to_tibble.md)
   : Imports 96-well plate data from .TXT format as exported from the
   plate reader
+
 - [`vertical_plates`](https://mdetoeuf.github.io/plate2N/reference/vertical_plates.md)
   : Example of the verticalized plate data
+
 - [`vertical_to_tidy()`](https://mdetoeuf.github.io/plate2N/reference/vertical_to_tidy.md)
   : From vertical plate data to tidy data using the tidyr package
+
 - [`verticalize_plates()`](https://mdetoeuf.github.io/plate2N/reference/verticalize_plates.md)
   : Tidying plate data (verticalization)
 

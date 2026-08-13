@@ -5,7 +5,7 @@ Extracting "extractant" data (blank for samples) from plate tidy table
 ## Usage
 
 ``` r
-extract_extractant(data, extr_def = "extr")
+extract_extractant(data, extr_def = "extr", map_col = "map")
 ```
 
 ## Arguments
@@ -18,6 +18,11 @@ extract_extractant(data, extr_def = "extr")
 
   A string that characterizes wells containing the extractant in the
   mapping (`map`column) of the plate
+
+- map_col:
+
+  Name of the column containing well mapping/type information. Defaults
+  to `"map"`.
 
 ## Value
 

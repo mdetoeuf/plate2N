@@ -14,7 +14,13 @@ column)
 ## Usage
 
 ``` r
-verticalize_plates(tibble, coerce_numeric = FALSE, prefix = NULL)
+verticalize_plates(
+  tibble,
+  coerce_numeric = FALSE,
+  prefix = NULL,
+  row_col = "row",
+  column_cols = paste0("X", 1:12)
+)
 ```
 
 ## Arguments
@@ -41,6 +47,16 @@ verticalize_plates(tibble, coerce_numeric = FALSE, prefix = NULL)
 
   Defaults as an empty string. A `prefix` can be added to all column
   names, which can be useful to join tables from distinct datasets
+
+- row_col:
+
+  Name of the column identifying plate row (A-H) in the raw input.
+  Defaults to `"row"`.
+
+- column_cols:
+
+  A vector of the 12 column names holding plate columns 1-12 in the raw
+  input, in order. Defaults to `paste0("X", 1:12)`.
 
 ## Value
 

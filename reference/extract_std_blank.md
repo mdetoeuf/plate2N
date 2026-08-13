@@ -10,7 +10,19 @@ containing the blank value, usually pipetted in row A
 ## Usage
 
 ``` r
-extract_std_blank(data, std_def = "Std", pipetting_direction = "top_down")
+extract_std_blank(
+  data,
+  std_def = "Std",
+  pipetting_direction = "top_down",
+  row_col = "row",
+  well_id_col = "well_id",
+  unique_well_id_col = "unique_well_id",
+  dataset_col = "dataset",
+  plate_id_col = "plate_id",
+  column_col = "column",
+  map_col = "map",
+  value_col = "abs"
+)
 ```
 
 ## Arguments
@@ -36,17 +48,49 @@ extract_std_blank(data, std_def = "Std", pipetting_direction = "top_down")
   highest value in row H. Conversely, bottom_up pipetting would have the
   blank in row H and the most concentrated solution in row A
 
+- row_col:
+
+  Name of the column containing well row (A-H). Defaults to `"row"`.
+
+- well_id_col:
+
+  Name of the column identifying wells. Defaults to `"well_id"`.
+
+- unique_well_id_col:
+
+  Name of the column identifying wells uniquely across plates. Defaults
+  to `"unique_well_id"`.
+
+- dataset_col:
+
+  Name of the column identifying the dataset. Defaults to `"dataset"`.
+
+- plate_id_col:
+
+  Name of the column identifying physical plates. Defaults to
+  `"plate_id"`.
+
+- column_col:
+
+  Name of the column identifying the plate column (1-12). Defaults to
+  `"column"`.
+
+- map_col:
+
+  Name of the column containing well mapping/type information. Defaults
+  to `"map"`.
+
+- value_col:
+
+  Name of the numeric absorbance column. Defaults to `"abs"`.
+
 ## Value
 
-A list of 4 elements characterizing blank wells: - `list$all` contains
+A list of 3 elements characterizing blank wells: - `list$all` contains
 all supposed blank values (minimum values from each curve) -
 `list$trusted` contains all trusted blank values (minimum values and
 wells in the "correct" row (A or H)) - `list$untrusted` contains all
-untrusted wells - `list$average` contains a summarized table with a
-per-plate computation of average, standard deviation and coefficient of
-variation of blank values. Note that a coefficient of variation has
-little value when computed on 2 values, especially when the values are
-small numbers (typically, blank absorbances are often lower than 0.1)
+untrusted wells
 
 ## Details
 
@@ -57,21 +101,17 @@ dataset, plate and column (= 1 curve), the smallest absorbance value is
 extracted. - We then check that the smallest per-curve value is indeed
 found in plate row "A" (top_down pipetting) or row "H" (bottom_up
 pipetting). - Should that not be the case, those wells are considered
-"untrusted" and are removed from the "trusted" blank values. - Per-plate
-averages for blank values are then computed
+"untrusted" and are removed from the "trusted" blank values.
+
+Per-plate averages are computed separately, by
+[`std_blank_average()`](https://mdetoeuf.github.io/plate2N/reference/std_blank_average.md)
+— deliberately kept as its own step, taken on whichever of `$all`/
+`$trusted`/`$untrusted` (possibly manually reviewed/edited) the user
+decides to trust.
 
 ## Examples
 
 ``` r
-# reconstruct a proper data table to start from
-# map_file <- system.file("extdata", "csv_map.csv", package = "plate2N")
-# abs_folder <- system.file("extdata", "txt_examples/", package = "plate2N")
-# map_tibble <- csv_to_tibble(map_file)
-# abs_tibble <- txt_to_tibble(abs_folder)
-# joined_vertical <- join_abs_map(abs_tibble, map_tibble, dataset = "Nmin-")
-# tidy_data <- vertical_to_tidy(joined_vertical)
-
-# check out input table
 tidy_plates
 #> # A tibble: 480 × 8
 #>    row   column well_id unique_well_id dataset plate_id map      abs  
@@ -87,8 +127,6 @@ tidy_plates
 #>  9 A     2      A2      A2_NO3_1F4     Nmin    NO3_1F4  81_t1_z1 0.118
 #> 10 A     2      A2      A2_NO3_1F5     Nmin    NO3_1F5  Std_3_t1 0.167
 #> # ℹ 470 more rows
-
-# run the function
 std_blank <- tidy_plates |> extract_std_blank(std_def = "Std")
 std_blank$all ; std_blank$trusted ; std_blank$untrusted
 #> # A tibble: 10 × 8

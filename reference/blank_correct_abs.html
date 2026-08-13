@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,7 +55,13 @@
 <span>  <span class="va">raw_wells_data</span>,</span>
 <span>  <span class="va">per_plate_avg_blank</span>,</span>
 <span>  extr_def <span class="op">=</span> <span class="st">"extr"</span>,</span>
-<span>  map_to_exclude <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"empty"</span>, <span class="st">"Std"</span>, <span class="st">"extr"</span><span class="op">)</span></span>
+<span>  map_to_exclude <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"empty"</span>, <span class="st">"Std"</span>, <span class="st">"extr"</span><span class="op">)</span>,</span>
+<span>  value_col <span class="op">=</span> <span class="st">"abs"</span>,</span>
+<span>  map_col <span class="op">=</span> <span class="st">"map"</span>,</span>
+<span>  blank_avg_col <span class="op">=</span> <span class="st">"blank_avg"</span>,</span>
+<span>  dataset_col <span class="op">=</span> <span class="st">"dataset"</span>,</span>
+<span>  plate_id_col <span class="op">=</span> <span class="st">"plate_id"</span>,</span>
+<span>  unique_well_id_col <span class="op">=</span> <span class="st">"unique_well_id"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -66,32 +72,62 @@
 <dl><dt id="arg-raw-wells-data">raw_wells_data<a class="anchor" aria-label="anchor" href="#arg-raw-wells-data"></a></dt>
 <dd><p>A tibble, based on <code>tidy_plates</code>, can contain metadata as well.
 <code>raw_wells_data</code> contains the raw absorbance data to be blank-corrected.
-Must contain columns "abs" and "map".</p></dd>
+Must contain the columns referenced by <code>value_col</code> and <code>map_col</code>.</p></dd>
 
 
 <dt id="arg-per-plate-avg-blank">per_plate_avg_blank<a class="anchor" aria-label="anchor" href="#arg-per-plate-avg-blank"></a></dt>
-<dd><p>Contains the per-plate average absorbance of the blank
-Must contain column "blank_avg" (rename it prior to function call if needed)</p></dd>
+<dd><p>Contains the per-plate average absorbance of the blank.
+Must contain the column referenced by <code>blank_avg_col</code> (rename it prior to
+function call if needed).</p></dd>
 
 
 <dt id="arg-extr-def">extr_def<a class="anchor" aria-label="anchor" href="#arg-extr-def"></a></dt>
 <dd><p>A string that characterizes wells containing the extractant
-in the mapping (<code>map</code>column) of the plate. Defaults to "extr". Can be a vector
+in the mapping (<code>map_col</code> column) of the plate. Defaults to "extr". Can be a vector
 containing several values (see examples)</p></dd>
 
 
 <dt id="arg-map-to-exclude">map_to_exclude<a class="anchor" aria-label="anchor" href="#arg-map-to-exclude"></a></dt>
-<dd><p>A vector of strings containing all <code>map</code> definitions of
+<dd><p>A vector of strings containing all <code>map_col</code> definitions of
 wells that are not data per se (e.g., empty wells, etc.).
 Defaults to <code>c("empty","Std","extr")</code>. If wells to exclude are not defined
-by a unique "map" (e.g., blank wells of the standard curve), make sure to
+by a unique <code>map_col</code> value (e.g., blank wells of the standard curve), make sure to
 filter out those rows from <code>raw_wells_data</code> before the function call.</p></dd>
+
+
+<dt id="arg-value-col">value_col<a class="anchor" aria-label="anchor" href="#arg-value-col"></a></dt>
+<dd><p>Name of the column containing raw absorbance. Defaults
+to <code>"abs"</code>.</p></dd>
+
+
+<dt id="arg-map-col">map_col<a class="anchor" aria-label="anchor" href="#arg-map-col"></a></dt>
+<dd><p>Name of the column containing well mapping/type
+information, in both <code>raw_wells_data</code> and (if present)
+<code>per_plate_avg_blank</code>. Defaults to <code>"map"</code>.</p></dd>
+
+
+<dt id="arg-blank-avg-col">blank_avg_col<a class="anchor" aria-label="anchor" href="#arg-blank-avg-col"></a></dt>
+<dd><p>Name of the column in <code>per_plate_avg_blank</code>
+containing the per-plate average blank absorbance. Defaults to
+<code>"blank_avg"</code>.</p></dd>
+
+
+<dt id="arg-dataset-col-plate-id-col">dataset_col, plate_id_col<a class="anchor" aria-label="anchor" href="#arg-dataset-col-plate-id-col"></a></dt>
+<dd><p>Names of the columns identifying
+dataset and physical plate, used to join <code>raw_wells_data</code> with
+<code>per_plate_avg_blank</code>. Default to <code>"dataset"</code> and <code>"plate_id"</code>.</p></dd>
+
+
+<dt id="arg-unique-well-id-col">unique_well_id_col<a class="anchor" aria-label="anchor" href="#arg-unique-well-id-col"></a></dt>
+<dd><p>Name of the column uniquely identifying a
+well, used only to check for any accidentally-dropped rows after
+the join. Defaults to <code>"unique_well_id"</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble with the blank-corrected absorbance. It has the same structure
-as <code>raw_wells_data</code>, but the <code>abs</code> column has been removed, and column
+as <code>raw_wells_data</code>, but the <code>value_col</code> column has been removed, and column
 <code>abs_corrected</code> has been added. The output tibble normally contains less rows
 than the input tibble (due to <code>map_to_exclude</code>)</p>
     </div>
@@ -104,9 +140,6 @@ than the input tibble (due to <code>map_to_exclude</code>)</p>
 <span class="r-in"><span>    raw_wells_data <span class="op">=</span> <span class="va">data</span>,</span></span>
 <span class="r-in"><span>    per_plate_avg_blank <span class="op">=</span> <span class="va">extractant_average</span>,</span></span>
 <span class="r-in"><span>    map_to_exclude <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"empty"</span>,<span class="st">"Std"</span>,<span class="st">"extr"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Joining with `by = join_by(dataset, plate_id, extr_id)`</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Joining with `by = join_by(row, column, well_id, unique_well_id, dataset,</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> plate_id, map, extr_id)`</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 264 × 11</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    row   column well_id unique_well_id dataset plate_id map      abs_corrected</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
@@ -132,9 +165,6 @@ than the input tibble (due to <code>map_to_exclude</code>)</p>
 <span class="r-in"><span>    per_plate_avg_blank <span class="op">=</span> <span class="va">extractant_average</span>,</span></span>
 <span class="r-in"><span>    extr_def <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"extr_1"</span>, <span class="st">"extr_2"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>    map_to_exclude <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"empty"</span>,<span class="st">"Std"</span>,<span class="st">"extr_1"</span>, <span class="st">"extr_2"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Joining with `by = join_by(dataset, plate_id, extr_id)`</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Joining with `by = join_by(row, column, well_id, unique_well_id, dataset,</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> plate_id, map, extr_id)`</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 232 × 11</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    row   column well_id unique_well_id dataset plate_id map      abs_corrected</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>

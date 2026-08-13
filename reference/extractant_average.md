@@ -6,7 +6,15 @@ Computing the per-plate average for raw absorbance of the extractant
 ## Usage
 
 ``` r
-extractant_average(data = NULL, extractant_data = NULL, extr_def = "extr")
+extractant_average(
+  data = NULL,
+  extractant_data = NULL,
+  extr_def = "extr",
+  dataset_col = "dataset",
+  plate_id_col = "plate_id",
+  map_col = "map",
+  value_col = "abs"
+)
 ```
 
 ## Arguments
@@ -26,6 +34,24 @@ extractant_average(data = NULL, extractant_data = NULL, extr_def = "extr")
   A string that characterizes wells containing the extractant in the
   mapping (`map`column) of the plate. Defaults to "extr". Can be a
   vector containing several values (see examples)
+
+- dataset_col:
+
+  Name of the column identifying the dataset. Defaults to `"dataset"`.
+
+- plate_id_col:
+
+  Name of the column identifying physical plates. Defaults to
+  `"plate_id"`.
+
+- map_col:
+
+  Name of the column containing well mapping/type information. Defaults
+  to `"map"`.
+
+- value_col:
+
+  Name of the numeric absorbance column. Defaults to `"abs"`.
 
 ## Value
 

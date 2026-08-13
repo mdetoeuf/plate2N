@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,7 +51,14 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">extract_curve</span><span class="op">(</span><span class="va">metadata</span>, pipetting_direction <span class="op">=</span> <span class="st">"top_down"</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">extract_curve</span><span class="op">(</span></span>
+<span>  <span class="va">metadata</span>,</span>
+<span>  pipetting_direction <span class="op">=</span> <span class="st">"top_down"</span>,</span>
+<span>  dataset_col <span class="op">=</span> <span class="st">"dataset"</span>,</span>
+<span>  plate_id_col <span class="op">=</span> <span class="st">"plate_id"</span>,</span>
+<span>  std_conc_col <span class="op">=</span> <span class="st">"std_conc"</span>,</span>
+<span>  row_col <span class="op">=</span> <span class="st">"row"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -67,6 +74,27 @@
 A top_down pipetting means that the curve was pipetted vertically (in a single column of the 96-well plate),
 with the smallest value (blank) in row A and the highest value in row H.
 Conversely, bottom_up pipetting would have the blank in row H and the most concentrated solution in row A</p></dd>
+
+
+<dt id="arg-dataset-col">dataset_col<a class="anchor" aria-label="anchor" href="#arg-dataset-col"></a></dt>
+<dd><p>Name of the column identifying the dataset. Defaults
+to <code>"dataset"</code>.</p></dd>
+
+
+<dt id="arg-plate-id-col">plate_id_col<a class="anchor" aria-label="anchor" href="#arg-plate-id-col"></a></dt>
+<dd><p>Name of the column identifying physical plates.
+Defaults to <code>"plate_id"</code>.</p></dd>
+
+
+<dt id="arg-std-conc-col">std_conc_col<a class="anchor" aria-label="anchor" href="#arg-std-conc-col"></a></dt>
+<dd><p>Name of the column containing the standard curve
+concentrations (dash-separated, one value per row A-H). Defaults
+to <code>"std_conc"</code>.</p></dd>
+
+
+<dt id="arg-row-col">row_col<a class="anchor" aria-label="anchor" href="#arg-row-col"></a></dt>
+<dd><p>Name of the output column identifying plate row (A-H).
+Defaults to <code>"row"</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

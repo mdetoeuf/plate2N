@@ -6,7 +6,12 @@ curves for the same standard solution
 ## Usage
 
 ``` r
-std_blank_average(std_blank_data)
+std_blank_average(
+  std_blank_data,
+  dataset_col = "dataset",
+  plate_id_col = "plate_id",
+  value_col = "abs"
+)
 ```
 
 ## Arguments
@@ -21,6 +26,19 @@ std_blank_average(std_blank_data)
   based on the examination of "untrusted wells". Thus, use as input (a
   modified version of) `extract_std_blank(data)$all` or
   `extract_std_blank(data)$trusted`
+
+- dataset_col:
+
+  Name of the column identifying the dataset. Defaults to `"dataset"`.
+
+- plate_id_col:
+
+  Name of the column identifying physical plates. Defaults to
+  `"plate_id"`.
+
+- value_col:
+
+  Name of the numeric absorbance column. Defaults to `"abs"`.
 
 ## Value
 

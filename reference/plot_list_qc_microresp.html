@@ -19,7 +19,7 @@ plates. Panels are assembled side by side using the patchwork package."></head><
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,6 +76,7 @@ plates. Panels are assembled side by side using the <code>patchwork</code> packa
 <span>  value_col <span class="op">=</span> <span class="st">"co2_g_h"</span>,</span>
 <span>  label_col <span class="op">=</span> <span class="st">"well_id"</span>,</span>
 <span>  panel_col <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  dataset_col <span class="op">=</span> <span class="st">"dataset"</span>,</span>
 <span>  max_plates_per_panel <span class="op">=</span> <span class="fl">10</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -86,8 +87,8 @@ plates. Panels are assembled side by side using the <code>patchwork</code> packa
 
 <dl><dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
 <dd><p>A tibble containing the columns referenced by <code>map_col</code>,
-<code>plate_id_col</code>, <code>value_col</code>, <code>label_col</code>, and (if given) <code>panel_col</code>.
-Must also contain a <code>dataset</code> column (used only in plot titles).</p></dd>
+<code>plate_id_col</code>, <code>value_col</code>, <code>label_col</code>, <code>dataset_col</code>, and (if
+given) <code>panel_col</code>.</p></dd>
 
 
 <dt id="arg-map-col">map_col<a class="anchor" aria-label="anchor" href="#arg-map-col"></a></dt>
@@ -122,6 +123,11 @@ plates are automatically split into evenly-sized panels labelled
 "Panel X of Y", each capped at <code>max_plates_per_panel</code> plates, with
 ridges in a single uniform colour (no meaningful grouping to colour
 by in this case).</p></dd>
+
+
+<dt id="arg-dataset-col">dataset_col<a class="anchor" aria-label="anchor" href="#arg-dataset-col"></a></dt>
+<dd><p>Name of the column identifying the dataset, used
+only in plot titles. Defaults to <code>"dataset"</code>.</p></dd>
 
 
 <dt id="arg-max-plates-per-panel">max_plates_per_panel<a class="anchor" aria-label="anchor" href="#arg-max-plates-per-panel"></a></dt>

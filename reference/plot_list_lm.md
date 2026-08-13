@@ -5,7 +5,16 @@ Compute a list of plots, one per standard curve
 ## Usage
 
 ``` r
-plot_list_lm(lm_data, std_data, model = "linear")
+plot_list_lm(
+  lm_data,
+  std_data,
+  model = "linear",
+  conc_col = "std_conc",
+  value_col = "abs_corrected",
+  curve_id_col = "unique_curve_id",
+  dataset_col = "dataset",
+  unit_col = "std_unit"
+)
 ```
 
 ## Arguments
@@ -25,6 +34,29 @@ plot_list_lm(lm_data, std_data, model = "linear")
 
   Which model to use. Accepts either `linear` (default) or `poly` for
   polynomial model.
+
+- conc_col:
+
+  Name of the column containing concentration. Defaults to `"std_conc"`.
+
+- value_col:
+
+  Name of the column containing (blank-corrected) absorbance. Defaults
+  to `"abs_corrected"`.
+
+- curve_id_col:
+
+  Name of the column identifying which curve a row belongs to. Defaults
+  to `"unique_curve_id"`.
+
+- dataset_col:
+
+  Name of the column identifying the dataset. Defaults to `"dataset"`.
+
+- unit_col:
+
+  Name of the column containing the concentration unit, shown in the
+  x-axis label. Defaults to `"std_unit"`.
 
 ## Value
 

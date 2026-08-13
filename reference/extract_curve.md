@@ -5,7 +5,14 @@ Get concentration of standard curve from metadata
 ## Usage
 
 ``` r
-extract_curve(metadata, pipetting_direction = "top_down")
+extract_curve(
+  metadata,
+  pipetting_direction = "top_down",
+  dataset_col = "dataset",
+  plate_id_col = "plate_id",
+  std_conc_col = "std_conc",
+  row_col = "row"
+)
 ```
 
 ## Arguments
@@ -23,6 +30,25 @@ extract_curve(metadata, pipetting_direction = "top_down")
   the 96-well plate), with the smallest value (blank) in row A and the
   highest value in row H. Conversely, bottom_up pipetting would have the
   blank in row H and the most concentrated solution in row A
+
+- dataset_col:
+
+  Name of the column identifying the dataset. Defaults to `"dataset"`.
+
+- plate_id_col:
+
+  Name of the column identifying physical plates. Defaults to
+  `"plate_id"`.
+
+- std_conc_col:
+
+  Name of the column containing the standard curve concentrations
+  (dash-separated, one value per row A-H). Defaults to `"std_conc"`.
+
+- row_col:
+
+  Name of the output column identifying plate row (A-H). Defaults to
+  `"row"`.
 
 ## Value
 

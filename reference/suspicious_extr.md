@@ -9,7 +9,11 @@ suspicious_extr(
   data,
   extr_def = "extr",
   suspicious_extr_per_plate = NULL,
-  max_coeff = 5
+  max_coeff = 5,
+  dataset_col = "dataset",
+  plate_id_col = "plate_id",
+  map_col = "map",
+  value_col = "abs"
 )
 ```
 
@@ -35,6 +39,27 @@ suspicious_extr(
   coefficient of variation for extractant raw absorbance is above this
   threshold will be considered "suspicious plates"
 
+- dataset_col:
+
+  Name of the column identifying the dataset, needed internally by
+  [`extractant_average()`](https://mdetoeuf.github.io/plate2N/reference/extractant_average.md).
+  Defaults to `"dataset"`.
+
+- plate_id_col:
+
+  Name of the column identifying physical plates. Defaults to
+  `"plate_id"`.
+
+- map_col:
+
+  Name of the column identifying extractants/layers. Defaults to
+  `"map"`.
+
+- value_col:
+
+  Name of the numeric absorbance column, coerced to numeric on output.
+  Defaults to `"abs"`.
+
 ## Value
 
 A subset of `data` containing only plates where raw extractant values
@@ -50,7 +75,6 @@ suspicious_plate_id <- qc_raw_extr(data, max_coeff = 5,
     suppress_message = TRUE, suppress_warning = TRUE)
 (suspicious_extr <- suspicious_extr(data, max_coeff = 0.5,
     suspicious_extr_per_plate = suspicious_plate_id))
-#> Joining with `by = join_by(plate_id, map)`
 #> # A tibble: 16 × 8
 #>    row   column well_id unique_well_id dataset plate_id map     abs
 #>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr> <dbl>
@@ -101,7 +125,6 @@ dbl_extr_plate
 (suspicious_extr <- suspicious_extr(
     dbl_extr_plate, extr_def = c("extr_1", "extr_2"),
     max_coeff = 5, suspicious_extr_per_plate = suspicious_extr_per_plate))
-#> Joining with `by = join_by(plate_id, map)`
 #> # A tibble: 40 × 9
 #>    row   column well_id unique_well_id dataset plate_id map      abs extr_id
 #>    <chr> <chr>  <chr>   <chr>          <chr>   <chr>    <chr>  <dbl> <chr>  
