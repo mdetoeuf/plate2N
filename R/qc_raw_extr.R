@@ -1,4 +1,3 @@
-
 #' Quality check of raw absorbance data for extractant wells
 #'
 #' Extracts plate ID's where it is suspected that raw absorbance
@@ -10,7 +9,7 @@
 #'     extractant is problematic on that plate
 #'
 #' @param data A tibble, as in `tidy_plates`, optional. It is only used if argument
-#'     `extractant_data` is `NULL` to compute it with `extractant_average()` and
+#'     `extractant_average` is `NULL` to compute it with `extractant_average()` and
 #'     the argument `extr_def`.
 #' @param extractant_average Defaults to NULL, where it is computed from `data`
 #'     using `extractant_average(data)`
@@ -19,11 +18,15 @@
 #' @param max_coeff User-defined, in % (defaults at 5): determines the threshold
 #'     coefficient of variation for raw absorbance of extractant wells, above which
 #'     plates will be considered "suspicious"
+#' @param var_col Name of the column in `extractant_average` holding the
+#'     coefficient of variation. Defaults to `"blank_coeff_var_percent"`.
+#' @param plate_id_col Name of the column identifying physical plates.
+#'     Defaults to `"plate_id"`.
+#' @param map_col Name of the column identifying extractants/layers.
+#'     Defaults to `"map"`.
 #' @param suppress_message Logical, whether or not to suppress the "success" message (given when no plate is above the `max_coeff`)
 #' @param suppress_warning Logical, whether or not to suppress the warning (given when some plate are above the `max_coeff`)
 #'
-#' @import dplyr
-#' @importFrom magrittr extract2
 #' @returns ID's of suspicious plates. (+ a message or warning if not suppressed)
 #'
 #' @export
@@ -39,14 +42,14 @@
 #' (suspicious_extr_per_plate <- qc_raw_extr(
 #'     dbl_extr_plate, extr_def = c("extr_1", "extr_2"),
 #'     max_coeff = 5, suppress_message = TRUE, suppress_warning = TRUE))
-#'
-#'
 qc_raw_extr <- function(
-    #extractant_average = NULL, # must be a tibble in format as `extractant_average(tidy_plates)$blank_avg`
     data = NULL,
     extractant_average = NULL,
     extr_def = "extr",
     max_coeff = 5,
+    var_col = "blank_coeff_var_percent",
+    plate_id_col = "plate_id",
+    map_col = "map",
     suppress_message = FALSE,
     suppress_warning = FALSE
 ) {
@@ -54,10 +57,17 @@ qc_raw_extr <- function(
   # compute extractant average if missing
   if (is.null(extractant_average)) {
     extractant_average <- extractant_average(data, extr_def = extr_def)
-    }
+  }
+
+  # store id of problematic plates - always computed, may end up empty;
+  # always returning a tibble (rather than NULL when nothing's
+  # suspicious) gives callers one consistent type to work with
+  suspicious_extr <- extractant_average |>
+    dplyr::filter(.data[[var_col]] > max_coeff) |>
+    dplyr::select(dplyr::all_of(c(plate_id_col, map_col)))
 
   # if all coefficient of variation below threshold --> YAY
-  if (max(extractant_average$blank_coeff_var_percent) < max_coeff) {
+  if (nrow(suspicious_extr) == 0) {
     if (!suppress_message) {
       message(paste0(
         "
@@ -68,18 +78,8 @@ qc_raw_extr <- function(
         "%."))
     }
 
-  # ELSE, if threshold is passed
-  } else if (max(extractant_average$blank_coeff_var_percent) >= max_coeff)  {
-
-    # store id of problematic plates
-    # suspicious_plate_id <- extractant_average |>
-    #   dplyr::filter(blank_coeff_var_percent > max_coeff) |>
-    #   dplyr::select(plate_id) |> as.vector() |> magrittr::extract2(1)
-
-    suspicious_extr <- extractant_average |>
-      dplyr::filter(blank_coeff_var_percent > max_coeff) |>
-      dplyr::select(plate_id, map)
-
+    # ELSE, if threshold is passed
+    } else {
     # send a warning
     if (!suppress_warning) {
       warning(paste0(
@@ -91,12 +91,12 @@ qc_raw_extr <- function(
         Suspicious plate ID's are returned"))
     }
 
-    return(suspicious_extr)
+    }
+
+  return(suspicious_extr)
   }
-}
 
 
-utils::globalVariables(c("map", "abs", "plate_id"))
 #' Extract suspicious extractant wells
 #'
 #' @param data A tibble, as in `tidy_plates`.
@@ -107,8 +107,12 @@ utils::globalVariables(c("map", "abs", "plate_id"))
 #' @param max_coeff User-defined threshold value, defaults at 5%. All plates for which
 #'     the coefficient of variation for extractant raw absorbance is above this threshold
 #'     will be considered "suspicious plates"
-#'
-#' @import dplyr ggplot2
+#' @param plate_id_col Name of the column identifying physical plates.
+#'     Defaults to `"plate_id"`.
+#' @param map_col Name of the column identifying extractants/layers.
+#'     Defaults to `"map"`.
+#' @param value_col Name of the numeric absorbance column, coerced to
+#'     numeric on output. Defaults to `"abs"`.
 #'
 #' @returns A subset of `data` containing only plates where raw extractant values
 #'     should be reviewed (because their coefficient of variation is above the
@@ -133,92 +137,36 @@ utils::globalVariables(c("map", "abs", "plate_id"))
 #'     dbl_extr_plate, extr_def = c("extr_1", "extr_2"),
 #'     max_coeff = 5, suspicious_extr_per_plate = suspicious_extr_per_plate))
 suspicious_extr <- function(
-    data,# = NULL,
-    # extractant_average = NULL,
+    data,
     extr_def = "extr",
-    suspicious_extr_per_plate = NULL, # suspicious_plate_id <- qc_raw_extr(data)
-    max_coeff = 5
-
+    suspicious_extr_per_plate = NULL,
+    max_coeff = 5,
+    plate_id_col = "plate_id",
+    map_col = "map",
+    value_col = "abs"
 ) {
-  # compute extractant average if missing
-#  if (is.null(extractant_average)) {
-    extractant_average <- extractant_average(data, extr_def = extr_def)
- # }
+  # local variable, deliberately renamed from "extractant_average" to
+  # avoid shadowing the extractant_average() function it calls
+  extractant_avg <- extractant_average(data, extr_def = extr_def)
 
   if (is.null(suspicious_extr_per_plate)) {
     suspicious_extr_per_plate <- qc_raw_extr(
-      extractant_average = extractant_average,
-      max_coeff = max_coeff, suppress_message = TRUE, suppress_warning = TRUE)
-    }
-
-  # suspicious_extractant <- extract_extractant(data, extr_def = extr_def) |>
-  #   dplyr::group_by(plate_id, map) |>
-  #   dplyr::filter(plate_id %in% suspicious_extr) |>
-  #   dplyr::arrange(plate_id) |>
-  #   mutate(abs = as.numeric(abs))
-
-    suspicious_extractant <- extract_extractant(data, extr_def = extr_def) |>
-      dplyr::right_join(suspicious_extr_per_plate) |>
-      dplyr::arrange(plate_id, map) |>
-      dplyr::mutate(abs = as.numeric(abs))
-
-  return(suspicious_extractant)
-}
-
-
-
-#' Multiple distribution plot to review suspicious extractant values and spot outliers
-#'
-#' @param suspicious_extractant A tibble as generated by `suspicious_extr()`,
-#'     can be computed from `data` with `suspicious_extr()`
-#' @param data Defaults to NULL. If provided, must be a tibble formatted as `tidy_plates`
-#' @param max_coeff User-defined threshold value, defaults at 5%. All plates for which
-#'     the coefficient of variation for extractant raw absorbance is above this threshold
-#'     will be considered "suspicious plates". ! Be consistent with previous steps
-#'
-#' @importFrom patchwork wrap_plots
-#' @importFrom patchwork plot_annotation
-#'
-#' @returns A multiple plot for quality checking of extractant wells distribution
-#'     and definition of threshold values
-#' @export
-#'
-#' @examples
-#' data <- tidy_plates
-#' # 0.5 is unreasonable in most uses, but is used here to ensure some output
-#' suspicious_extr_per_plate <- qc_raw_extr(data, max_coeff = 5,
-#'     suppress_message = TRUE, suppress_warning = TRUE)
-#' suspicious_extr <- suspicious_extr(data, max_coeff = 5,
-#'     suspicious_extr_per_plate = suspicious_extr_per_plate)
-#' multiplot_outlier_extr(suspicious_extractant = suspicious_extr, max_coeff = 5)
-#' ## Tip: if too many curves appear, consider cutting `suspicious_extractant`
-#' ##.     into several subsets, to be given as input for multiple runs of `multiplot_outlier_extr()`
-multiplot_outlier_extr <- function(
-    suspicious_extractant = NULL,
-    data = NULL, # must be provided if suspicious_extractant is NULL
-    max_coeff = 5
-
-){
-  if (is.null(suspicious_extractant)) {
-    suspicious_extractant <- suspicious_extr(data, max_coeff = max_coeff)
+      extractant_average = extractant_avg,
+      max_coeff = max_coeff, plate_id_col = plate_id_col, map_col = map_col,
+      suppress_message = TRUE, suppress_warning = TRUE)
   }
 
-  plots <- suspicious_extractant |>
-    dplyr::group_map(
-      .f = ~ggplot2::ggplot(.x, ggplot2::aes(x = abs)) +
-        ggplot2::geom_histogram() +
-        ggplot2::theme_minimal() +
-        ggplot2::labs(title = .y)
-    )
+  # keep only the expected columns before joining, regardless of what a
+  # user-supplied suspicious_extr_per_plate might otherwise contain
+  suspicious_extr_per_plate <- suspicious_extr_per_plate |>
+    dplyr::select(dplyr::all_of(c(plate_id_col, map_col)))
 
-  multiple_plot <- patchwork::wrap_plots(plots, axis_titles = "collect") +
-    patchwork::plot_annotation(title = "Distribution of absorbance of extractant",
-                               subtitle = paste0(
-                                 "Only displays plates for which the coefficient of variation\nfor the extractant is above ",
-                                 max_coeff)
-    )
+  suspicious_extractant <- extract_extractant(data, extr_def = extr_def) |>
+    dplyr::right_join(suspicious_extr_per_plate, by = c(plate_id_col, map_col)) |>
+    dplyr::arrange(.data[[plate_id_col]], .data[[map_col]]) |>
+    dplyr::mutate(dplyr::across(dplyr::all_of(value_col), as.numeric))
 
-  return(multiple_plot)
+  return(suspicious_extractant)
 }
 
 
@@ -362,7 +310,7 @@ boxplot_outlier_extr <- function(
   # if only one was given, leave the other NULL so patchwork can compute it
   if (is.null(nrow) && is.null(ncol)) {
     nrow <- 1
-    }
+  }
 
   # group panels into pages of at most max_nb_panels panels each,
   # spread evenly for the same reason plates were spread evenly above
@@ -389,4 +337,19 @@ boxplot_outlier_extr <- function(
     names(pages) <- paste0("page_", seq_along(pages))
     return(pages)
   }
+}
+
+
+#' Deprecated: use `boxplot_outlier_extr()` instead
+#'
+#' `multiplot_outlier_extr()` has been removed. `boxplot_outlier_extr()`
+#' covers the same purpose (reviewing suspicious extractant wells) with
+#' labelled points, pagination, and consistent axis scaling.
+#'
+#' @param ... Ignored.
+#' @export
+multiplot_outlier_extr <- function(...) {
+  stop(
+    "multiplot_outlier_extr() has been removed. ",
+    "Use boxplot_outlier_extr() instead.", call. = FALSE)
 }
