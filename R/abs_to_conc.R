@@ -62,7 +62,7 @@ reg_join_abs <- function(
 }
 
 
-
+utils::globalVariables("molar_masses")
 #' Converts Concentrations From Compound Weight to Target Weight
 #'
 #' Convert units of concentrations from "mg Compound L-1" to "mg Target L-1". This
@@ -93,8 +93,16 @@ reg_join_abs <- function(
 #' @export
 #'
 #' @examples
-#' tidy_plates
 #' molar_masses
+#'
+#' # small example: convert mg NH4/L to mg N/L
+#' conc_data <- tibble::tibble(
+#'   plate_id = c("P01", "P02"),
+#'   std_sp = c("NH4", "NH4"),
+#'   target_sp = c("N", "N"),
+#'   conc_mgNsp_L = c(5.2, 3.8)
+#' )
+#' convert_molec(conc_data)
 convert_molec <- function(
     conc_data,
     masses = molar_masses,

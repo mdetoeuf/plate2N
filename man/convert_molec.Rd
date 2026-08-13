@@ -45,8 +45,16 @@ Target (e.g., nitrogen) will be expressed in the same unit as the compound
 We don't go from mg to g or kg...
 }
 \examples{
-tidy_plates
 molar_masses
+
+# small example: convert mg NH4/L to mg N/L
+conc_data <- tibble::tibble(
+  plate_id = c("P01", "P02"),
+  std_sp = c("NH4", "NH4"),
+  target_sp = c("N", "N"),
+  conc_mgNsp_L = c(5.2, 3.8)
+)
+convert_molec(conc_data)
 }
 \seealso{
 molar_masses
