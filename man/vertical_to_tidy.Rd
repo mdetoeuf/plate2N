@@ -10,8 +10,11 @@ vertical_to_tidy(vertical_data, column_def = c("abs", "map"))
 \item{vertical_data}{As generated from either \code{\link[=verticalize_plates]{verticalize_plates()}} or \code{\link[=join_abs_map]{join_abs_map()}}.}
 
 \item{column_def}{Strings defining the types of data layout to be recovered.
-They correspond to the prefixes added to column names in a previous step
-with \code{join_abs_map()}. It defaults to \code{c("abs", "map")}.}
+\strong{Currently unused} — \code{pivot_wider()} already picks up whatever
+layout types are actually present in the data dynamically, so
+this parameter has no effect. Kept for backward compatibility
+with existing calls that pass it by name; may be deprecated in
+a future version. Defaults to \code{c("abs", "map")}.}
 }
 \value{
 A table in a tidy format for downstream analysis

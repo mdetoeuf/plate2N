@@ -4,7 +4,13 @@
 \alias{verticalize_plates}
 \title{Tidying plate data (verticalization)}
 \usage{
-verticalize_plates(tibble, coerce_numeric = FALSE, prefix = NULL)
+verticalize_plates(
+  tibble,
+  coerce_numeric = FALSE,
+  prefix = NULL,
+  row_col = "row",
+  column_cols = paste0("X", 1:12)
+)
 }
 \arguments{
 \item{tibble}{The tibble containing the raw plate-formatted data to be tidied.
@@ -16,6 +22,13 @@ tibble must fit the following criteria:
 \item{coerce_numeric}{Whether or not to force data entries to be numerical. The default is set to \code{FALSE}, so that data will be outputted as strings}
 
 \item{prefix}{Defaults as an empty string. A \code{prefix} can be added to all column names, which can be useful to join tables from distinct datasets}
+
+\item{row_col}{Name of the column identifying plate row (A-H) in the
+raw input. Defaults to \code{"row"}.}
+
+\item{column_cols}{A vector of the 12 column names holding plate
+columns 1-12 in the raw input, in order. Defaults to
+\code{paste0("X", 1:12)}.}
 }
 \value{
 A tidy tibble (verticalized plate data), with 1 column per plate
@@ -31,7 +44,6 @@ tibble_example
 (verticalize_plates(tibble_example))
 (verticalize_plates(tibble_example, coerce_numeric = TRUE))
 (verticalize_plates(tibble_example, prefix = "prefix_"))
-
 }
 \seealso{
 \code{\link[=skanit_to_tibble]{skanit_to_tibble()}}, \code{\link[=csv_to_tibble]{csv_to_tibble()}}, \code{\link[=txt_to_tibble]{txt_to_tibble()}} that can generate the input needed
