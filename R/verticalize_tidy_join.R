@@ -4,8 +4,6 @@
 #** - and joining of several plate-shaped data (e.g., absorbance and mapping) *
 #**   and/or joining of plate-shaped data with plate metadata (one row per plate) *
 
-utils::globalVariables(c("row", "column", "X1", "X12"))
-
 
 #' Tidying plate data (verticalization)
 #'
@@ -20,6 +18,11 @@ utils::globalVariables(c("row", "column", "X1", "X12"))
 #'               - Plate data in the tibble **must be** structured exactly as in example files (see also `txt_to_tibble()`, `csv_to_tibble()` or `skanit_to_tibble()`).
 #' @param coerce_numeric Whether or not to force data entries to be numerical. The default is set to `FALSE`, so that data will be outputted as strings
 #' @param prefix Defaults as an empty string. A `prefix` can be added to all column names, which can be useful to join tables from distinct datasets
+#' @param row_col Name of the column identifying plate row (A-H) in the
+#'     raw input. Defaults to `"row"`.
+#' @param column_cols A vector of the 12 column names holding plate
+#'     columns 1-12 in the raw input, in order. Defaults to
+#'     `paste0("X", 1:12)`.
 #'
 #' @import dplyr tidyr tidyselect
 #'
@@ -33,72 +36,56 @@ utils::globalVariables(c("row", "column", "X1", "X12"))
 #' (verticalize_plates(tibble_example))
 #' (verticalize_plates(tibble_example, coerce_numeric = TRUE))
 #' (verticalize_plates(tibble_example, prefix = "prefix_"))
-
-#'
 verticalize_plates <- function(
     tibble,
     coerce_numeric = FALSE,
-    prefix = NULL
+    prefix = NULL,
+    row_col = "row",
+    column_cols = paste0("X", 1:12)
 ) {
 
-  # initialize the tidy table format by verticalizing a empty plate and store in a tibble
+  # accumulator always uses the package's standard "row"/"column" naming -
+  # row_col/column_cols only control how the RAW INPUT is read, the
+  # output stays normalized so everything downstream keeps working
   vertic_plates <- verticalized_empty
 
-  # extract plate_ids
   plates <- tibble |>
-    # exclude rows where 1st column contains single capital letters
-    # effectively keeping only header rows for each plate (containing plate_id and column nb (1 to 12))
-    dplyr::filter(!(row %in% LETTERS)) |>
-    # keep only 1st column --> create a tibble (1 column) with plate_ids
-    dplyr::select(plate_id = row)
+    dplyr::filter(!(.data[[row_col]] %in% LETTERS)) |>
+    dplyr::select(plate_id = dplyr::all_of(row_col))
 
-  # loop (1 iteration per plate)
-  #i = 1
   for (i in seq_len(nrow(plates))) {
-    # store plate id
     plate_id <- plates$plate_id[i]
+    line <- which(tibble[[row_col]] == plate_id)
 
-    # extract line corresponding to plate_id
-    line <- which(tibble$row == plate_id)
-
-    # get plate data (absorbances or mapping, start at line of plate_id, and get next 8 lines)
+    # normalize back to the package's standard "row" name, regardless
+    # of what row_col was called in the raw input
     plate_abs <- tibble[line:(line+8),] |>
-      # rename column with "A", "B", etc. Not vital, but kept here to reach same
-      # format in all functions for interoperability
-      dplyr::rename(row = tidyselect::any_of(plate_id)) |>
-      dplyr::filter(row != plate_id)
+      dplyr::rename(row = dplyr::all_of(row_col)) |>
+      dplyr::filter(.data[["row"]] != plate_id)
 
-    # force data (now as strings) to become numeric (if coerce_numeric == TRUE)
     if (coerce_numeric) {
-      plate_abs[2:13] <- lapply(plate_abs[2:13], as.numeric)
-    } else { #(default, if coerce_numeric == FALSE)
-      plate_abs[2:13] <- lapply(plate_abs[2:13], as.character)
+      plate_abs[column_cols] <- lapply(plate_abs[column_cols], as.numeric)
+    } else {
+      plate_abs[column_cols] <- lapply(plate_abs[column_cols], as.character)
     }
 
-    # verticalize the absorbance data and append it to the dataframe in construction
     vertic_plates <- vertic_plates |>
       dplyr::mutate(
         plate_abs |>
-          tidyr::pivot_longer(cols = X1:X12, names_to = "column", values_to = plate_id) |>
+          tidyr::pivot_longer(cols = dplyr::all_of(column_cols), names_to = "column", values_to = plate_id) |>
           dplyr::select(tidyselect::any_of(plate_id))
       )
   }
-  #print(i)
-  #i = i+1
+
   if (!is.null(prefix)) {
     vertic_plates <- vertic_plates |>
-      rename_with(~ paste0(prefix, .x, recycle0 = TRUE), .cols = !row:column)
-  } # end of for-loop
+      dplyr::rename_with(~ paste0(prefix, .x, recycle0 = TRUE), .cols = !dplyr::all_of(c("row", "column")))
+  }
 
   return(vertic_plates)
 }
 
 
-
-
-
-
-utils::globalVariables("row")
 
 #' Converts plates data from tibble to a list
 #'
@@ -155,8 +142,7 @@ tibble_to_list <- function(tibble) {
 }
 
 
-
-utils::globalVariables(c("row", "column", "layout_type"))
+#utils::globalVariables(c("row", "column", "layout_type"))
 
 #' Merging 2 vertical plates into one
 #'
@@ -227,17 +213,19 @@ join_abs_map <- function(
 
   # initialize
   joined_vertical <- first_vertical_tibble
-  for (i in 2:length(tibble_list)) {
-    joined_vertical <- dplyr::left_join(
-      joined_vertical,
-      verticalize_plates(
-        tibble_list[[i]],
-        coerce_numeric = coerce_numeric[i],
-        prefix = paste0(dataset, abs_map[i])
-      ),
-      by = dplyr::join_by(row, column)
-    )
-  }
+  if (length(tibble_list) > 1) {
+    for (i in 2:length(tibble_list)) {
+      joined_vertical <- dplyr::left_join(
+        joined_vertical,
+        verticalize_plates(
+          tibble_list[[i]],
+          coerce_numeric = coerce_numeric[i],
+          prefix = paste0(dataset, abs_map[i])
+          ),
+        by = c("row", "column")
+      )
+    }
+    }
 
   return(joined_vertical)
 }
@@ -250,8 +238,11 @@ join_abs_map <- function(
 #'
 #' @param vertical_data As generated from either [`verticalize_plates()`] or [`join_abs_map()`].
 #' @param column_def Strings defining the types of data layout to be recovered.
-#'     They correspond to the prefixes added to column names in a previous step
-#'     with `join_abs_map()`. It defaults to `c("abs", "map")`.
+#'     **Currently unused** — `pivot_wider()` already picks up whatever
+#'     layout types are actually present in the data dynamically, so
+#'     this parameter has no effect. Kept for backward compatibility
+#'     with existing calls that pass it by name; may be deprecated in
+#'     a future version. Defaults to `c("abs", "map")`.
 #'
 #' @returns A table in a tidy format for downstream analysis
 #' @export
@@ -279,13 +270,14 @@ vertical_to_tidy <- function(
       values_to = "value"
     ) |>
     tidyr::pivot_wider(
-      names_from = layout_type,
+      names_from = "layout_type",
       values_from = "value"
     ) |>
-    # dplyr::relocate(row, column, dataset, plate_id, any_of(column_def)) |>
     dplyr::mutate(
-      well_id = paste0(row, column),
+      well_id = paste0(.data[["row"]], .data[["column"]]),
       unique_well_id = paste0(well_id, "_", plate_id),
       .before = 3
     )
+
+  return(tidy_data)
 }

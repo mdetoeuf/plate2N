@@ -27,7 +27,6 @@ Imports:
     forcats,
     ggplot2,
     ggrepel,
-    janitor,
     magrittr,
     patchwork,
     readr,
