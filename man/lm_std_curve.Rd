@@ -4,22 +4,58 @@
 \alias{lm_std_curve}
 \title{Perform Linear Model for Standard Curve}
 \usage{
-lm_std_curve(grouped_data, model = "linear")
+lm_std_curve(
+  grouped_data,
+  model = "linear",
+  conc_col = "std_conc",
+  value_col = "abs_corrected",
+  curve_id_col = "unique_curve_id",
+  dataset_col = "dataset",
+  plate_id_col = "plate_id",
+  std_sp_col = "std_sp",
+  through_origin = TRUE
+)
 }
 \arguments{
 \item{grouped_data}{A tibble, grouped per curve (e.g., use \code{dplyr::group_by(plate_id, column)}
-on your data before calling the function). Must contain columns \code{std_conc},
-\code{unique_curve_id} and \code{abs_corrected}}
+on your data before calling the function). Must contain the
+columns referenced by \code{conc_col}, \code{value_col}, \code{curve_id_col},
+\code{dataset_col}, \code{plate_id_col}, and \code{std_sp_col}.}
 
 \item{model}{Which model to use. Accepts either \code{linear} (default) or \code{poly}
 for polynomial model.}
+
+\item{conc_col}{Name of the column containing concentration. Defaults
+to \code{"std_conc"}.}
+
+\item{value_col}{Name of the column containing (blank-corrected)
+absorbance. Defaults to \code{"abs_corrected"}.}
+
+\item{curve_id_col}{Name of the column identifying which curve a row
+belongs to. Defaults to \code{"unique_curve_id"}.}
+
+\item{dataset_col}{Name of the column identifying the dataset.
+Defaults to \code{"dataset"}.}
+
+\item{plate_id_col}{Name of the column identifying physical plates.
+Defaults to \code{"plate_id"}.}
+
+\item{std_sp_col}{Name of the column identifying the standard species.
+Defaults to \code{"std_sp"}.}
+
+\item{through_origin}{Whether to force the model through the origin.
+Defaults to \code{TRUE}. See \code{\link[=fit_curve_model]{fit_curve_model()}} for the same
+argument's meaning.}
 }
 \value{
 A table containing relevant parameters of the linear model, with
 - 1 row per "group" (e.g., plate * column, which is relevant to spot outliers).
 - columns: \code{unique_curve_id}, \code{slope}, \code{r_squared}, \code{adj_r_squared}, \code{lm_p},
 \code{normality_lm_residuals}, \code{shapiro_p}, \code{homoscedasticity_lm_residuals},
-\code{breusch_pagan_p}
+\code{breusch_pagan_p}. When \code{model = "poly"}, also \code{poly_a}/\code{poly_a_p}
+(the squared, \code{x^2}, term's coefficient and p-value) and
+\code{poly_b}/\code{poly_b_p} (the linear, \code{x}, term's coefficient and
+p-value).
 }
 \description{
 The linear model is based on the function \code{lm()} and fits the curve to go through
@@ -33,8 +69,16 @@ With
 - y = blank-corrected absorbance
 - x = concentration
 - c = 0 because we use blank-corrected absorbance data
+
+Fitting itself is delegated to \code{\link[=fit_curve_model]{fit_curve_model()}} (the same function
+used by the \code{model-choice} toolkit), with diagnostic statistics
+computed by \code{\link[=lm_diagnostics]{lm_diagnostics()}} — call that directly if you only need
+diagnostics for a single already-fitted model.
 }
 \examples{
 data <- std_corrected |> dplyr::group_by(plate_id, column)
 lm_std_curve(data)
+}
+\seealso{
+\code{\link[=fit_curve_model]{fit_curve_model()}}, \code{\link[=lm_diagnostics]{lm_diagnostics()}}
 }

@@ -1,5 +1,80 @@
 utils::globalVariables(c("std_conc", "unique_curve_id", "abs_corrected"))
 
+#' Compute diagnostic statistics for a fitted standard curve model
+#'
+#' Extracts diagnostic statistics from an already-fitted model: R²,
+#' adjusted R², overall model p-value, tests of residual normality
+#' (Shapiro-Wilk) and homoscedasticity (Breusch-Pagan), and, for
+#' polynomial models, the individual coefficients and their p-values —
+#' `poly_a`/`poly_a_p` for the squared (`x²`) term, `poly_b`/`poly_b_p`
+#' for the linear (`x`) term. Used internally by [lm_std_curve()], but
+#' can be called directly on any [fit_curve_model()] output.
+#'
+#' @param model An `lm` model object, typically from [fit_curve_model()].
+#' @param model_type Which kind of model `model` is: `"linear"` or
+#'     `"poly"` — determines whether polynomial-specific coefficients
+#'     are extracted.
+#' @param conc_col Name of the concentration term in the model's
+#'     original formula, used to extract polynomial coefficients by
+#'     name. Defaults to `"std_conc"`. Only relevant when
+#'     `model_type = "poly"`.
+#'
+#' @returns A one-row tibble of diagnostic statistics.
+#' @seealso [fit_curve_model()], [lm_std_curve()]
+#' @export
+#'
+#' @examples
+#' curve <- std_corrected |> dplyr::filter(unique_curve_id == unique(std_corrected$unique_curve_id)[1])
+#' model <- fit_curve_model(curve, model = "linear")
+#' lm_diagnostics(model, model_type = "linear")
+lm_diagnostics <- function(
+    model,
+    model_type = c("linear", "poly"),
+    conc_col = "std_conc"
+) {
+  model_type <- match.arg(model_type)
+  model_summary <- summary(model)
+
+  r_squared <- model_summary$r.squared |> as.numeric() |> round(digits = 4)
+  adj_r_squared <- model_summary$adj.r.squared |> as.numeric() |> round(digits = 4)
+
+  shapiro_p <- (stats::residuals(model) |> stats::shapiro.test())$p.value |> round(digits = 3)
+  normality_lm_residuals <- if (shapiro_p < 0.05) "Not Normal" else "Normal"
+
+  breusch_pagan_p <- (car::ncvTest(model))$p |> round(digits = 3)
+  homoscedasticity_lm_residuals <- if (breusch_pagan_p < 0.05) "Heteroscedasticity" else "Homoscedasticity"
+
+  if (model_type == "linear") {
+    slope <- model$coefficients |> as.numeric()
+    lm_p <- model_summary$coefficients[, "Pr(>|t|)"] |> as.numeric() |> signif(digits = 4)
+
+    diagnostics <- tibble::tibble(
+      slope, r_squared, adj_r_squared, lm_p,
+      normality_lm_residuals, shapiro_p,
+      homoscedasticity_lm_residuals, breusch_pagan_p)
+
+  } else {
+    poly_term <- paste0("I(", conc_col, "^2)")
+    poly_a <- model$coefficients[[poly_term]]
+    poly_b <- model$coefficients[[conc_col]]
+    poly_a_p <- model_summary$coefficients[poly_term, "Pr(>|t|)"]
+    poly_b_p <- model_summary$coefficients[conc_col, "Pr(>|t|)"]
+
+    lm_fstat <- model_summary$fstatistic["value"]
+    lm_numdf <- model_summary$fstatistic["numdf"]
+    lm_dendf <- model_summary$fstatistic["dendf"]
+    lm_p <- stats::pf(lm_fstat, lm_numdf, lm_dendf, lower.tail = FALSE) |> signif(digits = 4)
+
+    diagnostics <- tibble::tibble(
+      poly_a, poly_a_p, poly_b, poly_b_p,
+      r_squared, adj_r_squared, lm_p,
+      normality_lm_residuals, shapiro_p,
+      homoscedasticity_lm_residuals, breusch_pagan_p)
+  }
+
+  return(diagnostics)
+}
+
 
 #' Perform Linear Model for Standard Curve
 #'
@@ -14,24 +89,45 @@ utils::globalVariables(c("std_conc", "unique_curve_id", "abs_corrected"))
 #'       - x = concentration
 #'       - c = 0 because we use blank-corrected absorbance data
 #'
+#' Fitting itself is delegated to [fit_curve_model()] (the same function
+#' used by the `model-choice` toolkit), with diagnostic statistics
+#' computed by [lm_diagnostics()] — call that directly if you only need
+#' diagnostics for a single already-fitted model.
+#'
 #' @param grouped_data A tibble, grouped per curve (e.g., use `dplyr::group_by(plate_id, column)`
-#'     on your data before calling the function). Must contain columns `std_conc`,
-#'     `unique_curve_id` and `abs_corrected`
+#'     on your data before calling the function). Must contain the
+#'     columns referenced by `conc_col`, `value_col`, `curve_id_col`,
+#'     `dataset_col`, `plate_id_col`, and `std_sp_col`.
 #' @param model Which model to use. Accepts either `linear` (default) or `poly`
 #'     for polynomial model.
+#' @param conc_col Name of the column containing concentration. Defaults
+#'     to `"std_conc"`.
+#' @param value_col Name of the column containing (blank-corrected)
+#'     absorbance. Defaults to `"abs_corrected"`.
+#' @param curve_id_col Name of the column identifying which curve a row
+#'     belongs to. Defaults to `"unique_curve_id"`.
+#' @param dataset_col Name of the column identifying the dataset.
+#'     Defaults to `"dataset"`.
+#' @param plate_id_col Name of the column identifying physical plates.
+#'     Defaults to `"plate_id"`.
+#' @param std_sp_col Name of the column identifying the standard species.
+#'     Defaults to `"std_sp"`.
+#' @param through_origin Whether to force the model through the origin.
+#'     Defaults to `TRUE`. See [fit_curve_model()] for the same
+#'     argument's meaning.
 #'
-#' @import dplyr tibble
-#' @importFrom magrittr extract2
 #' @importFrom car ncvTest
-#' @importFrom car outlierTest
-#' @importFrom stats pf
 #'
 #' @returns A table containing relevant parameters of the linear model, with
 #'     - 1 row per "group" (e.g., plate * column, which is relevant to spot outliers).
 #'     - columns: `unique_curve_id`, `slope`, `r_squared`, `adj_r_squared`, `lm_p`,
 #'       `normality_lm_residuals`, `shapiro_p`, `homoscedasticity_lm_residuals`,
-#'       `breusch_pagan_p`
+#'       `breusch_pagan_p`. When `model = "poly"`, also `poly_a`/`poly_a_p`
+#'       (the squared, `x^2`, term's coefficient and p-value) and
+#'       `poly_b`/`poly_b_p` (the linear, `x`, term's coefficient and
+#'       p-value).
 #'
+#' @seealso [fit_curve_model()], [lm_diagnostics()]
 #' @export
 #'
 #' @examples
@@ -39,165 +135,37 @@ utils::globalVariables(c("std_conc", "unique_curve_id", "abs_corrected"))
 #' lm_std_curve(data)
 lm_std_curve <- function(
     grouped_data,
-    model = "linear"
+    model = "linear",
+    conc_col = "std_conc",
+    value_col = "abs_corrected",
+    curve_id_col = "unique_curve_id",
+    dataset_col = "dataset",
+    plate_id_col = "plate_id",
+    std_sp_col = "std_sp",
+    through_origin = TRUE
 ) {
-  full_data <- grouped_data |> dplyr::mutate(std_conc = as.numeric(std_conc))
+  full_data <- grouped_data |> dplyr::mutate(dplyr::across(dplyr::all_of(conc_col), as.numeric))
 
-
-  # initiate empty tibble for the looploop
-
-  # CASE 1 : LINEAR MODEL
-  if (model == "linear") {
-    lm_data <- tibble::tibble(
-      dataset = character(),
-      plate_id = character(),
-      unique_curve_id = character(),
-      std_sp = character(),
-      slope = numeric(),
-      r_squared = numeric(),
-      adj_r_squared = numeric(),
-      lm_p = numeric(),
-      normality_lm_residuals = character(),
-      shapiro_p = numeric(),
-      homoscedasticity_lm_residuals = character(),
-      breusch_pagan_p = numeric()#,
-      # outlier_rstudent = numeric()
-    )
-
-    # CASE 2 : POLYNOMIAL MODEL
-  } else if (model == "poly") {
-    lm_data <- tibble::tibble(
-      dataset = character(),
-      plate_id = character(),
-      unique_curve_id = character(),
-      std_sp = character(),
-      poly_a = numeric(),
-      poly_a_p = numeric(),
-      poly_b = numeric(),
-      poly_b_p = numeric(),
-      r_squared = numeric(),
-      adj_r_squared = numeric(),
-      lm_p = numeric(),
-      normality_lm_residuals = character(),
-      shapiro_p = numeric(),
-      homoscedasticity_lm_residuals = character(),
-      breusch_pagan_p = numeric()#,
-    )
-  } else stop('Argument "model" is not valid.
-              Only `model = "linear"` and `model = "poly"` are accepted.
-              See also `?lm_std_curve()`')
-
-  # split data in a list - split according to groups
   splitted_data <- dplyr::group_split(full_data)
-  #i = 9
-  for (i in 1:dplyr::n_groups(full_data)) {
-    #for (i in 1:10) {
 
-    # curve data, regardless of model
+  lm_data <- NULL
+  for (i in seq_len(dplyr::n_groups(full_data))) {
+
     curve <- splitted_data[[i]]
-    dataset <- curve$dataset[1]
-    plate_id <- curve |>
-      dplyr::select(plate_id) |> magrittr::extract2(1) |> unique()
-    unique_curve_id <- curve |>
-      dplyr::select(unique_curve_id) |> magrittr::extract2(1) |> unique()
-    std_sp = curve |>
-      dplyr::select(std_sp) |> magrittr::extract2(1) |> unique()
 
-    # CASE 1 : linear model
-    if (model == "linear") {
-      lm_linear <- stats::lm(abs_corrected ~ 0 + std_conc, data = curve)
-      sum_linear <- summary(lm_linear)
-      slope <- lm_linear$coefficients |> as.numeric()
-      r_squared <- sum_linear$r.squared |> as.numeric() |> round(digits = 4)
-      adj_r_squared <- sum_linear$adj.r.squared |> as.numeric() |> round(digits = 4)
-      lm_coeff <- sum_linear$coefficients ; names(lm_coeff) <- dimnames(lm_coeff)[[2]]
-      lm_p <- lm_coeff["Pr(>|t|)"] |> as.numeric() |> signif(digits = 4)
-      # test normality of residuals for one plate
-      shapiro_p <- (stats::residuals(lm_linear) |> stats::shapiro.test())$p.value |> round(digits = 3)
-      if (shapiro_p < 0.05) {normality_lm_residuals <- "Not Normal"} else {normality_lm_residuals <- "Normal"}
+    fitted_model <- fit_curve_model(
+      curve, model = model, conc_col = conc_col, value_col = value_col, through_origin = through_origin)
 
-      # test homoscedasticity of residuals - # H0 = homoscedasticity
-      breusch_pagan_p <- (car::ncvTest(lm_linear))$p |> round(digits = 3)
-      if (breusch_pagan_p < 0.05) {homoscedasticity_lm_residuals <- "Heteroscedasticity"} else {homoscedasticity_lm_residuals <- "Homoscedasticity"}
+    diagnostics <- lm_diagnostics(fitted_model, model_type = model, conc_col = conc_col)
 
-      # test for outliers - ideally between -3 and 3 or even -5 and 5 (usage a bit unclear)
-      # outlier_rstudent <- (car::outlierTest(my_lm))$rstudent |> as.numeric() |> round(digits = 3)#
+    new_row <- tibble::tibble(
+      dataset = curve[[dataset_col]][1],
+      plate_id = curve[[plate_id_col]] |> unique(),
+      unique_curve_id = curve[[curve_id_col]] |> unique(),
+      std_sp = curve[[std_sp_col]] |> unique()
+    ) |> dplyr::bind_cols(diagnostics)
 
-      # Store all of it in a vector
-      new_row <- tibble::tibble(
-        dataset,
-        plate_id,
-        unique_curve_id,
-        std_sp,
-        slope,
-        r_squared,
-        adj_r_squared,
-        lm_p,
-        normality_lm_residuals,
-        shapiro_p,
-        homoscedasticity_lm_residuals,
-        breusch_pagan_p #,
-        # outlier_rstudent
-      )
-
-
-      # CASE 2 : polynomial model
-
-    } else if (model == "poly") {
-      # compute model
-      lm_poly <- stats::lm(abs_corrected ~ 0 + std_conc + I(std_conc^2), data = curve)
-      sum_poly <- summary(lm_poly)
-
-      # get coefficients of the modeled curve + their p-value
-      poly_a <- lm_poly$coefficients["I(std_conc^2)"]
-      poly_b <- lm_poly$coefficients["std_conc"]
-      poly_a_p <- sum_poly$coefficients[2,4]
-      poly_b_p <- sum_poly$coefficients[1,4]
-
-      # get R^2 of the model
-      r_squared <- sum_poly$r.squared |> as.numeric() |> round(digits = 4)
-      adj_r_squared <- sum_poly$adj.r.squared |> as.numeric() |> round(digits = 4)
-
-      # get p-value of the model
-      lm_fstat <- sum_poly$fstatistic["value"]
-      lm_numdf <- sum_poly$fstatistic["numdf"]
-      lm_dendf <- sum_poly$fstatistic["dendf"]
-      lm_p <- stats::pf(lm_fstat, lm_numdf, lm_dendf, lower.tail = FALSE) |> signif(digits = 4)
-
-      # test normality of residuals for one plate
-      shapiro_p <- (stats::residuals(lm_poly) |> stats::shapiro.test())$p.value |> signif(digits = 4)
-      if (shapiro_p < 0.05) {normality_lm_residuals <- "Not Normal"} else {normality_lm_residuals <- "Normal"}
-
-      # test homoscedasticity of residuals - # H0 = homoscedasticity
-      breusch_pagan_p <- (car::ncvTest(lm_poly))$p |> signif(digits = 4)
-      if (breusch_pagan_p < 0.05) {homoscedasticity_lm_residuals <- "Heteroscedasticity"} else {homoscedasticity_lm_residuals <- "Homoscedasticity"}
-      #
-
-      # Store all of it in a vector
-      new_row <- tibble::tibble(
-        dataset,
-        plate_id,
-        unique_curve_id,
-        std_sp,
-        poly_a,
-        poly_a_p,
-        poly_b,
-        poly_b_p,
-        r_squared,
-        adj_r_squared,
-        lm_p,
-        normality_lm_residuals,
-        shapiro_p,
-        homoscedasticity_lm_residuals,
-        breusch_pagan_p#,
-      )
-    }
-
-
-
-
-    lm_data <- lm_data |> dplyr::bind_rows(new_row)
-
+    lm_data <- dplyr::bind_rows(lm_data, new_row)
   }
 
   return(lm_data)
@@ -236,19 +204,19 @@ suspicious_lm <- function(lm_data, model = "linear") {
   if (model == "linear") {
     suspicious_lm <- lm_data |>
       dplyr::filter_out(
-        normality_lm_residuals == "Normal" &
-          homoscedasticity_lm_residuals == "Homoscedasticity" &
-          lm_p < 0.05)
+        .data[["normality_lm_residuals"]] == "Normal" &
+          .data[["homoscedasticity_lm_residuals"]] == "Homoscedasticity" &
+          .data[["lm_p"]] < 0.05)
 
     # CASE 2 : POLYNOMIAL MODEL
   } else if (model == "poly") {
     suspicious_lm <- lm_data |>
       dplyr::filter_out(
-        normality_lm_residuals == "Normal" &
-          homoscedasticity_lm_residuals == "Homoscedasticity" &
-          lm_p < 0.05 &
-          poly_a_p < 0.05 &
-          poly_b_p < 0.05
+        .data[["normality_lm_residuals"]] == "Normal" &
+          .data[["homoscedasticity_lm_residuals"]] == "Homoscedasticity" &
+          .data[["lm_p"]] < 0.05 &
+          .data[["poly_a_p"]] < 0.05 &
+          .data[["poly_b_p"]] < 0.05
       )
 
     # CASE 3 : WRONG MODEL SPECIFICATION
@@ -274,6 +242,16 @@ utils::globalVariables(c("std_conc", "abs_corrected"))
 #'     Absorbance values should already by blank-corrected
 #' @param model Which model to use. Accepts either `linear` (default) or `poly`
 #'     for polynomial model.
+#' @param conc_col Name of the column containing concentration. Defaults
+#'     to `"std_conc"`.
+#' @param value_col Name of the column containing (blank-corrected)
+#'     absorbance. Defaults to `"abs_corrected"`.
+#' @param curve_id_col Name of the column identifying which curve a row
+#'     belongs to. Defaults to `"unique_curve_id"`.
+#' @param dataset_col Name of the column identifying the dataset.
+#'     Defaults to `"dataset"`.
+#' @param unit_col Name of the column containing the concentration unit,
+#'     shown in the x-axis label. Defaults to `"std_unit"`.
 #'
 #' @import dplyr ggplot2
 #'
@@ -292,35 +270,34 @@ utils::globalVariables(c("std_conc", "abs_corrected"))
 #'     std_data = std_corrected)
 #' plot_list[[1]] ; plot_list[[2]]
 plot_list_lm <- function(
-    lm_data, # lm_data <- lm_suspicious_NO3
-    std_data, # std_data <- std_corrected
-    model = "linear") { # model = "poly"
+    lm_data,
+    std_data,
+    model = "linear",
+    conc_col = "std_conc",
+    value_col = "abs_corrected",
+    curve_id_col = "unique_curve_id",
+    dataset_col = "dataset",
+    unit_col = "std_unit"
+) {
 
-  #i = 1
   plots <- list()
-  #i = 1
-  #for (i in 1:10) {
   for (i in seq_len(nrow(lm_data))) {
-    # curve data
     lm_curve <- lm_data[i,]
-    curve_id <- lm_data$unique_curve_id[i]
-    dataset <- lm_data$dataset[i]
+    curve_id <- lm_data[["unique_curve_id"]][i]
+    dataset <- lm_data[[dataset_col]][i]
 
     curve_data <- std_data |>
-      dplyr::filter(unique_curve_id == curve_id) |>
-      dplyr::mutate(std_conc = as.numeric(std_conc))
-
-    # std unit for plotting
-    std_unit <- curve_data$std_unit |> unique()
+      dplyr::filter(.data[[curve_id_col]] == curve_id) |>
+      dplyr::mutate(dplyr::across(dplyr::all_of(conc_col), as.numeric))
 
     # gathering info to display
-    if (lm_curve$lm_p < 0.05) { lm_p_msg <- ""} else {
-      lm_p_msg <- paste0("lm: p_val = ", lm_curve$lm_p, ", ")
+    if (lm_curve[["lm_p"]] < 0.05) { lm_p_msg <- ""} else {
+      lm_p_msg <- paste0("lm: p_val = ", lm_curve[["lm_p"]], ", ")
     }
-    if (lm_curve$normality_lm_residuals == "Normal") {norm_msg <- ""} else {
+    if (lm_curve[["normality_lm_residuals"]] == "Normal") {norm_msg <- ""} else {
       norm_msg <- "Non-Normal, "
     }
-    if (lm_curve$homoscedasticity_lm_residuals != "Heteroscedasticity") {
+    if (lm_curve[["homoscedasticity_lm_residuals"]] != "Heteroscedasticity") {
       homosced_msg <- ""} else {
         homosced_msg <- "Heteroscedasticity, "
       }
@@ -328,38 +305,33 @@ plot_list_lm <- function(
     annotation <- paste(lm_p_msg, norm_msg, homosced_msg)
 
     if (model == "poly") {
-      if (lm_curve$poly_a_p < 0.05) {coeff_a <- ""} else {
-        coeff_a <- paste0("a: p_val = ", signif(lm_curve$poly_a_p, digits = 2), ", ")
+      if (lm_curve[["poly_a_p"]] < 0.05) {coeff_a <- ""} else {
+        coeff_a <- paste0("a: p_val = ", signif(lm_curve[["poly_a_p"]], digits = 2), ", ")
       }
-      if (lm_curve$poly_b_p < 0.05) {coeff_b <- ""} else {
-        coeff_b <- paste0("b: p_val = ", signif(lm_curve$poly_b_p, digits = 2), ", ")
+      if (lm_curve[["poly_b_p"]] < 0.05) {coeff_b <- ""} else {
+        coeff_b <- paste0("b: p_val = ", signif(lm_curve[["poly_b_p"]], digits = 2), ", ")
       }
 
       annotation <- paste(annotation, coeff_a, coeff_b)
     }
 
+    x_pos <- min(curve_data[[conc_col]])
+    y_pos <- max(curve_data[[value_col]]) * 0.9
 
-
-    x_pos <- min(curve_data$std_conc)
-    y_pos <- max(curve_data$abs_corrected)*0.9
-
-    # plot
-    plot <- plot_std(curve_data |> dplyr::rename(abs = abs_corrected), model = model) +
+    plot <- plot_std(
+      curve_data, model = model,
+      conc_col = conc_col, value_col = value_col, unit_col = unit_col) +
       ggplot2::labs(title = curve_id, subtitle = dataset) +
-      ggplot2::xlab(paste0("Concentration of Standard Curve [", std_unit, "]")) +
       ggplot2::ylab("Blank-corrected Absorbance") +
       ggplot2::theme(legend.position = "none") +
       ggplot2::annotate(
         geom = "label", label = annotation,
         x = x_pos, y = y_pos, hjust = 0, colour = "red")
-    #plot
-    plots[[curve_id]] <- plot
-    #i = i+1
 
+    plots[[curve_id]] <- plot
   }
 
   return(plots)
-
 }
 
 utils::globalVariables(c("std_sp", "lm_p", "adj_r_squared", "r_squared"))
@@ -404,24 +376,24 @@ density_lm_param <- function(
 ) {
 
   # SET UP GRAPHICAL PARAMETERS
-  n_row <- lm_data |> dplyr::select(std_sp) |> unique() |> nrow()
+  n_row <- lm_data |> dplyr::select(dplyr::all_of("std_sp")) |> unique() |> nrow()
   if (p_or_r == "p") {
     label_1 <- "p-value"
-    xlim <- c(0,max(-log(lm_data$lm_p)))
+    xlim <- c(0, max(-log(lm_data[["lm_p"]])))
     xlab <- "-log(p-value of model)"
     subtitle = "logarithmic scale"
   } else if (p_or_r == "adjR2") {
     label_1 <- "adjusted R2"
     xlim <- c(
-      min(0.945, min(lm_data$adj_r_squared)),
-      max(lm_data$adj_r_squared))
+      min(0.945, min(lm_data[["adj_r_squared"]])),
+      max(lm_data[["adj_r_squared"]]))
     xlab <- "Adjusted R2"
     subtitle <- ""
   } else if (p_or_r == "R2") {
     label_1 <- "R2 = "
     xlim <- c(
-      min(0.945, min(lm_data$r_squared)),
-      max(lm_data$r_squared))
+      min(0.945, min(lm_data[["r_squared"]])),
+      max(lm_data[["r_squared"]]))
     xlab <- "R2"
     subtitle <- ""
   }
@@ -436,24 +408,19 @@ density_lm_param <- function(
   plot <- lm_data |>
     ggplot2::ggplot(ggplot2::aes(
       x = if (
-        p_or_r == "p") (-log(lm_p)) else if (
-          p_or_r == "adjR2") (adj_r_squared) else if (
-            p_or_r == "R2") (r_squared),
-      colour = if (color_std_sp) std_sp,
-      fill = if (color_std_sp) std_sp
+        p_or_r == "p") (-log(.data[["lm_p"]])) else if (
+          p_or_r == "adjR2") (.data[["adj_r_squared"]]) else if (
+            p_or_r == "R2") (.data[["r_squared"]]),
+      colour = if (color_std_sp) .data[["std_sp"]],
+      fill = if (color_std_sp) .data[["std_sp"]]
     )) +
     ggplot2::theme_minimal() +
-    # geom_histogram() +
     ggplot2::geom_density(alpha = 0.3) +
     ggplot2::geom_vline(
       ggplot2::aes(xintercept = if (
         p_or_r == "p") (-log(threshold)) else if (
           p_or_r %in% c("adjR2", "R2")) (threshold)),
       linetype = 2, colour = "purple") +
-    # annotate(
-    #   geom = "label", label = label,
-    #   x = label_x,
-    #   y = 0.15, hjust = 0.25, colour = "purple" ) +
     {if (facetting_std_sp) ggplot2::facet_wrap(~std_sp, nrow = n_row) } +
     ggplot2::xlim(xlim) +
     ggplot2::xlab(xlab) +
