@@ -10,7 +10,13 @@ correct_std_blank(
   pipetting_direction = "top_down",
   std_blank_average = NULL,
   std_blank_trusted = NULL,
-  std_blank = NULL
+  std_blank = NULL,
+  row_col = "row",
+  dataset_col = "dataset",
+  plate_id_col = "plate_id",
+  column_col = "column",
+  map_col = "map",
+  value_col = "abs"
 )
 }
 \arguments{
@@ -34,6 +40,24 @@ in any way (see \code{?extract_std_blank()} for more details)}
 \item{std_blank_trusted}{If NULL (default), it will be extracted from \code{std_blank}}
 
 \item{std_blank}{If NULL (default), it will be extracted/computed from \code{data}, using \code{extract_std_blank()}.}
+
+\item{row_col}{Name of the column containing well row (A-H). Defaults
+to \code{"row"}.}
+
+\item{dataset_col}{Name of the column identifying the dataset. Defaults
+to \code{"dataset"}.}
+
+\item{plate_id_col}{Name of the column identifying physical plates.
+Defaults to \code{"plate_id"}.}
+
+\item{column_col}{Name of the column identifying the plate column
+(1-12). Defaults to \code{"column"}.}
+
+\item{map_col}{Name of the column containing well mapping/type
+information. Defaults to \code{"map"}.}
+
+\item{value_col}{Name of the numeric absorbance column. Defaults to
+\code{"abs"}.}
 }
 \value{
 A tibble with blank-corrected absorbance values for standard curves.

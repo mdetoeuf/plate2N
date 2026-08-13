@@ -4,7 +4,14 @@
 \alias{extract_curve}
 \title{Get concentration of standard curve from metadata}
 \usage{
-extract_curve(metadata, pipetting_direction = "top_down")
+extract_curve(
+  metadata,
+  pipetting_direction = "top_down",
+  dataset_col = "dataset",
+  plate_id_col = "plate_id",
+  std_conc_col = "std_conc",
+  row_col = "row"
+)
 }
 \arguments{
 \item{metadata}{A tibble following a similar structure as \code{\link{metadata}}, see documentation of `metadata for more details}
@@ -13,6 +20,19 @@ extract_curve(metadata, pipetting_direction = "top_down")
 A top_down pipetting means that the curve was pipetted vertically (in a single column of the 96-well plate),
 with the smallest value (blank) in row A and the highest value in row H.
 Conversely, bottom_up pipetting would have the blank in row H and the most concentrated solution in row A}
+
+\item{dataset_col}{Name of the column identifying the dataset. Defaults
+to \code{"dataset"}.}
+
+\item{plate_id_col}{Name of the column identifying physical plates.
+Defaults to \code{"plate_id"}.}
+
+\item{std_conc_col}{Name of the column containing the standard curve
+concentrations (dash-separated, one value per row A-H). Defaults
+to \code{"std_conc"}.}
+
+\item{row_col}{Name of the output column identifying plate row (A-H).
+Defaults to \code{"row"}.}
 }
 \value{
 A tibble with 3 columns: \code{plate_id}, \code{row} (corresponding to plate-row,

@@ -4,7 +4,14 @@
 \alias{extract_std_data}
 \title{Keeps only wells corresponding to standard curves}
 \usage{
-extract_std_data(data, std_def = "Std")
+extract_std_data(
+  data,
+  std_def = "Std",
+  map_col = "map",
+  dataset_col = "dataset",
+  plate_id_col = "plate_id",
+  column_col = "column"
+)
 }
 \arguments{
 \item{data}{A tibble respecting the structure of \code{\link{tidy_table}}. \code{data} must have,
@@ -12,6 +19,18 @@ though not necessarily in that order, the following column names:
 dataset, map, plate_id, column}
 
 \item{std_def}{A string, defaults with \code{"Std"}: how data from wells containing the standard curve are referred to.}
+
+\item{map_col}{Name of the column containing well mapping/type
+information. Defaults to \code{"map"}.}
+
+\item{dataset_col}{Name of the column identifying the dataset. Defaults
+to \code{"dataset"}.}
+
+\item{plate_id_col}{Name of the column identifying physical plates.
+Defaults to \code{"plate_id"}.}
+
+\item{column_col}{Name of the column identifying the plate column
+(1-12). Defaults to \code{"column"}.}
 }
 \value{
 A smaller tible than \code{data}, keeping only rows where the column \code{map}

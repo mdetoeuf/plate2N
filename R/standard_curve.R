@@ -12,7 +12,7 @@ pipette_to_row <- function(pipetting_direction) {
     blank_should_be_in <- "A"
   } else if (pipetting_direction == "bottom_up") {
     blank_should_be_in <- "H"
-  } else {stop("Unknown pipetting direction. Choose between `top-down` and `bottom_up`")}
+  } else {stop("Unknown pipetting direction. Choose between `top_down` and `bottom_up`")}
   return(blank_should_be_in)
 }
 
@@ -27,7 +27,14 @@ pipette_to_row <- function(pipetting_direction) {
 #'     though not necessarily in that order, the following column names:
 #'     dataset, map, plate_id, column
 #' @param std_def A string, defaults with `"Std"`: how data from wells containing the standard curve are referred to.
-#'
+#' @param map_col Name of the column containing well mapping/type
+#'     information. Defaults to `"map"`.
+#' @param dataset_col Name of the column identifying the dataset. Defaults
+#'     to `"dataset"`.
+#' @param plate_id_col Name of the column identifying physical plates.
+#'     Defaults to `"plate_id"`.
+#' @param column_col Name of the column identifying the plate column
+#'     (1-12). Defaults to `"column"`.
 #' @import dplyr
 #'
 #' @returns A smaller tible than `data`, keeping only rows where the column `map`
@@ -37,19 +44,23 @@ pipette_to_row <- function(pipetting_direction) {
 #' @examples
 #' tidy_plates
 #' extract_std_data(tidy_plates)
-extract_std_data <- function(data, std_def = "Std") {
+extract_std_data <- function(
+    data, std_def = "Std",
+    map_col = "map",
+    dataset_col = "dataset",
+    plate_id_col = "plate_id",
+    column_col = "column") {
   std_data <- data |>
     # take only plate-columns with standard curves
-    dplyr::filter(map == std_def) |>
-    dplyr::group_by(dataset, plate_id) |>
-    dplyr::mutate(unique_curve_id = paste0(plate_id, "_col", column), .after = plate_id)
+    dplyr::filter(.data[[map_col]] == std_def) |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(c(dataset_col, plate_id_col)))) |>
+    dplyr::mutate(
+      unique_curve_id = paste0(.data[[plate_id_col]], "_col", .data[[column_col]]),
+      .after = dplyr::all_of(plate_id_col))
   return(std_data)
 }
 
 
-
-
-utils::globalVariables(c("row", "column", "well_id", "unique_well_id", "dataset", "plate_id", "map", "abs", "blank_sdev", "blank_avg", "unique_curve_id", "well_min"))
 
 #' Extraction and Quality Check (QC) of blank values for standard curves
 #'
@@ -64,7 +75,11 @@ utils::globalVariables(c("row", "column", "well_id", "unique_well_id", "dataset"
 #'     - We then check that the smallest per-curve value is indeed found in plate row "A"
 #'       (top_down pipetting) or row "H" (bottom_up pipetting).
 #'     - Should that not be the case, those wells are considered "untrusted" and are removed from the "trusted" blank values.
-#'     - Per-plate averages for blank values are then computed
+#'
+#' Per-plate averages are computed separately, by [`std_blank_average()`] —
+#' deliberately kept as its own step, taken on whichever of `$all`/
+#' `$trusted`/`$untrusted` (possibly manually reviewed/edited) the user
+#' decides to trust.
 #'
 #' @param data A tibble respecting the structure of [`tidy_table`]. `data` must have,
 #'     though not necessarily in that order, the following column names:
@@ -74,120 +89,100 @@ utils::globalVariables(c("row", "column", "well_id", "unique_well_id", "dataset"
 #'     A top_down pipetting means that the curve was pipetted vertically (in a single column of the 96-well plate),
 #'     with the smallest value (blank) in row A and the highest value in row H.
 #'     Conversely, bottom_up pipetting would have the blank in row H and the most concentrated solution in row A
+#' @param row_col Name of the column containing well row (A-H). Defaults
+#'     to `"row"`.
+#' @param well_id_col Name of the column identifying wells. Defaults to
+#'     `"well_id"`.
+#' @param unique_well_id_col Name of the column identifying wells
+#'     uniquely across plates. Defaults to `"unique_well_id"`.
+#' @param dataset_col Name of the column identifying the dataset. Defaults
+#'     to `"dataset"`.
+#' @param plate_id_col Name of the column identifying physical plates.
+#'     Defaults to `"plate_id"`.
+#' @param column_col Name of the column identifying the plate column
+#'     (1-12). Defaults to `"column"`.
+#' @param map_col Name of the column containing well mapping/type
+#'     information. Defaults to `"map"`.
+#' @param value_col Name of the numeric absorbance column. Defaults to
+#'     `"abs"`.
 #'
-#' @import dplyr
-#'
-#' @returns A list of 4 elements characterizing blank wells:
+#' @returns A list of 3 elements characterizing blank wells:
 #'     - `list$all` contains all supposed blank values (minimum values from each curve)
 #'     - `list$trusted` contains all trusted blank values (minimum values and wells in the "correct" row (A or H))
 #'     - `list$untrusted` contains all untrusted wells
-#'     - `list$average` contains a summarized table with a per-plate computation of average,
-#'       standard deviation and coefficient of variation of blank values.
-#'       Note that a coefficient of variation has little value when computed on 2 values,
-#'       especially when the values are small numbers (typically, blank absorbances are often lower than 0.1)
 #'
 #' @export
 #'
 #' @examples
-#' # reconstruct a proper data table to start from
-#' # map_file <- system.file("extdata", "csv_map.csv", package = "plate2N")
-#' # abs_folder <- system.file("extdata", "txt_examples/", package = "plate2N")
-#' # map_tibble <- csv_to_tibble(map_file)
-#' # abs_tibble <- txt_to_tibble(abs_folder)
-#' # joined_vertical <- join_abs_map(abs_tibble, map_tibble, dataset = "Nmin-")
-#' # tidy_data <- vertical_to_tidy(joined_vertical)
-#'
-#' # check out input table
 #' tidy_plates
-#'
-#' # run the function
 #' std_blank <- tidy_plates |> extract_std_blank(std_def = "Std")
 #' std_blank$all ; std_blank$trusted ; std_blank$untrusted
-#'
 extract_std_blank <- function(
-    data, # data <- tidy_data
+    data,
     std_def = "Std",
-    pipetting_direction = "top_down"
+    pipetting_direction = "top_down",
+    row_col = "row",
+    well_id_col = "well_id",
+    unique_well_id_col = "unique_well_id",
+    dataset_col = "dataset",
+    plate_id_col = "plate_id",
+    column_col = "column",
+    map_col = "map",
+    value_col = "abs"
 ) {
-
-  # blank_should_be_in <- pipette_to_row(pipetting_direction)
 
   # in case still character, correct absorbance values to be numerical
   data <- data |>
-    dplyr::mutate(abs = as.numeric(abs))
+    dplyr::mutate(dplyr::across(dplyr::all_of(value_col), as.numeric))
 
   # extract std data (only wells where the standard solutions have been pipetted)
-  std_data <- extract_std_data(data, std_def)
+  std_data <- extract_std_data(
+    data, std_def,
+    map_col = map_col, dataset_col = dataset_col,
+    plate_id_col = plate_id_col, column_col = column_col)
 
-  # std_blank_all <- std_data |>
-  #   # 1 group = 1 std curve
-  #   dplyr::group_by(dataset, plate_id, column) |>
-  #   dplyr::slice_min(
-  #     abs,
-  #     with_ties = FALSE
-  #   )
-
-  #** Tentative *
+  # per curve, find the well with the smallest absorbance value - this
+  # is where the blank is EXPECTED to be, checked against below
   std_min <- std_data |>
-    # 1 group = 1 std curve
-    dplyr::group_by(dataset, plate_id, column) |>
-    dplyr::select(!unique_well_id) |>
-    dplyr::slice_min(
-      abs,
-      with_ties = FALSE
-    ) |>
-    dplyr::rename(well_min = well_id) |>
-    dplyr::select(well_min, dataset, plate_id, column, unique_curve_id)
+    dplyr::group_by(dplyr::across(dplyr::all_of(c(dataset_col, plate_id_col, column_col)))) |>
+    dplyr::select(!dplyr::all_of(unique_well_id_col)) |>
+    dplyr::slice_min(.data[[value_col]], with_ties = FALSE) |>
+    dplyr::rename(well_min = dplyr::all_of(well_id_col)) |>
+    dplyr::select(well_min, dplyr::all_of(c(dataset_col, plate_id_col, column_col, "unique_curve_id")))
 
-  if (pipetting_direction == "top_down") {
-    std_blank_all <- std_data |>
-      # 1 group = 1 std curve
-      dplyr::group_by(dataset, plate_id, column) |>
-      dplyr::filter(row == "A") |>
-      dplyr::select(well_id, dataset, plate_id, row, column, unique_well_id,unique_curve_id, abs)
-  } else if (pipetting_direction == "bottom_up") {
-    std_blank_all <- std_data |>
-      # 1 group = 1 std curve
-      dplyr::group_by(dataset, plate_id, column) |>
-      dplyr::filter(row == "H") |>
-      dplyr::select(well_id, dataset, plate_id, row, column, unique_well_id, unique_curve_id, abs)
-  }
+  # extract the well that SHOULD contain the blank, based on the
+  # declared pipetting direction (row A for top_down, row H for
+  # bottom_up) - pipette_to_row() unifies what used to be two near-
+  # identical branches into one
+  std_blank_all <- std_data |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(c(dataset_col, plate_id_col, column_col)))) |>
+    dplyr::filter(.data[[row_col]] == pipette_to_row(pipetting_direction)) |>
+    dplyr::select(dplyr::all_of(c(
+      well_id_col, dataset_col, plate_id_col, row_col, column_col,
+      unique_well_id_col, "unique_curve_id", value_col)))
 
+  # check whether the declared blank well actually matches the smallest
+  # value found per curve; if not, that well is "untrusted"
   blank_min_check <- std_min |>
     dplyr::left_join(
       std_blank_all,
-      by = dplyr::join_by(column, dataset, plate_id, unique_curve_id)) |>
-    dplyr::relocate(well_id, .after = well_min)
+      by = c(column_col, dataset_col, plate_id_col, "unique_curve_id")) |>
+    dplyr::relocate(dplyr::all_of(well_id_col), .after = dplyr::all_of("well_min"))
 
-  #blank_min_check$well_min[2] <- "test"
   std_blank_untrusted <- blank_min_check |>
-    dplyr::filter(well_id != well_min) |>
-    dplyr::select(!well_min)
+    dplyr::filter(.data[[well_id_col]] != .data[["well_min"]]) |>
+    dplyr::select(!dplyr::all_of("well_min"))
 
   std_blank_trusted <- std_blank_all |>
     dplyr::anti_join(
       std_blank_untrusted,
-      by = dplyr::join_by(column, well_id, dataset, plate_id, unique_curve_id)) |>
+      by = c(column_col, well_id_col, dataset_col, plate_id_col, "unique_curve_id")) |>
     dplyr::ungroup()
-
-  #** End Tentative *
-
-
-  # std_blank_untrusted <- std_blank_all |> dplyr::filter(row != pipette_to_row(pipetting_direction))
-  #
-  # std_blank_trusted <- std_blank_all |>
-  #   dplyr::anti_join(
-  #     std_blank_untrusted,
-  #     by = dplyr::join_by(row, column, well_id, unique_well_id, dataset, plate_id, map, abs)) |>
-  #   dplyr::ungroup()
-
-
 
   std_blank <- list(
     "all" = std_blank_all,
     "trusted" = std_blank_trusted,
     "untrusted" = std_blank_untrusted
-   # "average" = std_blank_avg
   )
 
   return(std_blank)
@@ -205,6 +200,12 @@ extract_std_blank <- function(
 #'     if necessary, modified, based on the examination of "untrusted wells".
 #'     Thus, use as input (a modified version of) `extract_std_blank(data)$all` or
 #'     `extract_std_blank(data)$trusted`
+#' @param dataset_col Name of the column identifying the dataset. Defaults
+#'     to `"dataset"`.
+#' @param plate_id_col Name of the column identifying physical plates.
+#'     Defaults to `"plate_id"`.
+#' @param value_col Name of the numeric absorbance column. Defaults to
+#'     `"abs"`.
 #'
 #' @returns A tibble with one row per plate, and columns `dataset`, `plate_id`,
 #'     `blank_avg`, `blank_sdev`, `blank_coeff_var_percent`
@@ -217,24 +218,24 @@ extract_std_blank <- function(
 #' # Don't be disturbed by the NA values: it is not possible to compute a
 #' # standard deviation of coefficient of variation from only one data entry
 std_blank_average <- function(
-    std_blank_data # choose one (corrected) sub-element of std_blannk
+    std_blank_data,
+    dataset_col = "dataset",
+    plate_id_col = "plate_id",
+    value_col = "abs"
 ){
-  # compute intra-plate mean for the blank, st-dev and coefficient of variation in %
   std_blank_avg <- std_blank_data |>
     dplyr::ungroup() |>
     dplyr::summarise(
-      .by = c(dataset, plate_id),
-      blank_avg = mean(abs),
-      blank_sdev = stats::sd(abs)
+      .by = dplyr::all_of(c(dataset_col, plate_id_col)),
+      blank_avg = mean(.data[[value_col]]),
+      blank_sdev = stats::sd(.data[[value_col]])
     ) |>
-    dplyr::mutate(blank_coeff_var_percent = 100 * blank_sdev / blank_avg)
+    dplyr::mutate(blank_coeff_var_percent = 100 * .data[["blank_sdev"]] / .data[["blank_avg"]])
 
   return(std_blank_avg)
 }
 
 
-
-utils::globalVariables(c("dataset", "plate_id", "std_conc", "A", "H"))
 #' Get concentration of standard curve from metadata
 #'
 #' @param metadata A tibble following a similar structure as [`metadata`], see documentation of `metadata for more details
@@ -242,6 +243,15 @@ utils::globalVariables(c("dataset", "plate_id", "std_conc", "A", "H"))
 #'     A top_down pipetting means that the curve was pipetted vertically (in a single column of the 96-well plate),
 #'     with the smallest value (blank) in row A and the highest value in row H.
 #'     Conversely, bottom_up pipetting would have the blank in row H and the most concentrated solution in row A
+#' @param dataset_col Name of the column identifying the dataset. Defaults
+#'     to `"dataset"`.
+#' @param plate_id_col Name of the column identifying physical plates.
+#'     Defaults to `"plate_id"`.
+#' @param std_conc_col Name of the column containing the standard curve
+#'     concentrations (dash-separated, one value per row A-H). Defaults
+#'     to `"std_conc"`.
+#' @param row_col Name of the output column identifying plate row (A-H).
+#'     Defaults to `"row"`.
 #'
 #' @import dplyr tidyr
 #'
@@ -255,7 +265,11 @@ utils::globalVariables(c("dataset", "plate_id", "std_conc", "A", "H"))
 #' extract_curve(metadata)
 extract_curve <- function(
     metadata,
-    pipetting_direction = "top_down"
+    pipetting_direction = "top_down",
+    dataset_col = "dataset",
+    plate_id_col = "plate_id",
+    std_conc_col = "std_conc",
+    row_col = "row"
 ) {
   if (pipetting_direction == "top_down") {
     row_curve <- LETTERS[1:8]
@@ -264,13 +278,13 @@ extract_curve <- function(
   }
 
   curve_concentration <- metadata |>
-    dplyr::select(dataset, plate_id, std_conc) |>
-    tidyr::separate_wider_delim(std_conc, delim = "-", names = row_curve) |>
+    dplyr::select(dplyr::all_of(c(dataset_col, plate_id_col, std_conc_col))) |>
+    tidyr::separate_wider_delim(dplyr::all_of(std_conc_col), delim = "-", names = row_curve) |>
     tidyr::pivot_longer(
-      cols = A:H,
-      names_to = "row",
-      values_to = "std_conc") |>
-    dplyr::mutate(std_conc = as.double(std_conc))
+      cols = dplyr::all_of(row_curve),
+      names_to = row_col,
+      values_to = std_conc_col) |>
+    dplyr::mutate(dplyr::across(dplyr::all_of(std_conc_col), as.double))
 
   return(curve_concentration)
 }
@@ -393,9 +407,6 @@ plot_std <- function(
 
 
 
-
-utils::globalVariables(c("std_def", "abs_corrected"))
-
 #' Replaces raw absorbance data from standard curves by blank-corrected absorbance values.
 #'
 #' `correct_std_blank()` relies on [`plate2N::extract_std_blank()`].
@@ -415,8 +426,18 @@ utils::globalVariables(c("std_def", "abs_corrected"))
 #'     in any way (see `?extract_std_blank()` for more details)
 #' @param std_blank_trusted If NULL (default), it will be extracted from `std_blank`
 #' @param std_blank If NULL (default), it will be extracted/computed from `data`, using `extract_std_blank()`.
-#'
-#' @import dplyr
+#' @param row_col Name of the column containing well row (A-H). Defaults
+#'     to `"row"`.
+#' @param dataset_col Name of the column identifying the dataset. Defaults
+#'     to `"dataset"`.
+#' @param plate_id_col Name of the column identifying physical plates.
+#'     Defaults to `"plate_id"`.
+#' @param column_col Name of the column identifying the plate column
+#'     (1-12). Defaults to `"column"`.
+#' @param map_col Name of the column containing well mapping/type
+#'     information. Defaults to `"map"`.
+#' @param value_col Name of the numeric absorbance column. Defaults to
+#'     `"abs"`.
 #'
 #' @returns A tibble with blank-corrected absorbance values for standard curves.
 #'     It has less rows than the input `data` because
@@ -433,44 +454,50 @@ correct_std_blank <- function(
     data,
     std_def = "Std",
     pipetting_direction = "top_down",
-    std_blank_average = NULL, # what we need, but can be computed from trusted
-    std_blank_trusted = NULL, # can be extracted from blank
-    std_blank = NULL # can be extracted/computed from data (but no user QC on untrusted wells)
+    std_blank_average = NULL,
+    std_blank_trusted = NULL,
+    std_blank = NULL,
+    row_col = "row",
+    dataset_col = "dataset",
+    plate_id_col = "plate_id",
+    column_col = "column",
+    map_col = "map",
+    value_col = "abs"
 ) {
   ## Getting trusted blank average data
 
-  # if no blank average table provided
   if (is.null(std_blank_average)) {
-    # if trusted blank not explicitly provided, can be extracted from std_blank
     if (is.null(std_blank_trusted)) {
-      # if std_blank not provided, then compute it from data
       if (is.null(std_blank)) {
-        std_blank <- extract_std_blank(data, std_def = std_def, pipetting_direction = pipetting_direction)
+        std_blank <- extract_std_blank(
+          data, std_def = std_def, pipetting_direction = pipetting_direction,
+          row_col = row_col, dataset_col = dataset_col,
+          plate_id_col = plate_id_col, column_col = column_col,
+          map_col = map_col, value_col = value_col)
       }
-      # extract trusted
       std_blank_trusted <- std_blank$trusted
     }
-    # compute average from trusted blanks (if not provided)
-    std_blank_average <- std_blank_trusted |>
-      dplyr::summarise(
-        .by = c(dataset, plate_id),
-        blank_avg = mean(abs),
-        blank_sdev = stats::sd(abs)) |>
-      dplyr::mutate(blank_coeff_var_percent = 100 * blank_sdev / blank_avg)
+    # calling the std_blank_average() FUNCTION here - R resolves this
+    # correctly despite the same-named parameter above, since a name in
+    # call position specifically looks for a function binding
+    std_blank_average <- std_blank_average(
+      std_blank_trusted, dataset_col = dataset_col,
+      plate_id_col = plate_id_col, value_col = value_col)
   }
 
-  std_corrected <- extract_std_data(data) |>
-    dplyr::mutate(abs = as.numeric(abs)) |>
+  std_corrected <- extract_std_data(
+    data, std_def = std_def, map_col = map_col,
+    dataset_col = dataset_col, plate_id_col = plate_id_col,
+    column_col = column_col) |>
+    dplyr::mutate(dplyr::across(dplyr::all_of(value_col), as.numeric)) |>
     # keep only data that is not from blank wells
     dplyr::filter(
-      row != pipette_to_row(pipetting_direction)
+      .data[[row_col]] != pipette_to_row(pipetting_direction)
     ) |>
-    dplyr::right_join(std_blank_average, by = dplyr::join_by(dataset, plate_id)) |>
-    dplyr::mutate(abs_corrected = abs - blank_avg, .keep = "unused") |>
+    dplyr::right_join(std_blank_average, by = c(dataset_col, plate_id_col)) |>
+    dplyr::mutate(abs_corrected = .data[[value_col]] - .data[["blank_avg"]], .keep = "unused") |>
     # remove rows where no corrected absorbance data (untrusted or blanks)
-    dplyr::filter(!is.na(abs_corrected)) #|>
-  # create unique curve_id which will be needed for downstream analysis
-  #dplyr::mutate(unique_curve_id = paste0(plate_id, "_col", column), .after = plate_id)
+    dplyr::filter(!is.na(abs_corrected))
 
   return(std_corrected)
 }
@@ -479,10 +506,44 @@ correct_std_blank <- function(
 
 #' Compute per-dilution Averages for Standard Curves
 #'
-#' This needs better documentation!!
+#' Averages absorbance per plate, per row (dilution level), across
+#' several standard curves pipetted on the same plate — useful when a
+#' plate holds more than one curve of the same standard solution (e.g.
+#' one in column 1, one in column 12). Averaging serves two purposes:
+#' reducing noise before model fitting, and correcting for a
+#' systematic drift between curves caused by pipetting order (a plate
+#' is typically pipetted left to right, so column 1 and column 12
+#' wells experience slightly different incubation times before
+#' reading — averaging across the plate's curves compensates for that,
+#' since same-row wells across curves are assumed to hold the same
+#' concentration).
+#'
+#' Since the output no longer corresponds to a single real well, a
+#' placeholder `column`/`well_id`/`unique_curve_id` is fabricated (see
+#' `fake_column_value`) so the result still has the shape downstream
+#' functions expect.
 #'
 #' @param std_data A tibble of std data
+#' @param plate_id_col Name of the column identifying physical plates.
+#'     Defaults to `"plate_id"`.
+#' @param row_col Name of the column identifying plate row (A-H), used
+#'     as the dilution-level grouping key. Defaults to `"row"`.
+#' @param value_col Name of the numeric absorbance column averaged.
+#'     Defaults to `"abs_corrected"`.
+#' @param std_conc_col Name of the standard curve concentration column,
+#'     used only to order rows before deduplicating other columns.
+#'     Defaults to `"std_conc"`.
+#' @param column_col Name of the column identifying the plate column
+#'     (1-12). Defaults to `"column"`.
+#' @param well_id_col,unique_well_id_col Names of the well-identifying
+#'     columns. Default to `"well_id"` and `"unique_well_id"`.
+#' @param fake_column_value The placeholder value used for `column_col`
+#'     in the output, since averaged rows no longer correspond to a
+#'     single real plate column. Defaults to `13` — deliberately
+#'     outside the real 1-12 range, as a visible marker that this
+#'     value doesn't represent an actual well.
 #'
+#' @importFrom rlang :=
 #' @import dplyr tidyselect
 #'
 #' @returns Same, with less rows (bc average of same-dilution wells per plate).
@@ -493,25 +554,38 @@ correct_std_blank <- function(
 #' std_corrected
 #' std_dilution_average(std_corrected)
 std_dilution_average <- function(
-    std_data) {
+    std_data,
+    plate_id_col = "plate_id",
+    row_col = "row",
+    value_col = "abs_corrected",
+    std_conc_col = "std_conc",
+    column_col = "column",
+    well_id_col = "well_id",
+    unique_well_id_col = "unique_well_id",
+    fake_column_value = 13
+    ) {
 
   # compute per plate per std_conc mean
   std_mean <- std_data |>
-    dplyr::group_by(plate_id, row) |>
-    dplyr::summarise(abs_mean = mean(abs_corrected))
+    dplyr::group_by(dplyr::across(dplyr::all_of(c(plate_id_col, row_col)))) |>
+    dplyr::summarise(abs_mean = mean(.data[[value_col]]), .groups = "drop")
+
 
   # create a table to rejoin to the std mean, to get back the columns lost in the process
-  lost_columns <- std_data |> dplyr::arrange(plate_id, std_conc) |>
-    dplyr::select(!tidyselect::any_of(c("column", "unique_curve_id", "well_id", "unique_well_id", "abs_corrected"))) |> unique()
+  lost_columns <- std_data |>
+    dplyr::arrange(dplyr::across(dplyr::all_of(c(plate_id_col, std_conc_col)))) |>
+    dplyr::select(!tidyselect::any_of(c(
+      column_col, "unique_curve_id", well_id_col, unique_well_id_col, value_col))) |>
+    unique()
 
   # rejoin the mean with the relevant lost columns and recreate fake columns sometimes needed for downstream steps: column = 13; well_id ; unique_curve_id
   std_dilution_avg <- std_mean |>
-    dplyr::left_join(lost_columns, by = dplyr::join_by(plate_id, row)) |>
+    dplyr::left_join(lost_columns, by = c(plate_id_col, row_col)) |>
     dplyr::mutate(
-      column = rep(13),
-      well_id = paste0(row, column),
-      unique_curve_id = paste0(plate_id, "_col", column),
-      .after = row)
+      "{column_col}" := fake_column_value,
+      "{well_id_col}" := paste0(.data[[row_col]], .data[[column_col]]),
+      unique_curve_id = paste0(.data[[plate_id_col]], "_col", .data[[column_col]]),
+      .after = dplyr::all_of(row_col))
 
   return(std_dilution_avg)
 }

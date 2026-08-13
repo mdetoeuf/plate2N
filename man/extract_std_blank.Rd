@@ -4,7 +4,19 @@
 \alias{extract_std_blank}
 \title{Extraction and Quality Check (QC) of blank values for standard curves}
 \usage{
-extract_std_blank(data, std_def = "Std", pipetting_direction = "top_down")
+extract_std_blank(
+  data,
+  std_def = "Std",
+  pipetting_direction = "top_down",
+  row_col = "row",
+  well_id_col = "well_id",
+  unique_well_id_col = "unique_well_id",
+  dataset_col = "dataset",
+  plate_id_col = "plate_id",
+  column_col = "column",
+  map_col = "map",
+  value_col = "abs"
+)
 }
 \arguments{
 \item{data}{A tibble respecting the structure of \code{\link{tidy_table}}. \code{data} must have,
@@ -17,16 +29,36 @@ row, column, well_id, unique_well_id, dataset, plate_id, map, abs}
 A top_down pipetting means that the curve was pipetted vertically (in a single column of the 96-well plate),
 with the smallest value (blank) in row A and the highest value in row H.
 Conversely, bottom_up pipetting would have the blank in row H and the most concentrated solution in row A}
+
+\item{row_col}{Name of the column containing well row (A-H). Defaults
+to \code{"row"}.}
+
+\item{well_id_col}{Name of the column identifying wells. Defaults to
+\code{"well_id"}.}
+
+\item{unique_well_id_col}{Name of the column identifying wells
+uniquely across plates. Defaults to \code{"unique_well_id"}.}
+
+\item{dataset_col}{Name of the column identifying the dataset. Defaults
+to \code{"dataset"}.}
+
+\item{plate_id_col}{Name of the column identifying physical plates.
+Defaults to \code{"plate_id"}.}
+
+\item{column_col}{Name of the column identifying the plate column
+(1-12). Defaults to \code{"column"}.}
+
+\item{map_col}{Name of the column containing well mapping/type
+information. Defaults to \code{"map"}.}
+
+\item{value_col}{Name of the numeric absorbance column. Defaults to
+\code{"abs"}.}
 }
 \value{
-A list of 4 elements characterizing blank wells:
+A list of 3 elements characterizing blank wells:
 - \code{list$all} contains all supposed blank values (minimum values from each curve)
 - \code{list$trusted} contains all trusted blank values (minimum values and wells in the "correct" row (A or H))
 - \code{list$untrusted} contains all untrusted wells
-- \code{list$average} contains a summarized table with a per-plate computation of average,
-standard deviation and coefficient of variation of blank values.
-Note that a coefficient of variation has little value when computed on 2 values,
-especially when the values are small numbers (typically, blank absorbances are often lower than 0.1)
 }
 \description{
 In cases where the blank of the standard curve is not the same as the blank of the samples,
@@ -41,22 +73,14 @@ usually pipetted in row A (\code{pipetting_direction = "top_down"}), or in row H
 - We then check that the smallest per-curve value is indeed found in plate row "A"
 (top_down pipetting) or row "H" (bottom_up pipetting).
 - Should that not be the case, those wells are considered "untrusted" and are removed from the "trusted" blank values.
-- Per-plate averages for blank values are then computed
+
+Per-plate averages are computed separately, by \code{\link[=std_blank_average]{std_blank_average()}} —
+deliberately kept as its own step, taken on whichever of \verb{$all}/
+\verb{$trusted}/\verb{$untrusted} (possibly manually reviewed/edited) the user
+decides to trust.
 }
 \examples{
-# reconstruct a proper data table to start from
-# map_file <- system.file("extdata", "csv_map.csv", package = "plate2N")
-# abs_folder <- system.file("extdata", "txt_examples/", package = "plate2N")
-# map_tibble <- csv_to_tibble(map_file)
-# abs_tibble <- txt_to_tibble(abs_folder)
-# joined_vertical <- join_abs_map(abs_tibble, map_tibble, dataset = "Nmin-")
-# tidy_data <- vertical_to_tidy(joined_vertical)
-
-# check out input table
 tidy_plates
-
-# run the function
 std_blank <- tidy_plates |> extract_std_blank(std_def = "Std")
 std_blank$all ; std_blank$trusted ; std_blank$untrusted
-
 }

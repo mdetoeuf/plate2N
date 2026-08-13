@@ -4,17 +4,68 @@
 \alias{std_dilution_average}
 \title{Compute per-dilution Averages for Standard Curves}
 \usage{
-std_dilution_average(std_data)
+std_dilution_average(
+  std_data,
+  plate_id_col = "plate_id",
+  row_col = "row",
+  value_col = "abs_corrected",
+  std_conc_col = "std_conc",
+  column_col = "column",
+  well_id_col = "well_id",
+  unique_well_id_col = "unique_well_id",
+  fake_column_value = 13
+)
 }
 \arguments{
 \item{std_data}{A tibble of std data}
+
+\item{plate_id_col}{Name of the column identifying physical plates.
+Defaults to \code{"plate_id"}.}
+
+\item{row_col}{Name of the column identifying plate row (A-H), used
+as the dilution-level grouping key. Defaults to \code{"row"}.}
+
+\item{value_col}{Name of the numeric absorbance column averaged.
+Defaults to \code{"abs_corrected"}.}
+
+\item{std_conc_col}{Name of the standard curve concentration column,
+used only to order rows before deduplicating other columns.
+Defaults to \code{"std_conc"}.}
+
+\item{column_col}{Name of the column identifying the plate column
+(1-12). Defaults to \code{"column"}.}
+
+\item{well_id_col, unique_well_id_col}{Names of the well-identifying
+columns. Default to \code{"well_id"} and \code{"unique_well_id"}.}
+
+\item{fake_column_value}{The placeholder value used for \code{column_col}
+in the output, since averaged rows no longer correspond to a
+single real plate column. Defaults to \code{13} — deliberately
+outside the real 1-12 range, as a visible marker that this
+value doesn't represent an actual well.}
 }
 \value{
 Same, with less rows (bc average of same-dilution wells per plate).
 Artificial column 13
 }
 \description{
-This needs better documentation!!
+Averages absorbance per plate, per row (dilution level), across
+several standard curves pipetted on the same plate — useful when a
+plate holds more than one curve of the same standard solution (e.g.
+one in column 1, one in column 12). Averaging serves two purposes:
+reducing noise before model fitting, and correcting for a
+systematic drift between curves caused by pipetting order (a plate
+is typically pipetted left to right, so column 1 and column 12
+wells experience slightly different incubation times before
+reading — averaging across the plate's curves compensates for that,
+since same-row wells across curves are assumed to hold the same
+concentration).
+}
+\details{
+Since the output no longer corresponds to a single real well, a
+placeholder \code{column}/\code{well_id}/\code{unique_curve_id} is fabricated (see
+\code{fake_column_value}) so the result still has the shape downstream
+functions expect.
 }
 \examples{
 std_corrected
