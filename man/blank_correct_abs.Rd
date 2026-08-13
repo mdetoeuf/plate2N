@@ -8,30 +8,56 @@ blank_correct_abs(
   raw_wells_data,
   per_plate_avg_blank,
   extr_def = "extr",
-  map_to_exclude = c("empty", "Std", "extr")
+  map_to_exclude = c("empty", "Std", "extr"),
+  value_col = "abs",
+  map_col = "map",
+  blank_avg_col = "blank_avg",
+  dataset_col = "dataset",
+  plate_id_col = "plate_id",
+  unique_well_id_col = "unique_well_id"
 )
 }
 \arguments{
 \item{raw_wells_data}{A tibble, based on \code{tidy_plates}, can contain metadata as well.
 \code{raw_wells_data} contains the raw absorbance data to be blank-corrected.
-Must contain columns "abs" and "map".}
+Must contain the columns referenced by \code{value_col} and \code{map_col}.}
 
-\item{per_plate_avg_blank}{Contains the per-plate average absorbance of the blank
-Must contain column "blank_avg" (rename it prior to function call if needed)}
+\item{per_plate_avg_blank}{Contains the per-plate average absorbance of the blank.
+Must contain the column referenced by \code{blank_avg_col} (rename it prior to
+function call if needed).}
 
 \item{extr_def}{A string that characterizes wells containing the extractant
-in the mapping (\code{map}column) of the plate. Defaults to "extr". Can be a vector
+in the mapping (\code{map_col} column) of the plate. Defaults to "extr". Can be a vector
 containing several values (see examples)}
 
-\item{map_to_exclude}{A vector of strings containing all \code{map} definitions of
+\item{map_to_exclude}{A vector of strings containing all \code{map_col} definitions of
 wells that are not data per se (e.g., empty wells, etc.).
 Defaults to \code{c("empty","Std","extr")}. If wells to exclude are not defined
-by a unique "map" (e.g., blank wells of the standard curve), make sure to
+by a unique \code{map_col} value (e.g., blank wells of the standard curve), make sure to
 filter out those rows from \code{raw_wells_data} before the function call.}
+
+\item{value_col}{Name of the column containing raw absorbance. Defaults
+to \code{"abs"}.}
+
+\item{map_col}{Name of the column containing well mapping/type
+information, in both \code{raw_wells_data} and (if present)
+\code{per_plate_avg_blank}. Defaults to \code{"map"}.}
+
+\item{blank_avg_col}{Name of the column in \code{per_plate_avg_blank}
+containing the per-plate average blank absorbance. Defaults to
+\code{"blank_avg"}.}
+
+\item{dataset_col, plate_id_col}{Names of the columns identifying
+dataset and physical plate, used to join \code{raw_wells_data} with
+\code{per_plate_avg_blank}. Default to \code{"dataset"} and \code{"plate_id"}.}
+
+\item{unique_well_id_col}{Name of the column uniquely identifying a
+well, used only to check for any accidentally-dropped rows after
+the join. Defaults to \code{"unique_well_id"}.}
 }
 \value{
 A tibble with the blank-corrected absorbance. It has the same structure
-as \code{raw_wells_data}, but the \code{abs} column has been removed, and column
+as \code{raw_wells_data}, but the \code{value_col} column has been removed, and column
 \code{abs_corrected} has been added. The output tibble normally contains less rows
 than the input tibble (due to \code{map_to_exclude})
 }
