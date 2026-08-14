@@ -18,7 +18,9 @@ lm_std_curve(
 }
 \arguments{
 \item{grouped_data}{A tibble, grouped per curve (e.g., use \code{dplyr::group_by(plate_id, column)}
-on your data before calling the function). Must contain the
+on your data before calling the function). Grouping is now applied
+internally by \code{curve_id_col}, so pre-grouping is no longer strictly
+required — but harmless if already grouped. Must contain the
 columns referenced by \code{conc_col}, \code{value_col}, \code{curve_id_col},
 \code{dataset_col}, \code{plate_id_col}, and \code{std_sp_col}.}
 

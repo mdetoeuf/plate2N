@@ -95,7 +95,9 @@ lm_diagnostics <- function(
 #' diagnostics for a single already-fitted model.
 #'
 #' @param grouped_data A tibble, grouped per curve (e.g., use `dplyr::group_by(plate_id, column)`
-#'     on your data before calling the function). Must contain the
+#'     on your data before calling the function). Grouping is now applied
+#'     internally by `curve_id_col`, so pre-grouping is no longer strictly
+#'     required — but harmless if already grouped. Must contain the
 #'     columns referenced by `conc_col`, `value_col`, `curve_id_col`,
 #'     `dataset_col`, `plate_id_col`, and `std_sp_col`.
 #' @param model Which model to use. Accepts either `linear` (default) or `poly`
@@ -144,7 +146,15 @@ lm_std_curve <- function(
     std_sp_col = "std_sp",
     through_origin = TRUE
 ) {
-  full_data <- grouped_data |> dplyr::mutate(dplyr::across(dplyr::all_of(conc_col), as.numeric))
+  # group internally by curve_id_col regardless of any pre-existing
+  # grouping - removes the need for callers to remember to group the
+  # data themselves (unique_curve_id is constructed as
+  # paste0(plate_id, "_col", column) elsewhere in the package, so this
+  # is equivalent to the historically-documented group_by(plate_id,
+  # column) for any normally-built dataset)
+  full_data <- grouped_data |>
+    dplyr::mutate(dplyr::across(dplyr::all_of(conc_col), as.numeric)) |>
+    dplyr::group_by(dplyr::across(dplyr::all_of(curve_id_col)))
 
   splitted_data <- dplyr::group_split(full_data)
 
