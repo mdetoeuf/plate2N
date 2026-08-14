@@ -73,7 +73,9 @@ the origin (0,0), which only makes sense for blank-corrected absorbance data.</p
 
 <dl><dt id="arg-grouped-data">grouped_data<a class="anchor" aria-label="anchor" href="#arg-grouped-data"></a></dt>
 <dd><p>A tibble, grouped per curve (e.g., use <code>dplyr::group_by(plate_id, column)</code>
-on your data before calling the function). Must contain the
+on your data before calling the function). Grouping is now applied
+internally by <code>curve_id_col</code>, so pre-grouping is no longer strictly
+required — but harmless if already grouped. Must contain the
 columns referenced by <code>conc_col</code>, <code>value_col</code>, <code>curve_id_col</code>,
 <code>dataset_col</code>, <code>plate_id_col</code>, and <code>std_sp_col</code>.</p></dd>
 

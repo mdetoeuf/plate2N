@@ -27,7 +27,9 @@ lm_std_curve(
 
   A tibble, grouped per curve (e.g., use
   `dplyr::group_by(plate_id, column)` on your data before calling the
-  function). Must contain the columns referenced by `conc_col`,
+  function). Grouping is now applied internally by `curve_id_col`, so
+  pre-grouping is no longer strictly required — but harmless if already
+  grouped. Must contain the columns referenced by `conc_col`,
   `value_col`, `curve_id_col`, `dataset_col`, `plate_id_col`, and
   `std_sp_col`.
 
