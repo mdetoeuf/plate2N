@@ -19,7 +19,8 @@ review_model_choice(
   overplot_smooth_alpha = 0.3,
   overplot_smooth_linewidth = 0.8,
   overplot_smooth_linetype = 1,
-  legend_position = "right"
+  legend_position = "right",
+  signif_alpha = 0.05
 )
 }
 \arguments{
@@ -78,6 +79,10 @@ colour legend, relevant when \code{colour_col} is set. Also applied to
 the overplot residual plot's own model-type legend (linear vs.
 polynomial), so both legends stay visually consistent. Defaults
 to \code{"none"}.}
+
+\item{signif_alpha}{Significance threshold used only when \code{overplot = TRUE}
+— passed to \code{\link[=plot_poly_significance]{plot_poly_significance()}}'s summary panel. Defaults
+to \code{0.05}.}
 }
 \value{
 Either a named list (one entry per curve, each with

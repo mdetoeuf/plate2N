@@ -268,6 +268,75 @@ plot_residual_comparison <- function(
   plot_residuals_from_long(residuals_long)
 }
 
+#' Plot the distribution of polynomial x² coefficient significance across curves
+#'
+#' Companion summary view to [review_model_choice()]'s `overplot = TRUE`
+#' mode: while the overplotted comparison/residual plots let you assess
+#' curve shape and fit quality at a glance across a whole sample, this
+#' plots the *significance* of the polynomial term itself across that
+#' same sample — a density of each curve's x² coefficient p-value, on a
+#' log scale, with the number of curves crossing the significance
+#' threshold called out directly. Useful for answering "does switching
+#' to a polynomial model genuinely help, across my whole dataset, or
+#' just for the one curve I happened to look at?"
+#'
+#' @param review A named list as returned by [review_model_choice()] in
+#'     its default, paginated form (`overplot = FALSE`) — one entry per
+#'     curve, each containing a `models$poly` element. Does not accept
+#'     the single combined figure returned when `overplot = TRUE`.
+#' @param signif_alpha Significance threshold. Defaults to `0.05`. Used
+#'     for the vertical threshold line, its accompanying annotations,
+#'     and the "N of total curves significant" count.
+#'
+#' @returns A ggplot object.
+#' @seealso [review_model_choice()], [lm_diagnostics()], [fit_curve_model()]
+#' @export
+#'
+#' @examples
+#' review <- std_corrected_TDN |> review_model_choice(n_curves = 10, seed = 1)
+#' plot_poly_significance(review)
+#' plot_poly_significance(review, signif_alpha = 0.01)
+plot_poly_significance <- function(review, signif_alpha = 0.05) {
+  p_values <- vapply(review, function(entry) {
+    lm_diagnostics(entry$models$poly, model_type = "poly")$poly_a_p
+  }, numeric(1))
+  n_significant <- sum(p_values < signif_alpha)
+  n_total <- length(p_values)
+
+  neg_log_trans <- scales::trans_new(
+    name = "neg_log",
+    transform = function(x) -log(x),
+    inverse = function(x) exp(-x))
+
+  breaks <- c(0.5, 0.1, signif_alpha, 0.01, 1e-3, 1e-4, 1e-5, 1e-6)
+
+  plot <- tibble::tibble(p_value = p_values) |>
+    ggplot2::ggplot(ggplot2::aes(x = .data[["p_value"]])) +
+    ggplot2::theme_minimal() +
+    ggplot2::geom_density(fill = "magenta", alpha = 0.3, colour = "magenta") +
+    ggplot2::geom_vline(xintercept = signif_alpha, linetype = 2, colour = "orange") +
+    ggplot2::scale_x_continuous(
+      trans = neg_log_trans,
+      breaks = breaks,
+      labels = scales::label_scientific()) +
+    ggplot2::xlab("p-value of x\u00b2 coefficient (-log scale)") +
+    ggplot2::labs(
+      title = paste0("Significance across ", n_total, " curves\nAssessing the fit of the polynomial model"),
+      subtitle = "Distribution of p-values of the x\u00b2 coefficient of the polynomial model") +
+    ggplot2::theme(plot.title = ggplot2::element_text(colour = "magenta"))
+
+  plot_data <- ggplot2::ggplot_build(plot)
+  max_y <- plot_data$data[[1]]$y |> max()
+
+  plot +
+    ggplot2::annotate(
+      "label", x = signif_alpha, y = max_y / 2, hjust = -0.1,
+      label = paste0(n_significant, "/", n_total, " curves are\nsignificant (p < ", signif_alpha, ")"),
+      colour = "orange", fontface = "bold") +
+    ggplot2::annotate(
+      "text", x = signif_alpha, y = max_y * 0.95, vjust = 0,
+      label = paste0("alpha = ", signif_alpha), colour = "orange")
+}
 
 
 #' Review linear vs. polynomial model choice across several standard curves
@@ -324,6 +393,9 @@ plot_residual_comparison <- function(
 #'     the overplot residual plot's own model-type legend (linear vs.
 #'     polynomial), so both legends stay visually consistent. Defaults
 #'     to `"none"`.
+#' @param signif_alpha Significance threshold used only when `overplot = TRUE`
+#'     — passed to [plot_poly_significance()]'s summary panel. Defaults
+#'     to `0.05`.
 #'
 #' @returns Either a named list (one entry per curve, each with
 #'     `models`, `comparison_plot`, and `residual_plot`), or a single
@@ -361,7 +433,8 @@ review_model_choice <- function(
     overplot_smooth_alpha = 0.3,
     overplot_smooth_linewidth = 0.8,
     overplot_smooth_linetype = 1,
-    legend_position = "right"
+    legend_position = "right",
+    signif_alpha = 0.05
 ) {
   # decide which curves to review: all of them (n_curves = NULL), a
   # random sample, or simply the first n_curves found
@@ -400,25 +473,37 @@ review_model_choice <- function(
     # residuals: fit each curve's models individually, then combine into
     # one long table for plot_residuals_from_long() - a line connecting
     # each curve's own points helps trace it visually across the plot
-    residuals_all <- selected_ids |>
+    # fit each curve's models once, reused for both the residuals table
+    # and the poly-significance summary below
+    per_curve <- selected_ids |>
       lapply(function(id) {
         curve_data <- selected_data |> dplyr::filter(.data[[curve_id_col]] == id)
-        models <- fit_curve_models(curve_data, conc_col, value_col, through_origin)
+        list(
+          curve_data = curve_data,
+          models = fit_curve_models(curve_data, conc_col, value_col, through_origin))
+        })
+    names(per_curve) <- selected_ids
+
+    residuals_all <- per_curve |>
+      lapply(function(entry) {
         dplyr::bind_rows(
           tibble::tibble(
-            curve_id = id, conc = curve_data[[conc_col]],
-            residual = stats::residuals(models$linear), model = "linear"),
+            curve_id = entry$curve_data[[curve_id_col]][1], conc = entry$curve_data[[conc_col]],
+            residual = stats::residuals(entry$models$linear), model = "linear"),
           tibble::tibble(
-            curve_id = id, conc = curve_data[[conc_col]],
-            residual = stats::residuals(models$poly), model = "poly"))
-      }) |>
+            curve_id = entry$curve_data[[curve_id_col]][1], conc = entry$curve_data[[conc_col]],
+            residual = stats::residuals(entry$models$poly), model = "poly"))
+        }) |>
       dplyr::bind_rows()
 
     residual_plot <- plot_residuals_from_long(residuals_all) +
       ggplot2::geom_line(alpha = 0.5) +
       ggplot2::theme(legend.position = legend_position)
 
-    return(patchwork::wrap_plots(comparison_plot, residual_plot, ncol = 1))
+    poly_significance_plot <- plot_poly_significance(per_curve, signif_alpha = signif_alpha)
+
+    bottom_row <- patchwork::wrap_plots(residual_plot, poly_significance_plot, ncol = 2)
+    return(patchwork::wrap_plots(comparison_plot, bottom_row, ncol = 1))
 
   } else {
     # paginated: one comparison+residual pair per curve, individually
