@@ -84,7 +84,8 @@ larger number of curves at once.</p>
 <span>  overplot_smooth_alpha <span class="op">=</span> <span class="fl">0.3</span>,</span>
 <span>  overplot_smooth_linewidth <span class="op">=</span> <span class="fl">0.8</span>,</span>
 <span>  overplot_smooth_linetype <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  legend_position <span class="op">=</span> <span class="st">"right"</span></span>
+<span>  legend_position <span class="op">=</span> <span class="st">"right"</span>,</span>
+<span>  signif_alpha <span class="op">=</span> <span class="fl">0.05</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -172,6 +173,12 @@ colour legend, relevant when <code>colour_col</code> is set. Also applied to
 the overplot residual plot's own model-type legend (linear vs.
 polynomial), so both legends stay visually consistent. Defaults
 to <code>"none"</code>.</p></dd>
+
+
+<dt id="arg-signif-alpha">signif_alpha<a class="anchor" aria-label="anchor" href="#arg-signif-alpha"></a></dt>
+<dd><p>Significance threshold used only when <code>overplot = TRUE</code>
+— passed to <code><a href="plot_poly_significance.html">plot_poly_significance()</a></code>'s summary panel. Defaults
+to <code>0.05</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

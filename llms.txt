@@ -35,6 +35,10 @@ concentrations.
   : Interleave plots with spacer panels for visual gaps in patchwork
   layouts
 
+- [`auto_to_tibble()`](https://mdetoeuf.github.io/plate2N/reference/auto_to_tibble.md)
+  : Automatically detect and extract 96-well plate layouts from a raw
+  data file
+
 - [`blank_correct_abs()`](https://mdetoeuf.github.io/plate2N/reference/blank_correct_abs.md)
   : Transform Raw Absorbance Data into Blank-corrected Absorbance
 
@@ -144,6 +148,10 @@ concentrations.
 - [`plot_model_comparison()`](https://mdetoeuf.github.io/plate2N/reference/plot_model_comparison.md)
   : Plot linear and polynomial model fits side by side for one or more
   curves
+
+- [`plot_poly_significance()`](https://mdetoeuf.github.io/plate2N/reference/plot_poly_significance.md)
+  : Plot the distribution of polynomial x² coefficient significance
+  across curves
 
 - [`plot_qc_sample_pair()`](https://mdetoeuf.github.io/plate2N/reference/plot_qc_sample_pair.md)
   : Boxplot + ridgeline pair for one chunk of samples

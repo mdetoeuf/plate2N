@@ -26,7 +26,8 @@ review_model_choice(
   overplot_smooth_alpha = 0.3,
   overplot_smooth_linewidth = 0.8,
   overplot_smooth_linetype = 1,
-  legend_position = "right"
+  legend_position = "right",
+  signif_alpha = 0.05
 )
 ```
 
@@ -115,6 +116,12 @@ review_model_choice(
   overplot residual plot's own model-type legend (linear vs.
   polynomial), so both legends stay visually consistent. Defaults to
   `"none"`.
+
+- signif_alpha:
+
+  Significance threshold used only when `overplot = TRUE` — passed to
+  [`plot_poly_significance()`](https://mdetoeuf.github.io/plate2N/reference/plot_poly_significance.md)'s
+  summary panel. Defaults to `0.05`.
 
 ## Value
 
