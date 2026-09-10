@@ -19,6 +19,8 @@ auto_to_tibble(
   skip = 0,
   comment = "",
   col_select = NULL,
+  sheet = 1,
+  na = c("", "NA"),
   plate_id_in_anchor = TRUE,
   plate_ids = NULL,
   case_sensitive = TRUE,
@@ -65,6 +67,20 @@ auto_to_tibble(
   *positions* (a numeric vector), not names or `tidyselect` helpers —
   simpler than `readr`'s own `col_select`, which does accept full
   `tidyselect` syntax for the other formats.
+
+- sheet:
+
+  Which sheet to read, only relevant for `format = "xlsx"`. Accepts
+  either a sheet name (character) or a 1-based position (integer).
+  Defaults to `1` (the first sheet). Ignored for all other formats.
+
+- na:
+
+  Character vector of strings to treat as missing values. Defaults to
+  `c("", "NA")`, applied consistently across every format (matches
+  `readr`'s own default; `readxl` alone would otherwise only treat `""`
+  as missing, so a literal `"NA"` text value could behave inconsistently
+  depending on file format).
 
 - plate_id_in_anchor:
 

@@ -79,6 +79,8 @@ package's other fixed import formats.</p>
 <span>  skip <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  comment <span class="op">=</span> <span class="st">""</span>,</span>
 <span>  col_select <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  sheet <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  na <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">""</span>, <span class="st">"NA"</span><span class="op">)</span>,</span>
 <span>  plate_id_in_anchor <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  plate_ids <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  case_sensitive <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -126,6 +128,21 @@ certain range). Defaults to <code>NULL</code> (scan every column). For
 vector), not names or <code>tidyselect</code> helpers — simpler than
 <code>readr</code>'s own <code>col_select</code>, which does accept full <code>tidyselect</code>
 syntax for the other formats.</p></dd>
+
+
+<dt id="arg-sheet">sheet<a class="anchor" aria-label="anchor" href="#arg-sheet"></a></dt>
+<dd><p>Which sheet to read, only relevant for
+<code>format = "xlsx"</code>. Accepts either a sheet name (character) or
+a 1-based position (integer). Defaults to <code>1</code> (the first
+sheet). Ignored for all other formats.</p></dd>
+
+
+<dt id="arg-na">na<a class="anchor" aria-label="anchor" href="#arg-na"></a></dt>
+<dd><p>Character vector of strings to treat as missing values.
+Defaults to <code>c("", "NA")</code>, applied consistently across every
+format (matches <code>readr</code>'s own default; <code>readxl</code> alone would
+otherwise only treat <code>""</code> as missing, so a literal <code>"NA"</code> text
+value could behave inconsistently depending on file format).</p></dd>
 
 
 <dt id="arg-plate-id-in-anchor">plate_id_in_anchor<a class="anchor" aria-label="anchor" href="#arg-plate-id-in-anchor"></a></dt>
