@@ -12,6 +12,7 @@ auto_to_tibble(
   comment = "",
   col_select = NULL,
   sheet = 1,
+  na = c("", "NA"),
   plate_id_in_anchor = TRUE,
   plate_ids = NULL,
   case_sensitive = TRUE,
@@ -51,6 +52,12 @@ syntax for the other formats.}
 \code{format = "xlsx"}. Accepts either a sheet name (character) or
 a 1-based position (integer). Defaults to \code{1} (the first
 sheet). Ignored for all other formats.}
+
+\item{na}{Character vector of strings to treat as missing values.
+Defaults to \code{c("", "NA")}, applied consistently across every
+format (matches \code{readr}'s own default; \code{readxl} alone would
+otherwise only treat \code{""} as missing, so a literal \code{"NA"} text
+value could behave inconsistently depending on file format).}
 
 \item{plate_id_in_anchor}{If \code{TRUE} (the default), each plate's ID is
 read from its anchor cell (the cell just above \code{"A"} and left of

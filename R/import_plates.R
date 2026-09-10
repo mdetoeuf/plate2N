@@ -403,6 +403,11 @@ return(tibble)
 #'     `format = "xlsx"`. Accepts either a sheet name (character) or
 #'     a 1-based position (integer). Defaults to `1` (the first
 #'     sheet). Ignored for all other formats.
+#' @param na Character vector of strings to treat as missing values.
+#'     Defaults to `c("", "NA")`, applied consistently across every
+#'     format (matches `readr`'s own default; `readxl` alone would
+#'     otherwise only treat `""` as missing, so a literal `"NA"` text
+#'     value could behave inconsistently depending on file format).
 #' @param plate_id_in_anchor If `TRUE` (the default), each plate's ID is
 #'     read from its anchor cell (the cell just above `"A"` and left of
 #'     `"1"`). If `FALSE`, IDs come from `plate_ids` if given, or are
@@ -446,6 +451,7 @@ auto_to_tibble <- function(
     comment = "",
     col_select = NULL,
     sheet = 1,
+    na = c("", "NA"),
     plate_id_in_anchor = TRUE,
     plate_ids = NULL,
     case_sensitive = TRUE,
@@ -473,21 +479,22 @@ auto_to_tibble <- function(
                  "csv" = readr::read_csv(
                    filepath, col_names = FALSE, skip = skip, comment = comment,
                    col_select = col_select, col_types = readr::cols(.default = readr::col_character()),
-                   show_col_types = FALSE),
+                   show_col_types = FALSE, skip_empty_rows = FALSE, trim_ws = FALSE, na = na),
                  "csv2" = readr::read_csv2(
                    filepath, col_names = FALSE, skip = skip, comment = comment,
                    col_select = col_select, col_types = readr::cols(.default = readr::col_character()),
-                   show_col_types = FALSE),
+                   show_col_types = FALSE, skip_empty_rows = FALSE, trim_ws = FALSE, na = na),
                  "txt" = readr::read_delim(
                    filepath, delim = delim, col_names = FALSE, skip = skip, comment = comment,
                    col_select = col_select, col_types = readr::cols(.default = readr::col_character()),
-                   show_col_types = FALSE),
+                   show_col_types = FALSE, skip_empty_rows = FALSE, trim_ws = FALSE, na = na),
                  "xlsx" = {
                    if (!identical(comment, "")) {
                      stop("`comment` is not supported for format = \"xlsx\" (readxl has no comment-skipping option). Remove `comment` or use a different format.", call. = FALSE)
                      }
                    x <- suppressMessages(
-                     readxl::read_excel(filepath, sheet = sheet, col_names = FALSE, skip = skip, col_types = "text"))
+                     readxl::read_excel(
+                       filepath, sheet = sheet, col_names = FALSE, skip = skip, col_types = "text", trim_ws = FALSE, na = na))
                    if (!is.null(col_select)) x <- x[, col_select]
                    x
                  },
