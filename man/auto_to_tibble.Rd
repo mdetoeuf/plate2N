@@ -11,6 +11,7 @@ auto_to_tibble(
   skip = 0,
   comment = "",
   col_select = NULL,
+  sheet = 1,
   plate_id_in_anchor = TRUE,
   plate_ids = NULL,
   case_sensitive = TRUE,
@@ -45,6 +46,11 @@ certain range). Defaults to \code{NULL} (scan every column). For
 vector), not names or \code{tidyselect} helpers — simpler than
 \code{readr}'s own \code{col_select}, which does accept full \code{tidyselect}
 syntax for the other formats.}
+
+\item{sheet}{Which sheet to read, only relevant for
+\code{format = "xlsx"}. Accepts either a sheet name (character) or
+a 1-based position (integer). Defaults to \code{1} (the first
+sheet). Ignored for all other formats.}
 
 \item{plate_id_in_anchor}{If \code{TRUE} (the default), each plate's ID is
 read from its anchor cell (the cell just above \code{"A"} and left of

@@ -399,6 +399,10 @@ return(tibble)
 #'     vector), not names or `tidyselect` helpers — simpler than
 #'     `readr`'s own `col_select`, which does accept full `tidyselect`
 #'     syntax for the other formats.
+#' @param sheet Which sheet to read, only relevant for
+#'     `format = "xlsx"`. Accepts either a sheet name (character) or
+#'     a 1-based position (integer). Defaults to `1` (the first
+#'     sheet). Ignored for all other formats.
 #' @param plate_id_in_anchor If `TRUE` (the default), each plate's ID is
 #'     read from its anchor cell (the cell just above `"A"` and left of
 #'     `"1"`). If `FALSE`, IDs come from `plate_ids` if given, or are
@@ -441,6 +445,7 @@ auto_to_tibble <- function(
     skip = 0,
     comment = "",
     col_select = NULL,
+    sheet = 1,
     plate_id_in_anchor = TRUE,
     plate_ids = NULL,
     case_sensitive = TRUE,
@@ -482,7 +487,7 @@ auto_to_tibble <- function(
                      stop("`comment` is not supported for format = \"xlsx\" (readxl has no comment-skipping option). Remove `comment` or use a different format.", call. = FALSE)
                      }
                    x <- suppressMessages(
-                     readxl::read_excel(filepath, col_names = FALSE, skip = skip, col_types = "text"))
+                     readxl::read_excel(filepath, sheet = sheet, col_names = FALSE, skip = skip, col_types = "text"))
                    if (!is.null(col_select)) x <- x[, col_select]
                    x
                  },
@@ -530,7 +535,7 @@ auto_to_tibble <- function(
   if (n_found == 0) {
     warning(
       "No 96-well plate layouts were found in this file. Check that the file ",
-      "contains complete A-H / 1-12 blocks, and that `skip`/`format`/`col_select` are set correctly.")
+      "contains complete A-H / 1-12 blocks, and that `skip`/`format`/`col_select`/`sheet` are set correctly.")
     return(if (output == "tibble") columns[0, ] else list())
   }
 
