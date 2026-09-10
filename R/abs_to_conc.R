@@ -44,12 +44,16 @@ reg_join_abs <- function(
 ) {
   if ("slope" %in% names(lm_table)) {
     reg_data <- lm_table |>
-      dplyr::select(dplyr::all_of(c(plate_id_col, "slope", "adj_r_squared", "lm_p")))
+      dplyr::select(
+        dplyr::all_of(c(plate_id_col, "slope", "adj_r_squared", "lm_p")),
+        dplyr::any_of(c("intercept", "intercept_p")))
   } else if ("poly_a" %in% names(lm_table)) {
     reg_data <- lm_table |>
-      dplyr::select(dplyr::all_of(c(
-        plate_id_col, "poly_a", "poly_a_p", "poly_b", "poly_b_p",
-        "r_squared", "adj_r_squared", "lm_p")))
+      dplyr::select(
+        dplyr::all_of(c(
+          plate_id_col, "poly_a", "poly_a_p", "poly_b", "poly_b_p",
+          "r_squared", "adj_r_squared", "lm_p")),
+        dplyr::any_of(c("intercept", "intercept_p")))
   } else stop("Required column names are missing. See `?reg_join_abs()`")
 
   joined_data <- abs_data |>

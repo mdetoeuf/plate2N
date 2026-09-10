@@ -19,7 +19,9 @@ name. Defaults to \code{"std_conc"}. Only relevant when
 \code{model_type = "poly"}.}
 }
 \value{
-A one-row tibble of diagnostic statistics.
+A one-row tibble of diagnostic statistics, including
+\code{intercept}/\code{intercept_p} (\code{NA} unless the model was fitted with
+\code{through_origin = FALSE}).
 }
 \description{
 Extracts diagnostic statistics from an already-fitted model: R²,
@@ -27,13 +29,22 @@ adjusted R², overall model p-value, tests of residual normality
 (Shapiro-Wilk) and homoscedasticity (Breusch-Pagan), and, for
 polynomial models, the individual coefficients and their p-values —
 \code{poly_a}/\code{poly_a_p} for the squared (\verb{x²}) term, \code{poly_b}/\code{poly_b_p}
-for the linear (\code{x}) term. Used internally by \code{\link[=lm_std_curve]{lm_std_curve()}}, but
+for the linear (\code{x}) term. Also extracts \code{intercept}/\code{intercept_p}
+whenever the model was fitted with \code{through_origin = FALSE} (see
+\code{\link[=fit_curve_model]{fit_curve_model()}}) — \code{NA} when the model was forced through the
+origin instead, since there's no intercept term to report in that
+case. Used internally by \code{\link[=lm_std_curve]{lm_std_curve()}}, but
 can be called directly on any \code{\link[=fit_curve_model]{fit_curve_model()}} output.
 }
 \examples{
 curve <- std_corrected |> dplyr::filter(unique_curve_id == unique(std_corrected$unique_curve_id)[1])
 model <- fit_curve_model(curve, model = "linear")
 lm_diagnostics(model, model_type = "linear")
+
+# a model not forced through the origin - intercept/intercept_p are
+# real values rather than NA
+model_free <- fit_curve_model(curve, model = "linear", through_origin = FALSE)
+lm_diagnostics(model_free, model_type = "linear")
 }
 \seealso{
 \code{\link[=fit_curve_model]{fit_curve_model()}}, \code{\link[=lm_std_curve]{lm_std_curve()}}

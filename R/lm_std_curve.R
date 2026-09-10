@@ -7,7 +7,11 @@ utils::globalVariables(c("std_conc", "unique_curve_id", "abs_corrected"))
 #' (Shapiro-Wilk) and homoscedasticity (Breusch-Pagan), and, for
 #' polynomial models, the individual coefficients and their p-values —
 #' `poly_a`/`poly_a_p` for the squared (`x²`) term, `poly_b`/`poly_b_p`
-#' for the linear (`x`) term. Used internally by [lm_std_curve()], but
+#' for the linear (`x`) term. Also extracts `intercept`/`intercept_p`
+#' whenever the model was fitted with `through_origin = FALSE` (see
+#' [fit_curve_model()]) — `NA` when the model was forced through the
+#' origin instead, since there's no intercept term to report in that
+#' case. Used internally by [lm_std_curve()], but
 #' can be called directly on any [fit_curve_model()] output.
 #'
 #' @param model An `lm` model object, typically from [fit_curve_model()].
@@ -19,7 +23,9 @@ utils::globalVariables(c("std_conc", "unique_curve_id", "abs_corrected"))
 #'     name. Defaults to `"std_conc"`. Only relevant when
 #'     `model_type = "poly"`.
 #'
-#' @returns A one-row tibble of diagnostic statistics.
+#' @returns A one-row tibble of diagnostic statistics, including
+#'     `intercept`/`intercept_p` (`NA` unless the model was fitted with
+#'     `through_origin = FALSE`).
 #' @seealso [fit_curve_model()], [lm_std_curve()]
 #' @export
 #'
@@ -27,6 +33,11 @@ utils::globalVariables(c("std_conc", "unique_curve_id", "abs_corrected"))
 #' curve <- std_corrected |> dplyr::filter(unique_curve_id == unique(std_corrected$unique_curve_id)[1])
 #' model <- fit_curve_model(curve, model = "linear")
 #' lm_diagnostics(model, model_type = "linear")
+#'
+#' # a model not forced through the origin - intercept/intercept_p are
+#' # real values rather than NA
+#' model_free <- fit_curve_model(curve, model = "linear", through_origin = FALSE)
+#' lm_diagnostics(model_free, model_type = "linear")
 lm_diagnostics <- function(
     model,
     model_type = c("linear", "poly"),
@@ -34,6 +45,7 @@ lm_diagnostics <- function(
 ) {
   model_type <- match.arg(model_type)
   model_summary <- summary(model)
+  coefs <- model_summary$coefficients
 
   r_squared <- model_summary$r.squared |> as.numeric() |> round(digits = 4)
   adj_r_squared <- model_summary$adj.r.squared |> as.numeric() |> round(digits = 4)
@@ -44,29 +56,40 @@ lm_diagnostics <- function(
   breusch_pagan_p <- (car::ncvTest(model))$p |> round(digits = 3)
   homoscedasticity_lm_residuals <- if (breusch_pagan_p < 0.05) "Heteroscedasticity" else "Homoscedasticity"
 
+  # intercept term is only present when through_origin = FALSE was used
+  # to fit the model - NA when absent, rather than silently omitted
+  has_intercept <- "(Intercept)" %in% rownames(coefs)
+  intercept <- if (has_intercept) coefs["(Intercept)", "Estimate"] else NA_real_
+  intercept_p <- if (has_intercept) coefs["(Intercept)", "Pr(>|t|)"] else NA_real_
+
+  # overall model p-value via the F-statistic rather than reading a
+  # coefficient's own row directly - correct regardless of whether an
+  # intercept term is present, and mathematically identical to the old
+  # single-coefficient lookup for the through_origin = TRUE, 1-term case
+  lm_fstat <- model_summary$fstatistic["value"]
+  lm_numdf <- model_summary$fstatistic["numdf"]
+  lm_dendf <- model_summary$fstatistic["dendf"]
+  lm_p <- stats::pf(lm_fstat, lm_numdf, lm_dendf, lower.tail = FALSE) |> signif(digits = 4)
+
   if (model_type == "linear") {
-    slope <- model$coefficients |> as.numeric()
-    lm_p <- model_summary$coefficients[, "Pr(>|t|)"] |> as.numeric() |> signif(digits = 4)
+    slope <- coefs[conc_col, "Estimate"]
 
     diagnostics <- tibble::tibble(
-      slope, r_squared, adj_r_squared, lm_p,
+      slope, intercept, intercept_p, lm_p,
+      r_squared, adj_r_squared,
       normality_lm_residuals, shapiro_p,
       homoscedasticity_lm_residuals, breusch_pagan_p)
 
   } else {
     poly_term <- paste0("I(", conc_col, "^2)")
-    poly_a <- model$coefficients[[poly_term]]
-    poly_b <- model$coefficients[[conc_col]]
-    poly_a_p <- model_summary$coefficients[poly_term, "Pr(>|t|)"]
-    poly_b_p <- model_summary$coefficients[conc_col, "Pr(>|t|)"]
-
-    lm_fstat <- model_summary$fstatistic["value"]
-    lm_numdf <- model_summary$fstatistic["numdf"]
-    lm_dendf <- model_summary$fstatistic["dendf"]
-    lm_p <- stats::pf(lm_fstat, lm_numdf, lm_dendf, lower.tail = FALSE) |> signif(digits = 4)
+    poly_a <- coefs[poly_term, "Estimate"]
+    poly_b <- coefs[conc_col, "Estimate"]
+    poly_a_p <- coefs[poly_term, "Pr(>|t|)"]
+    poly_b_p <- coefs[conc_col, "Pr(>|t|)"]
 
     diagnostics <- tibble::tibble(
       poly_a, poly_a_p, poly_b, poly_b_p,
+      intercept, intercept_p,
       r_squared, adj_r_squared, lm_p,
       normality_lm_residuals, shapiro_p,
       homoscedasticity_lm_residuals, breusch_pagan_p)
