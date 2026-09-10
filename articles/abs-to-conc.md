@@ -411,33 +411,37 @@ the function also requires the column `unique_curve_id`.
 # compute the model and store model details
 (lm_table_raw <- lm_std_curve(
   std_corrected |> dplyr::group_by(plate_id, column)))
-#> # A tibble: 10 × 12
-#>    dataset plate_id unique_curve_id std_sp  slope r_squared adj_r_squared
-#>    <chr>   <chr>    <chr>           <chr>   <dbl>     <dbl>         <dbl>
-#>  1 Nmin    NO3_1F1  NO3_1F1_col1    NO3    0.0189     0.999         0.999
-#>  2 Nmin    NO3_1F1  NO3_1F1_col12   NO3    0.0179     0.999         0.999
-#>  3 Nmin    NO3_1F2  NO3_1F2_col1    NO3    0.0178     0.999         0.999
-#>  4 Nmin    NO3_1F2  NO3_1F2_col12   NO3    0.0190     0.999         0.999
-#>  5 Nmin    NO3_1F3  NO3_1F3_col1    NO3    0.0187     0.999         0.999
-#>  6 Nmin    NO3_1F3  NO3_1F3_col12   NO3    0.0185     0.999         0.999
-#>  7 Nmin    NO3_1F4  NO3_1F4_col1    NO3    0.0178     0.999         0.999
-#>  8 Nmin    NO3_1F4  NO3_1F4_col12   NO3    0.0188     0.999         0.999
-#>  9 Nmin    NO3_1F5  NO3_1F5_col1    NO3    0.0193     0.999         0.999
-#> 10 Nmin    NO3_1F5  NO3_1F5_col12   NO3    0.0185     0.999         0.998
-#> # ℹ 5 more variables: lm_p <dbl>, normality_lm_residuals <chr>,
-#> #   shapiro_p <dbl>, homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>
+#> # A tibble: 10 × 14
+#>    dataset plate_id unique_curve_id std_sp  slope intercept intercept_p     lm_p
+#>    <chr>   <chr>    <chr>           <chr>   <dbl>     <dbl>       <dbl>    <dbl>
+#>  1 Nmin    NO3_1F1  NO3_1F1_col1    NO3    0.0189        NA          NA 6.49e-11
+#>  2 Nmin    NO3_1F1  NO3_1F1_col12   NO3    0.0179        NA          NA 2.79e-10
+#>  3 Nmin    NO3_1F2  NO3_1F2_col1    NO3    0.0178        NA          NA 6.03e-11
+#>  4 Nmin    NO3_1F2  NO3_1F2_col12   NO3    0.0190        NA          NA 1.64e-10
+#>  5 Nmin    NO3_1F3  NO3_1F3_col1    NO3    0.0187        NA          NA 9.25e-11
+#>  6 Nmin    NO3_1F3  NO3_1F3_col12   NO3    0.0185        NA          NA 1.69e-10
+#>  7 Nmin    NO3_1F4  NO3_1F4_col1    NO3    0.0178        NA          NA 2.16e-10
+#>  8 Nmin    NO3_1F4  NO3_1F4_col12   NO3    0.0188        NA          NA 2.43e-10
+#>  9 Nmin    NO3_1F5  NO3_1F5_col1    NO3    0.0193        NA          NA 2.45e-10
+#> 10 Nmin    NO3_1F5  NO3_1F5_col12   NO3    0.0185        NA          NA 6.15e-10
+#> # ℹ 6 more variables: r_squared <dbl>, adj_r_squared <dbl>,
+#> #   normality_lm_residuals <chr>, shapiro_p <dbl>,
+#> #   homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>
 
 # check out column names, type, and data
 str(lm_table_raw)
-#> tibble [10 × 12] (S3: tbl_df/tbl/data.frame)
+#> tibble [10 × 14] (S3: tbl_df/tbl/data.frame)
 #>  $ dataset                      : chr [1:10] "Nmin" "Nmin" "Nmin" "Nmin" ...
 #>  $ plate_id                     : chr [1:10] "NO3_1F1" "NO3_1F1" "NO3_1F2" "NO3_1F2" ...
 #>  $ unique_curve_id              : chr [1:10] "NO3_1F1_col1" "NO3_1F1_col12" "NO3_1F2_col1" "NO3_1F2_col12" ...
 #>  $ std_sp                       : chr [1:10] "NO3" "NO3" "NO3" "NO3" ...
 #>  $ slope                        : num [1:10] 0.0189 0.0179 0.0178 0.019 0.0187 ...
+#>  $ intercept                    : num [1:10] NA NA NA NA NA NA NA NA NA NA
+#>  $ intercept_p                  : num [1:10] NA NA NA NA NA NA NA NA NA NA
+#>  $ lm_p                         : Named num [1:10] 6.49e-11 2.79e-10 6.03e-11 1.64e-10 9.25e-11 ...
+#>   ..- attr(*, "names")= chr [1:10] "value" "value" "value" "value" ...
 #>  $ r_squared                    : num [1:10] 0.999 0.999 0.999 0.999 0.999 ...
 #>  $ adj_r_squared                : num [1:10] 0.999 0.999 0.999 0.999 0.999 ...
-#>  $ lm_p                         : num [1:10] 6.49e-11 2.79e-10 6.03e-11 1.64e-10 9.25e-11 ...
 #>  $ normality_lm_residuals       : chr [1:10] "Normal" "Not Normal" "Normal" "Normal" ...
 #>  $ shapiro_p                    : num [1:10] 0.836 0.01 0.824 0.962 0.805 0.81 0.632 0.646 0.602 0.535
 #>  $ homoscedasticity_lm_residuals: chr [1:10] "Homoscedasticity" "Homoscedasticity" "Homoscedasticity" "Homoscedasticity" ...
@@ -460,12 +464,13 @@ In this simplified data set, there is only one suspicious curve:
 
 # extract all plates where "something" is not perfect 
 (lm_table_suspicious <- lm_table_raw |> suspicious_lm())
-#> # A tibble: 1 × 12
-#>   dataset plate_id unique_curve_id std_sp  slope r_squared adj_r_squared
-#>   <chr>   <chr>    <chr>           <chr>   <dbl>     <dbl>         <dbl>
-#> 1 Nmin    NO3_1F1  NO3_1F1_col12   NO3    0.0179     0.999         0.999
-#> # ℹ 5 more variables: lm_p <dbl>, normality_lm_residuals <chr>,
-#> #   shapiro_p <dbl>, homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>
+#> # A tibble: 1 × 14
+#>   dataset plate_id unique_curve_id std_sp  slope intercept intercept_p     lm_p
+#>   <chr>   <chr>    <chr>           <chr>   <dbl>     <dbl>       <dbl>    <dbl>
+#> 1 Nmin    NO3_1F1  NO3_1F1_col12   NO3    0.0179        NA          NA 2.79e-10
+#> # ℹ 6 more variables: r_squared <dbl>, adj_r_squared <dbl>,
+#> #   normality_lm_residuals <chr>, shapiro_p <dbl>,
+#> #   homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>
 ```
 
 For visual aid (useful for larger data sets),
@@ -611,24 +616,25 @@ plotting
 # Generate linear model data
 (lm_std_mean <- lm_std_curve(
   std_dilution_avg |> dplyr::rename(abs_corrected = abs_mean)))
-#> # A tibble: 5 × 12
-#>   dataset plate_id unique_curve_id std_sp  slope r_squared adj_r_squared
-#>   <chr>   <chr>    <chr>           <chr>   <dbl>     <dbl>         <dbl>
-#> 1 Nmin    NO3_1F1  NO3_1F1_col13   NO3    0.0184     0.999         0.999
-#> 2 Nmin    NO3_1F2  NO3_1F2_col13   NO3    0.0184     0.999         0.999
-#> 3 Nmin    NO3_1F3  NO3_1F3_col13   NO3    0.0186     0.999         0.999
-#> 4 Nmin    NO3_1F4  NO3_1F4_col13   NO3    0.0183     0.999         0.999
-#> 5 Nmin    NO3_1F5  NO3_1F5_col13   NO3    0.0189     0.999         0.999
-#> # ℹ 5 more variables: lm_p <dbl>, normality_lm_residuals <chr>,
-#> #   shapiro_p <dbl>, homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>
+#> # A tibble: 5 × 14
+#>   dataset plate_id unique_curve_id std_sp  slope intercept intercept_p     lm_p
+#>   <chr>   <chr>    <chr>           <chr>   <dbl>     <dbl>       <dbl>    <dbl>
+#> 1 Nmin    NO3_1F1  NO3_1F1_col13   NO3    0.0184        NA          NA 7.36e-11
+#> 2 Nmin    NO3_1F2  NO3_1F2_col13   NO3    0.0184        NA          NA 6.32e-11
+#> 3 Nmin    NO3_1F3  NO3_1F3_col13   NO3    0.0186        NA          NA 9.98e-11
+#> 4 Nmin    NO3_1F4  NO3_1F4_col13   NO3    0.0183        NA          NA 2.23e-10
+#> 5 Nmin    NO3_1F5  NO3_1F5_col13   NO3    0.0189        NA          NA 3.80e-10
+#> # ℹ 6 more variables: r_squared <dbl>, adj_r_squared <dbl>,
+#> #   normality_lm_residuals <chr>, shapiro_p <dbl>,
+#> #   homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>
 
 # look for suspicious curves
 (lm_suspicious_mean <- lm_std_mean |> suspicious_lm())
-#> # A tibble: 0 × 12
-#> # ℹ 12 variables: dataset <chr>, plate_id <chr>, unique_curve_id <chr>,
-#> #   std_sp <chr>, slope <dbl>, r_squared <dbl>, adj_r_squared <dbl>,
-#> #   lm_p <dbl>, normality_lm_residuals <chr>, shapiro_p <dbl>,
-#> #   homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>
+#> # A tibble: 0 × 14
+#> # ℹ 14 variables: dataset <chr>, plate_id <chr>, unique_curve_id <chr>,
+#> #   std_sp <chr>, slope <dbl>, intercept <dbl>, intercept_p <dbl>, lm_p <dbl>,
+#> #   r_squared <dbl>, adj_r_squared <dbl>, normality_lm_residuals <chr>,
+#> #   shapiro_p <dbl>, homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>
 ```
 
 Good news, there are no more suspicious linear models anymore. Should
@@ -797,7 +803,7 @@ data_mg_N_L <-
 
 # Check it out
 data_mg_N_L
-#> # A tibble: 264 × 13
+#> # A tibble: 264 × 15
 #>    dataset plate_id map   well_id abs_corrected std_sp target_sp std_unit  slope
 #>    <chr>   <chr>    <chr> <chr>           <dbl> <chr>  <chr>     <chr>     <dbl>
 #>  1 Nmin    NO3_1F1  81_t… A2            0.0312  NO3    N         mg NO3-… 0.0184
@@ -811,8 +817,8 @@ data_mg_N_L
 #>  9 Nmin    NO3_1F4  82_t… A3            0.0638  NO3    N         mg NO3-… 0.0183
 #> 10 Nmin    NO3_1F5  98_t… A3            0.0232  NO3    N         mg NO3-… 0.0189
 #> # ℹ 254 more rows
-#> # ℹ 4 more variables: adj_r_squared <dbl>, lm_p <dbl>, conc_mgNsp_L <dbl>,
-#> #   conc_mgN_L <dbl>
+#> # ℹ 6 more variables: adj_r_squared <dbl>, lm_p <dbl>, intercept <dbl>,
+#> #   intercept_p <dbl>, conc_mgNsp_L <dbl>, conc_mgN_L <dbl>
 ```
 
 We finally have our computed concentration for each well, expressed in
@@ -942,7 +948,7 @@ lm_TDN_raw <- lm_std_curve(
 
 # Check it out
 lm_TDN_raw
-#> # A tibble: 32 × 15
+#> # A tibble: 32 × 17
 #>    dataset plate_id   unique_curve_id std_sp     poly_a poly_a_p poly_b poly_b_p
 #>    <chr>   <chr>      <chr>           <chr>       <dbl>    <dbl>  <dbl>    <dbl>
 #>  1 TDN     NO3_TDN_01 NO3_TDN_01_col1 NO3    -0.0000152  7.40e-4 0.0134  6.71e-7
@@ -956,9 +962,9 @@ lm_TDN_raw
 #>  9 TDN     NO3_TDN_09 NO3_TDN_09_col1 NO3    -0.0000213  1.94e-5 0.0167  2.70e-8
 #> 10 TDN     NO3_TDN_10 NO3_TDN_10_col1 NO3    -0.0000186  1.07e-4 0.0155  1.16e-7
 #> # ℹ 22 more rows
-#> # ℹ 7 more variables: r_squared <dbl>, adj_r_squared <dbl>, lm_p <dbl>,
-#> #   normality_lm_residuals <chr>, shapiro_p <dbl>,
-#> #   homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>
+#> # ℹ 9 more variables: intercept <dbl>, intercept_p <dbl>, r_squared <dbl>,
+#> #   adj_r_squared <dbl>, lm_p <dbl>, normality_lm_residuals <chr>,
+#> #   shapiro_p <dbl>, homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>
 ```
 
 This produces a table that has a similar structure to the one from the
@@ -996,7 +1002,7 @@ In our case, this concerns 7 curves (from 32)
 
 # extract all plates where "something" is not perfect 
 (lm_suspicious <- lm_TDN_raw |> suspicious_lm(model = "poly"))
-#> # A tibble: 7 × 15
+#> # A tibble: 7 × 17
 #>   dataset plate_id   unique_curve_id std_sp     poly_a poly_a_p poly_b  poly_b_p
 #>   <chr>   <chr>      <chr>           <chr>       <dbl>    <dbl>  <dbl>     <dbl>
 #> 1 TDN     NO3_TDN_02 NO3_TDN_02_col1 NO3    -0.0000174 0.000493 0.0134   8.32e-7
@@ -1006,9 +1012,9 @@ In our case, this concerns 7 curves (from 32)
 #> 5 TDN     NO3_TDN_17 NO3_TDN_17_col1 NO3    -0.0000252 0.00113  0.0203   1.66e-6
 #> 6 TDN     NO3_TDN_20 NO3_TDN_20_col1 NO3    -0.0000218 0.000483 0.0194   4.00e-7
 #> 7 TDN     NO3_TDN_24 NO3_TDN_24_col1 NO3    -0.0000236 0.000662 0.0187   9.99e-7
-#> # ℹ 7 more variables: r_squared <dbl>, adj_r_squared <dbl>, lm_p <dbl>,
-#> #   normality_lm_residuals <chr>, shapiro_p <dbl>,
-#> #   homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>
+#> # ℹ 9 more variables: intercept <dbl>, intercept_p <dbl>, r_squared <dbl>,
+#> #   adj_r_squared <dbl>, lm_p <dbl>, normality_lm_residuals <chr>,
+#> #   shapiro_p <dbl>, homoscedasticity_lm_residuals <chr>, breusch_pagan_p <dbl>
 ```
 
 We can visually evaluate those plates. For visual support, we create
@@ -1171,7 +1177,7 @@ data <- lm_TDN_raw |>
 
 # Check it out
 data
-#> # A tibble: 2,560 × 15
+#> # A tibble: 2,560 × 17
 #>    dataset plate_id   map        well_id abs_corrected std_sp target_sp std_unit
 #>    <chr>   <chr>      <chr>      <chr>           <dbl> <chr>  <chr>     <chr>   
 #>  1 TDN     NO3_TDN_01 102_t2_z1… A2              0.459 NO3    N         mg NO3-…
@@ -1185,8 +1191,9 @@ data
 #>  9 TDN     NO3_TDN_09 102_t2_z1… A2              0.759 NO3    N         mg NO3-…
 #> 10 TDN     NO3_TDN_10 92_t2_z2_… A2              0.694 NO3    N         mg NO3-…
 #> # ℹ 2,550 more rows
-#> # ℹ 7 more variables: poly_a <dbl>, poly_a_p <dbl>, poly_b <dbl>,
-#> #   poly_b_p <dbl>, r_squared <dbl>, adj_r_squared <dbl>, lm_p <dbl>
+#> # ℹ 9 more variables: poly_a <dbl>, poly_a_p <dbl>, poly_b <dbl>,
+#> #   poly_b_p <dbl>, r_squared <dbl>, adj_r_squared <dbl>, lm_p <dbl>,
+#> #   intercept <dbl>, intercept_p <dbl>
 ```
 
 Then, we can compute the concentration in N-species in mg N / L (i.e.,
@@ -1228,7 +1235,7 @@ data_mg_N_L <- data |>
 
 # Check it out
 data_mg_N_L
-#> # A tibble: 2,560 × 16
+#> # A tibble: 2,560 × 18
 #> # Rowwise: 
 #>    dataset plate_id   map    well_id abs_corrected conc_mgNsp_L std_sp target_sp
 #>    <chr>   <chr>      <chr>  <chr>           <dbl>        <dbl> <chr>  <chr>    
@@ -1243,9 +1250,9 @@ data_mg_N_L
 #>  9 TDN     NO3_TDN_09 102_t… A2              0.759         48.4 NO3    N        
 #> 10 TDN     NO3_TDN_10 92_t2… A2              0.694         47.6 NO3    N        
 #> # ℹ 2,550 more rows
-#> # ℹ 8 more variables: poly_a <dbl>, poly_a_p <dbl>, poly_b <dbl>,
+#> # ℹ 10 more variables: poly_a <dbl>, poly_a_p <dbl>, poly_b <dbl>,
 #> #   poly_b_p <dbl>, r_squared <dbl>, adj_r_squared <dbl>, lm_p <dbl>,
-#> #   conc_mgN_L <dbl>
+#> #   intercept <dbl>, intercept_p <dbl>, conc_mgN_L <dbl>
 ```
 
 ## 5 - Epilogue

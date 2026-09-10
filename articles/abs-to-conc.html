@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">plate2N</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -449,33 +449,37 @@
 <code class="sourceCode R"><span><span class="co"># compute the model and store model details</span></span>
 <span><span class="op">(</span><span class="va">lm_table_raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lm_std_curve.html">lm_std_curve</a></span><span class="op">(</span></span>
 <span>  <span class="va">std_corrected</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">plate_id</span>, <span class="va">column</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 10 × 12</span></span>
-<span><span class="co">#&gt;    dataset plate_id unique_curve_id std_sp  slope r_squared adj_r_squared</span></span>
-<span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;           &lt;chr&gt;   &lt;dbl&gt;     &lt;dbl&gt;         &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt;  1 Nmin    NO3_1F1  NO3_1F1_col1    NO3    0.0189     0.999         0.999</span></span>
-<span><span class="co">#&gt;  2 Nmin    NO3_1F1  NO3_1F1_col12   NO3    0.0179     0.999         0.999</span></span>
-<span><span class="co">#&gt;  3 Nmin    NO3_1F2  NO3_1F2_col1    NO3    0.0178     0.999         0.999</span></span>
-<span><span class="co">#&gt;  4 Nmin    NO3_1F2  NO3_1F2_col12   NO3    0.0190     0.999         0.999</span></span>
-<span><span class="co">#&gt;  5 Nmin    NO3_1F3  NO3_1F3_col1    NO3    0.0187     0.999         0.999</span></span>
-<span><span class="co">#&gt;  6 Nmin    NO3_1F3  NO3_1F3_col12   NO3    0.0185     0.999         0.999</span></span>
-<span><span class="co">#&gt;  7 Nmin    NO3_1F4  NO3_1F4_col1    NO3    0.0178     0.999         0.999</span></span>
-<span><span class="co">#&gt;  8 Nmin    NO3_1F4  NO3_1F4_col12   NO3    0.0188     0.999         0.999</span></span>
-<span><span class="co">#&gt;  9 Nmin    NO3_1F5  NO3_1F5_col1    NO3    0.0193     0.999         0.999</span></span>
-<span><span class="co">#&gt; 10 Nmin    NO3_1F5  NO3_1F5_col12   NO3    0.0185     0.999         0.998</span></span>
-<span><span class="co">#&gt; # ℹ 5 more variables: lm_p &lt;dbl&gt;, normality_lm_residuals &lt;chr&gt;,</span></span>
-<span><span class="co">#&gt; #   shapiro_p &lt;dbl&gt;, homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; # A tibble: 10 × 14</span></span>
+<span><span class="co">#&gt;    dataset plate_id unique_curve_id std_sp  slope intercept intercept_p     lm_p</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;           &lt;chr&gt;   &lt;dbl&gt;     &lt;dbl&gt;       &lt;dbl&gt;    &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt;  1 Nmin    NO3_1F1  NO3_1F1_col1    NO3    0.0189        NA          NA 6.49e-11</span></span>
+<span><span class="co">#&gt;  2 Nmin    NO3_1F1  NO3_1F1_col12   NO3    0.0179        NA          NA 2.79e-10</span></span>
+<span><span class="co">#&gt;  3 Nmin    NO3_1F2  NO3_1F2_col1    NO3    0.0178        NA          NA 6.03e-11</span></span>
+<span><span class="co">#&gt;  4 Nmin    NO3_1F2  NO3_1F2_col12   NO3    0.0190        NA          NA 1.64e-10</span></span>
+<span><span class="co">#&gt;  5 Nmin    NO3_1F3  NO3_1F3_col1    NO3    0.0187        NA          NA 9.25e-11</span></span>
+<span><span class="co">#&gt;  6 Nmin    NO3_1F3  NO3_1F3_col12   NO3    0.0185        NA          NA 1.69e-10</span></span>
+<span><span class="co">#&gt;  7 Nmin    NO3_1F4  NO3_1F4_col1    NO3    0.0178        NA          NA 2.16e-10</span></span>
+<span><span class="co">#&gt;  8 Nmin    NO3_1F4  NO3_1F4_col12   NO3    0.0188        NA          NA 2.43e-10</span></span>
+<span><span class="co">#&gt;  9 Nmin    NO3_1F5  NO3_1F5_col1    NO3    0.0193        NA          NA 2.45e-10</span></span>
+<span><span class="co">#&gt; 10 Nmin    NO3_1F5  NO3_1F5_col12   NO3    0.0185        NA          NA 6.15e-10</span></span>
+<span><span class="co">#&gt; # ℹ 6 more variables: r_squared &lt;dbl&gt;, adj_r_squared &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   normality_lm_residuals &lt;chr&gt;, shapiro_p &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;</span></span>
 <span></span>
 <span><span class="co"># check out column names, type, and data</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">lm_table_raw</span><span class="op">)</span></span>
-<span><span class="co">#&gt; tibble [10 × 12] (S3: tbl_df/tbl/data.frame)</span></span>
+<span><span class="co">#&gt; tibble [10 × 14] (S3: tbl_df/tbl/data.frame)</span></span>
 <span><span class="co">#&gt;  $ dataset                      : chr [1:10] "Nmin" "Nmin" "Nmin" "Nmin" ...</span></span>
 <span><span class="co">#&gt;  $ plate_id                     : chr [1:10] "NO3_1F1" "NO3_1F1" "NO3_1F2" "NO3_1F2" ...</span></span>
 <span><span class="co">#&gt;  $ unique_curve_id              : chr [1:10] "NO3_1F1_col1" "NO3_1F1_col12" "NO3_1F2_col1" "NO3_1F2_col12" ...</span></span>
 <span><span class="co">#&gt;  $ std_sp                       : chr [1:10] "NO3" "NO3" "NO3" "NO3" ...</span></span>
 <span><span class="co">#&gt;  $ slope                        : num [1:10] 0.0189 0.0179 0.0178 0.019 0.0187 ...</span></span>
+<span><span class="co">#&gt;  $ intercept                    : num [1:10] NA NA NA NA NA NA NA NA NA NA</span></span>
+<span><span class="co">#&gt;  $ intercept_p                  : num [1:10] NA NA NA NA NA NA NA NA NA NA</span></span>
+<span><span class="co">#&gt;  $ lm_p                         : Named num [1:10] 6.49e-11 2.79e-10 6.03e-11 1.64e-10 9.25e-11 ...</span></span>
+<span><span class="co">#&gt;   ..- attr(*, "names")= chr [1:10] "value" "value" "value" "value" ...</span></span>
 <span><span class="co">#&gt;  $ r_squared                    : num [1:10] 0.999 0.999 0.999 0.999 0.999 ...</span></span>
 <span><span class="co">#&gt;  $ adj_r_squared                : num [1:10] 0.999 0.999 0.999 0.999 0.999 ...</span></span>
-<span><span class="co">#&gt;  $ lm_p                         : num [1:10] 6.49e-11 2.79e-10 6.03e-11 1.64e-10 9.25e-11 ...</span></span>
 <span><span class="co">#&gt;  $ normality_lm_residuals       : chr [1:10] "Normal" "Not Normal" "Normal" "Normal" ...</span></span>
 <span><span class="co">#&gt;  $ shapiro_p                    : num [1:10] 0.836 0.01 0.824 0.962 0.805 0.81 0.632 0.646 0.602 0.535</span></span>
 <span><span class="co">#&gt;  $ homoscedasticity_lm_residuals: chr [1:10] "Homoscedasticity" "Homoscedasticity" "Homoscedasticity" "Homoscedasticity" ...</span></span>
@@ -489,12 +493,13 @@
 <div class="sourceCode cell-code" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># extract all plates where "something" is not perfect </span></span>
 <span><span class="op">(</span><span class="va">lm_table_suspicious</span> <span class="op">&lt;-</span> <span class="va">lm_table_raw</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/suspicious_lm.html">suspicious_lm</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 1 × 12</span></span>
-<span><span class="co">#&gt;   dataset plate_id unique_curve_id std_sp  slope r_squared adj_r_squared</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;           &lt;chr&gt;   &lt;dbl&gt;     &lt;dbl&gt;         &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1 Nmin    NO3_1F1  NO3_1F1_col12   NO3    0.0179     0.999         0.999</span></span>
-<span><span class="co">#&gt; # ℹ 5 more variables: lm_p &lt;dbl&gt;, normality_lm_residuals &lt;chr&gt;,</span></span>
-<span><span class="co">#&gt; #   shapiro_p &lt;dbl&gt;, homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt; # A tibble: 1 × 14</span></span>
+<span><span class="co">#&gt;   dataset plate_id unique_curve_id std_sp  slope intercept intercept_p     lm_p</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;           &lt;chr&gt;   &lt;dbl&gt;     &lt;dbl&gt;       &lt;dbl&gt;    &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 Nmin    NO3_1F1  NO3_1F1_col12   NO3    0.0179        NA          NA 2.79e-10</span></span>
+<span><span class="co">#&gt; # ℹ 6 more variables: r_squared &lt;dbl&gt;, adj_r_squared &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   normality_lm_residuals &lt;chr&gt;, shapiro_p &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;</span></span></code></pre></div>
 </div>
 <p>For visual aid (useful for larger data sets), <code><a href="../reference/plot_list_lm.html">plot_list_lm()</a></code> creates a <u>list</u> of plots of each curve given as argument. This means that it can be used to store plots any subset of curves, or for the whole dataset. Calling individual plots from this list can help spotting possible outlier wells, which can be removed with similar steps as shown above.</p>
 <p>Each element of the list is one plot, so that calling <code>suspicious_lm_plotlist[[i]]</code> will return the i-th plot. The plots are named in the list, so that you can also access any plot by calling the <code>unique_curve_id</code>, e.g., with <code>suspicious_lm_plotlist$NO3_1F1_col12</code></p>
@@ -606,24 +611,25 @@
 <code class="sourceCode R"><span><span class="co"># Generate linear model data</span></span>
 <span><span class="op">(</span><span class="va">lm_std_mean</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lm_std_curve.html">lm_std_curve</a></span><span class="op">(</span></span>
 <span>  <span class="va">std_dilution_avg</span> <span class="op">|&gt;</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename</a></span><span class="op">(</span>abs_corrected <span class="op">=</span> <span class="va">abs_mean</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 5 × 12</span></span>
-<span><span class="co">#&gt;   dataset plate_id unique_curve_id std_sp  slope r_squared adj_r_squared</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;           &lt;chr&gt;   &lt;dbl&gt;     &lt;dbl&gt;         &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1 Nmin    NO3_1F1  NO3_1F1_col13   NO3    0.0184     0.999         0.999</span></span>
-<span><span class="co">#&gt; 2 Nmin    NO3_1F2  NO3_1F2_col13   NO3    0.0184     0.999         0.999</span></span>
-<span><span class="co">#&gt; 3 Nmin    NO3_1F3  NO3_1F3_col13   NO3    0.0186     0.999         0.999</span></span>
-<span><span class="co">#&gt; 4 Nmin    NO3_1F4  NO3_1F4_col13   NO3    0.0183     0.999         0.999</span></span>
-<span><span class="co">#&gt; 5 Nmin    NO3_1F5  NO3_1F5_col13   NO3    0.0189     0.999         0.999</span></span>
-<span><span class="co">#&gt; # ℹ 5 more variables: lm_p &lt;dbl&gt;, normality_lm_residuals &lt;chr&gt;,</span></span>
-<span><span class="co">#&gt; #   shapiro_p &lt;dbl&gt;, homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; # A tibble: 5 × 14</span></span>
+<span><span class="co">#&gt;   dataset plate_id unique_curve_id std_sp  slope intercept intercept_p     lm_p</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;           &lt;chr&gt;   &lt;dbl&gt;     &lt;dbl&gt;       &lt;dbl&gt;    &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 Nmin    NO3_1F1  NO3_1F1_col13   NO3    0.0184        NA          NA 7.36e-11</span></span>
+<span><span class="co">#&gt; 2 Nmin    NO3_1F2  NO3_1F2_col13   NO3    0.0184        NA          NA 6.32e-11</span></span>
+<span><span class="co">#&gt; 3 Nmin    NO3_1F3  NO3_1F3_col13   NO3    0.0186        NA          NA 9.98e-11</span></span>
+<span><span class="co">#&gt; 4 Nmin    NO3_1F4  NO3_1F4_col13   NO3    0.0183        NA          NA 2.23e-10</span></span>
+<span><span class="co">#&gt; 5 Nmin    NO3_1F5  NO3_1F5_col13   NO3    0.0189        NA          NA 3.80e-10</span></span>
+<span><span class="co">#&gt; # ℹ 6 more variables: r_squared &lt;dbl&gt;, adj_r_squared &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   normality_lm_residuals &lt;chr&gt;, shapiro_p &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;</span></span>
 <span></span>
 <span><span class="co"># look for suspicious curves</span></span>
 <span><span class="op">(</span><span class="va">lm_suspicious_mean</span> <span class="op">&lt;-</span> <span class="va">lm_std_mean</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/suspicious_lm.html">suspicious_lm</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 0 × 12</span></span>
-<span><span class="co">#&gt; # ℹ 12 variables: dataset &lt;chr&gt;, plate_id &lt;chr&gt;, unique_curve_id &lt;chr&gt;,</span></span>
-<span><span class="co">#&gt; #   std_sp &lt;chr&gt;, slope &lt;dbl&gt;, r_squared &lt;dbl&gt;, adj_r_squared &lt;dbl&gt;,</span></span>
-<span><span class="co">#&gt; #   lm_p &lt;dbl&gt;, normality_lm_residuals &lt;chr&gt;, shapiro_p &lt;dbl&gt;,</span></span>
-<span><span class="co">#&gt; #   homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt; # A tibble: 0 × 14</span></span>
+<span><span class="co">#&gt; # ℹ 14 variables: dataset &lt;chr&gt;, plate_id &lt;chr&gt;, unique_curve_id &lt;chr&gt;,</span></span>
+<span><span class="co">#&gt; #   std_sp &lt;chr&gt;, slope &lt;dbl&gt;, intercept &lt;dbl&gt;, intercept_p &lt;dbl&gt;, lm_p &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   r_squared &lt;dbl&gt;, adj_r_squared &lt;dbl&gt;, normality_lm_residuals &lt;chr&gt;,</span></span>
+<span><span class="co">#&gt; #   shapiro_p &lt;dbl&gt;, homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;</span></span></code></pre></div>
 </div>
 <p>Good news, there are no more suspicious linear models anymore. Should there be any, one more round of QC as described above can still be helpful in some cases (<code><a href="../reference/plot_list_lm.html">plot_list_lm()</a></code>). However, one should not expect to always reach normality of residuals with only 7 points. If the curve fits and the p-value of the model if very low, non-normality and heteroscedasticity can be accepted. They are used as tools to “flag” suspicious curves, but should not be used as too strict criteria.</p>
 <p>Let’s store the last correction into a clean variable name to reduce possible confusion, and let’s compute all the plots in a big list, for storage purposes. We could then export this as one output data in a single list with <code><a href="https://readr.tidyverse.org/reference/read_rds.html" class="external-link">readr::write_rds()</a></code>, or save the plots with <code>ggsave()</code>.</p>
@@ -749,7 +755,7 @@
 <span></span>
 <span><span class="co"># Check it out</span></span>
 <span><span class="va">data_mg_N_L</span></span>
-<span><span class="co">#&gt; # A tibble: 264 × 13</span></span>
+<span><span class="co">#&gt; # A tibble: 264 × 15</span></span>
 <span><span class="co">#&gt;    dataset plate_id map   well_id abs_corrected std_sp target_sp std_unit  slope</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt; &lt;chr&gt;           &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;     &lt;chr&gt;     &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt;  1 Nmin    NO3_1F1  81_t… A2            0.0312  NO3    N         mg NO3-… 0.0184</span></span>
@@ -763,8 +769,8 @@
 <span><span class="co">#&gt;  9 Nmin    NO3_1F4  82_t… A3            0.0638  NO3    N         mg NO3-… 0.0183</span></span>
 <span><span class="co">#&gt; 10 Nmin    NO3_1F5  98_t… A3            0.0232  NO3    N         mg NO3-… 0.0189</span></span>
 <span><span class="co">#&gt; # ℹ 254 more rows</span></span>
-<span><span class="co">#&gt; # ℹ 4 more variables: adj_r_squared &lt;dbl&gt;, lm_p &lt;dbl&gt;, conc_mgNsp_L &lt;dbl&gt;,</span></span>
-<span><span class="co">#&gt; #   conc_mgN_L &lt;dbl&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt; # ℹ 6 more variables: adj_r_squared &lt;dbl&gt;, lm_p &lt;dbl&gt;, intercept &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   intercept_p &lt;dbl&gt;, conc_mgNsp_L &lt;dbl&gt;, conc_mgN_L &lt;dbl&gt;</span></span></code></pre></div>
 </div>
 <p>We finally have our computed concentration for each well, expressed in mg N per L. This is not the end of the data pipeline, but it is the end of what really belongs in this vignette. Downstream steps are different for each study. However, we propose below, in <a href="#sec-epilogue">Epilogue</a>, a few examples of further data transformation.</p>
 </section></section><section class="section level2"><h2 id="sec-polynomial">4 - Polynomial model<a class="anchor" aria-label="anchor" href="#sec-polynomial"></a>
@@ -850,7 +856,7 @@
 <span></span>
 <span><span class="co"># Check it out</span></span>
 <span><span class="va">lm_TDN_raw</span></span>
-<span><span class="co">#&gt; # A tibble: 32 × 15</span></span>
+<span><span class="co">#&gt; # A tibble: 32 × 17</span></span>
 <span><span class="co">#&gt;    dataset plate_id   unique_curve_id std_sp     poly_a poly_a_p poly_b poly_b_p</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;           &lt;chr&gt;       &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt;  1 TDN     NO3_TDN_01 NO3_TDN_01_col1 NO3    -0.0000152  7.40e-4 0.0134  6.71e-7</span></span>
@@ -864,9 +870,9 @@
 <span><span class="co">#&gt;  9 TDN     NO3_TDN_09 NO3_TDN_09_col1 NO3    -0.0000213  1.94e-5 0.0167  2.70e-8</span></span>
 <span><span class="co">#&gt; 10 TDN     NO3_TDN_10 NO3_TDN_10_col1 NO3    -0.0000186  1.07e-4 0.0155  1.16e-7</span></span>
 <span><span class="co">#&gt; # ℹ 22 more rows</span></span>
-<span><span class="co">#&gt; # ℹ 7 more variables: r_squared &lt;dbl&gt;, adj_r_squared &lt;dbl&gt;, lm_p &lt;dbl&gt;,</span></span>
-<span><span class="co">#&gt; #   normality_lm_residuals &lt;chr&gt;, shapiro_p &lt;dbl&gt;,</span></span>
-<span><span class="co">#&gt; #   homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt; # ℹ 9 more variables: intercept &lt;dbl&gt;, intercept_p &lt;dbl&gt;, r_squared &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   adj_r_squared &lt;dbl&gt;, lm_p &lt;dbl&gt;, normality_lm_residuals &lt;chr&gt;,</span></span>
+<span><span class="co">#&gt; #   shapiro_p &lt;dbl&gt;, homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;</span></span></code></pre></div>
 </div>
 <p>This produces a table that has a similar structure to the one from the linear model, though columns are slightly different to reflect the differences in the model. This table has one row per standard curve. Columns poly_a and poly_b correspond to the coefficients <code>a</code> and <code>b</code>, respectively, in the equation <code>y = a*x^2 + b*x + c</code>, where</p>
 <ul>
@@ -883,7 +889,7 @@
 <div class="sourceCode cell-code" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># extract all plates where "something" is not perfect </span></span>
 <span><span class="op">(</span><span class="va">lm_suspicious</span> <span class="op">&lt;-</span> <span class="va">lm_TDN_raw</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/suspicious_lm.html">suspicious_lm</a></span><span class="op">(</span>model <span class="op">=</span> <span class="st">"poly"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 7 × 15</span></span>
+<span><span class="co">#&gt; # A tibble: 7 × 17</span></span>
 <span><span class="co">#&gt;   dataset plate_id   unique_curve_id std_sp     poly_a poly_a_p poly_b  poly_b_p</span></span>
 <span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;           &lt;chr&gt;       &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt;     &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt; 1 TDN     NO3_TDN_02 NO3_TDN_02_col1 NO3    -0.0000174 0.000493 0.0134   8.32e-7</span></span>
@@ -893,9 +899,9 @@
 <span><span class="co">#&gt; 5 TDN     NO3_TDN_17 NO3_TDN_17_col1 NO3    -0.0000252 0.00113  0.0203   1.66e-6</span></span>
 <span><span class="co">#&gt; 6 TDN     NO3_TDN_20 NO3_TDN_20_col1 NO3    -0.0000218 0.000483 0.0194   4.00e-7</span></span>
 <span><span class="co">#&gt; 7 TDN     NO3_TDN_24 NO3_TDN_24_col1 NO3    -0.0000236 0.000662 0.0187   9.99e-7</span></span>
-<span><span class="co">#&gt; # ℹ 7 more variables: r_squared &lt;dbl&gt;, adj_r_squared &lt;dbl&gt;, lm_p &lt;dbl&gt;,</span></span>
-<span><span class="co">#&gt; #   normality_lm_residuals &lt;chr&gt;, shapiro_p &lt;dbl&gt;,</span></span>
-<span><span class="co">#&gt; #   homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt; # ℹ 9 more variables: intercept &lt;dbl&gt;, intercept_p &lt;dbl&gt;, r_squared &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   adj_r_squared &lt;dbl&gt;, lm_p &lt;dbl&gt;, normality_lm_residuals &lt;chr&gt;,</span></span>
+<span><span class="co">#&gt; #   shapiro_p &lt;dbl&gt;, homoscedasticity_lm_residuals &lt;chr&gt;, breusch_pagan_p &lt;dbl&gt;</span></span></code></pre></div>
 </div>
 <p>We can visually evaluate those plates. For visual support, we create with <code><a href="../reference/plot_list_lm.html">plot_list_lm()</a></code> a list of plots where we store each individual plot of “suspicious” standard curves.</p>
 <div class="cell">
@@ -1021,7 +1027,7 @@
 <span></span>
 <span><span class="co"># Check it out</span></span>
 <span><span class="va">data</span></span>
-<span><span class="co">#&gt; # A tibble: 2,560 × 15</span></span>
+<span><span class="co">#&gt; # A tibble: 2,560 × 17</span></span>
 <span><span class="co">#&gt;    dataset plate_id   map        well_id abs_corrected std_sp target_sp std_unit</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;      &lt;chr&gt;           &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;     &lt;chr&gt;   </span></span>
 <span><span class="co">#&gt;  1 TDN     NO3_TDN_01 102_t2_z1… A2              0.459 NO3    N         mg NO3-…</span></span>
@@ -1035,8 +1041,9 @@
 <span><span class="co">#&gt;  9 TDN     NO3_TDN_09 102_t2_z1… A2              0.759 NO3    N         mg NO3-…</span></span>
 <span><span class="co">#&gt; 10 TDN     NO3_TDN_10 92_t2_z2_… A2              0.694 NO3    N         mg NO3-…</span></span>
 <span><span class="co">#&gt; # ℹ 2,550 more rows</span></span>
-<span><span class="co">#&gt; # ℹ 7 more variables: poly_a &lt;dbl&gt;, poly_a_p &lt;dbl&gt;, poly_b &lt;dbl&gt;,</span></span>
-<span><span class="co">#&gt; #   poly_b_p &lt;dbl&gt;, r_squared &lt;dbl&gt;, adj_r_squared &lt;dbl&gt;, lm_p &lt;dbl&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt; # ℹ 9 more variables: poly_a &lt;dbl&gt;, poly_a_p &lt;dbl&gt;, poly_b &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   poly_b_p &lt;dbl&gt;, r_squared &lt;dbl&gt;, adj_r_squared &lt;dbl&gt;, lm_p &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; #   intercept &lt;dbl&gt;, intercept_p &lt;dbl&gt;</span></span></code></pre></div>
 </div>
 <p>Then, we can compute the concentration in N-species in mg N / L (i.e., mg NO3-N / L, mg NH4-N / L, etc.). Because the concentration of the standard curve dilution was expressed in mg N-sp / L (i.e., mg NO3 / L or mg NH4 /L, etc.), a conversion using molar masses of both the target species (N as an element) and the origin species (e.g., NO3-) needs to take place as a last step. For that purpose, <code>plate2N</code> stores molar masses of N, NO3-, NO2-, NH4+ in a vector called <code>molar_masses</code>.</p>
 <p>In the script below, we take the smallest value of the solutions to the 2nd degree equation <code>a*x^2 + b*x - y = 0</code>. See <a href="#cau-parable" class="quarto-xref">Caution 1</a> for more details on when to adapt this choice, which you can do by changing <code><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min()</a></code> to <code><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max()</a></code>.</p>
@@ -1064,7 +1071,7 @@
 <span></span>
 <span><span class="co"># Check it out</span></span>
 <span><span class="va">data_mg_N_L</span></span>
-<span><span class="co">#&gt; # A tibble: 2,560 × 16</span></span>
+<span><span class="co">#&gt; # A tibble: 2,560 × 18</span></span>
 <span><span class="co">#&gt; # Rowwise: </span></span>
 <span><span class="co">#&gt;    dataset plate_id   map    well_id abs_corrected conc_mgNsp_L std_sp target_sp</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;   &lt;chr&gt;      &lt;chr&gt;  &lt;chr&gt;           &lt;dbl&gt;        &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;    </span></span>
@@ -1079,9 +1086,9 @@
 <span><span class="co">#&gt;  9 TDN     NO3_TDN_09 102_t… A2              0.759         48.4 NO3    N        </span></span>
 <span><span class="co">#&gt; 10 TDN     NO3_TDN_10 92_t2… A2              0.694         47.6 NO3    N        </span></span>
 <span><span class="co">#&gt; # ℹ 2,550 more rows</span></span>
-<span><span class="co">#&gt; # ℹ 8 more variables: poly_a &lt;dbl&gt;, poly_a_p &lt;dbl&gt;, poly_b &lt;dbl&gt;,</span></span>
+<span><span class="co">#&gt; # ℹ 10 more variables: poly_a &lt;dbl&gt;, poly_a_p &lt;dbl&gt;, poly_b &lt;dbl&gt;,</span></span>
 <span><span class="co">#&gt; #   poly_b_p &lt;dbl&gt;, r_squared &lt;dbl&gt;, adj_r_squared &lt;dbl&gt;, lm_p &lt;dbl&gt;,</span></span>
-<span><span class="co">#&gt; #   conc_mgN_L &lt;dbl&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt; #   intercept &lt;dbl&gt;, intercept_p &lt;dbl&gt;, conc_mgN_L &lt;dbl&gt;</span></span></code></pre></div>
 </div>
 </section></section><section class="section level2"><h2 id="sec-epilogue">5 - Epilogue<a class="anchor" aria-label="anchor" href="#sec-epilogue"></a>
 </h2>
